@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交" />
+    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/HJ212Decoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/HJ212Decoder.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -173,7 +176,7 @@
       <workItem from="1714269420600" duration="395000" />
       <workItem from="1714269823542" duration="41000" />
       <workItem from="1714269881630" duration="1359000" />
-      <workItem from="1714271906028" duration="3808000" />
+      <workItem from="1714271906028" duration="4432000" />
     </task>
     <task id="LOCAL-00001" summary="初次提交">
       <created>1714267235196</created>
@@ -336,11 +339,6 @@
           <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/ProxyIpDecoder.java</url>
           <line>40</line>
           <option name="timeStamp" value="67" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/HJ212Decoder.java</url>
-          <line>22</line>
-          <option name="timeStamp" value="70" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>

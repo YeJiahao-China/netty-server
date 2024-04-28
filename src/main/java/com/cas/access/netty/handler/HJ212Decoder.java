@@ -28,8 +28,6 @@ public class HJ212Decoder extends ByteToMessageDecoder {
         // 读取数据包的开头（两个#）
         if (in.getByte(in.readerIndex()) != '#' || in.getByte(in.readerIndex() + 1) != '#') {
             log.error("数据包无效开头, 丢弃该条消息: {}", in.toString(Charset.defaultCharset()));
-//            in.retain();
-//            in.release();
             in.skipBytes(in.readableBytes());
             return;
         }
@@ -46,8 +44,7 @@ public class HJ212Decoder extends ByteToMessageDecoder {
         // 检查是否有足够的数据
         if (in.readableBytes() < dataLength) {
             log.error("不正确的数据段长度");
-            in.release();
-//            in.skipBytes(in.readableBytes());
+            in.skipBytes(in.readableBytes());
 //            in.resetReaderIndex(); // 重置读索引，等待更多数据
             return;
         }
