@@ -1,0 +1,9 @@
+server:
+  port: 2310
+
+logging:
+  config: classpath:logback.xml
+
+netty:
+  server:
+    ports: 10101,20202
