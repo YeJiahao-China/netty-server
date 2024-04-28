@@ -25,11 +25,6 @@ public class HJ212Decoder extends ByteToMessageDecoder {
             return;
         }
 
-
-//        if(in.refCnt()>0){
-//            in.release();
-//        }
-
         // 读取数据包的开头（两个#）
         if (in.getByte(in.readerIndex()) != '#' || in.getByte(in.readerIndex() + 1) != '#') {
             log.error("数据包无效开头, 丢弃该条消息: {}", in.toString(Charset.defaultCharset()));
