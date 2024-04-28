@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Enum" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="JsFlowSettings">
+    <service-enabled>true</service-enabled>
+    <exe-path />
+    <other-services-enabled>true</other-services-enabled>
+    <auto-save>true</auto-save>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="$PROJECT_DIR$/../../../../Dev/Maven/apache-maven-3.2.2" />
+        <option name="userSettingsFile" value="D:\Dev\Maven\apache-maven-3.2.2\conf\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="enabledProfiles">
+      <list>
+        <option value="jdk-1.8" />
+      </list>
+    </option>
+  </component>
+  <component name="MavenRunner">
+    <option name="delegateBuildToMaven" value="true" />
+    <option name="jreName" value="1.8" />
+    <option name="skipTests" value="true" />
+  </component>
+  <component name="ProjectId" id="2VYb7i1QBx5q42O7rXFCdJ7YM0T" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="foldersAlwaysOnTop" value="false" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showVisibilityIcons" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="GO_FMT" value="true" />
+    <property name="RequestMappingsPanelOrder0" value="0" />
+    <property name="RequestMappingsPanelOrder1" value="1" />
+    <property name="RequestMappingsPanelWidth0" value="75" />
+    <property name="RequestMappingsPanelWidth1" value="75" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../netty-server-git" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.15332031" />
+    <property name="project.structure.side.proportion" value="0.5127021" />
+    <property name="settings.editor.selected.configurable" value="MavenSettings" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.cas.access.service.config" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
+  <component name="RunManager" selected="Spring Boot.NettyServerApplication">
+    <configuration name="ClientDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.access.netty.client.ClientDemo" />
+      <module name="netty-server" />
+      <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.access.netty.client.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.access.netty.test.TestApp" />
+      <module name="netty-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.access.netty.test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="netty-server" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="FILE" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="netty-server" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <framework value="gotest" />
+      <kind value="DIRECTORY" />
+      <method v="2" />
+    </configuration>
+    <configuration name="NettyServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+      <module name="netty-server" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.cas.access.NettyServerApplication" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.ClientDemo" />
+      <item itemvalue="Application.TestApp" />
+      <item itemvalue="Spring Boot.NettyServerApplication" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.TestApp" />
+        <item itemvalue="Application.ClientDemo" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="" />
+      <created>1695015795009</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1695015795009</updated>
+      <workItem from="1695015801788" duration="37986000" />
+      <workItem from="1695177360929" duration="416000" />
+      <workItem from="1695178009135" duration="10614000" />
+      <workItem from="1695260374974" duration="1446000" />
+      <workItem from="1698116633711" duration="43457000" />
+      <workItem from="1698302114719" duration="28082000" />
+      <workItem from="1698634064465" duration="2534000" />
+      <workItem from="1698653681119" duration="4839000" />
+      <workItem from="1699942375081" duration="1226000" />
+      <workItem from="1700039616969" duration="1754000" />
+      <workItem from="1700106797812" duration="2164000" />
+      <workItem from="1701312640676" duration="788000" />
+      <workItem from="1701417790170" duration="9669000" />
+      <workItem from="1703492397842" duration="660000" />
+      <workItem from="1706260490445" duration="720000" />
+      <workItem from="1714011188614" duration="34915000" />
+      <workItem from="1714269420600" duration="395000" />
+      <workItem from="1714269823542" duration="41000" />
+      <workItem from="1714269881630" duration="1359000" />
+      <workItem from="1714271906028" duration="3443000" />
+    </task>
+    <task id="LOCAL-00001" summary="初次提交">
+      <created>1714267235196</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1714267235196</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ORDER">
+      <list>
+        <option value="0" />
+        <option value="2" />
+        <option value="3" />
+        <option value="1" />
+      </list>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="初次提交" />
+    <option name="LAST_COMMIT_MESSAGE" value="初次提交" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="765" y="225" key="#com.intellij.ide.util.MemberChooser" timestamp="1714011291399">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="765" y="225" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1714011291399" />
+    <state x="909" y="337" width="734" height="703" key="#xdebugger.evaluate" timestamp="1714052154249">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="909" y="337" width="734" height="703" key="#xdebugger.evaluate/0.0.1920.1040@0.0.1920.1040" timestamp="1714052154249" />
+    <state x="479" y="94" key="CommitChangelistDialog2" timestamp="1714273912184">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="479" y="94" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1714273912184" />
+    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog" timestamp="1714268869730">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1714268869730" />
+    <state x="739" y="261" key="FileChooserDialogImpl" timestamp="1714266764456">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="739" y="261" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1714266764456" />
+    <state width="1877" height="227" key="GridCell.Tab.0.bottom" timestamp="1714271881275">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="227" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
+    <state width="1877" height="227" key="GridCell.Tab.0.center" timestamp="1714271881275">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="227" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
+    <state width="1877" height="227" key="GridCell.Tab.0.left" timestamp="1714271881275">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="227" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
+    <state width="1877" height="227" key="GridCell.Tab.0.right" timestamp="1714271881275">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1877" height="227" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
+    <state width="1565" height="576" key="GridCell.Tab.1.bottom" timestamp="1714268868664">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
+    <state width="1565" height="576" key="GridCell.Tab.1.center" timestamp="1714268868663">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
+    <state width="1565" height="576" key="GridCell.Tab.1.left" timestamp="1714268868663">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
+    <state width="1565" height="576" key="GridCell.Tab.1.right" timestamp="1714268868663">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
+    <state width="1565" height="576" key="GridCell.Tab.2.bottom" timestamp="1714268868664">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.2.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
+    <state width="1565" height="576" key="GridCell.Tab.2.center" timestamp="1714268868664">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.2.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
+    <state width="1565" height="576" key="GridCell.Tab.2.left" timestamp="1714268868664">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.2.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
+    <state width="1565" height="576" key="GridCell.Tab.2.right" timestamp="1714268868664">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1565" height="576" key="GridCell.Tab.2.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
+    <state x="490" y="175" key="Maven.ArtifactSearchDialog" timestamp="1714271713317">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="490" y="175" key="Maven.ArtifactSearchDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1714271713317" />
+    <state x="440" y="94" key="SettingsEditor" timestamp="1714271642976">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="440" y="94" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1714271642976" />
+    <state x="681" y="261" width="582" height="524" key="StructurePopup" timestamp="1714111645338">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="681" y="261" width="582" height="524" key="StructurePopup/0.0.1920.1040@0.0.1920.1040" timestamp="1714111645338" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1714273337056">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1714273337056" />
+    <state width="968" height="528" key="XDebugger.FullValuePopup" timestamp="1714014033015">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="968" height="528" key="XDebugger.FullValuePopup/0.0.1920.1040@0.0.1920.1040" timestamp="1714014033015" />
+    <state x="753" y="433" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1714267424884">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="753" y="433" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040@0.0.1920.1040" timestamp="1714267424884" />
+    <state x="467" y="249" width="986" height="756" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1714113431486">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="467" y="249" width="986" height="756" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1920.1040@0.0.1920.1040" timestamp="1714113431486" />
+    <state x="131" y="301" width="672" height="678" key="search.everywhere.popup" timestamp="1714101348090">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="131" y="301" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1714101348090" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/PooledByteBuf.java</url>
+          <line>170</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/AbstractReferenceCountedByteBuf.java</url>
+          <line>100</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/ChannelInboundHandlerAdapter.java</url>
+          <line>104</line>
+          <option name="timeStamp" value="22" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/ByteBufUtil.java</url>
+          <line>1290</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/AbstractUnpooledSlicedByteBuf.java</url>
+          <line>98</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/ProxyIpDecoder.java</url>
+          <line>40</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/HJ212Decoder.java</url>
+          <line>22</line>
+          <option name="timeStamp" value="70" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>289</line>
+          <option name="timeStamp" value="71" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>299</line>
+          <option name="timeStamp" value="72" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/ReadEventHandler.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="73" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

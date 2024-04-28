@@ -1,0 +1,6 @@
+Spring Boot Version: ${spring-boot.version}
+Spring Application Name: ${spring.application.name}
+  ___ __ _ ___ ______ __ _  ___ ___ ___  ___ ___
+ / __/ _` / __|______/ _` |/ __/ __/ _ \/ __/ __|
+| (_| (_| \__ \     | (_| | (_| (_|  __/\__ \__ \
+ \___\__,_|___/      \__,_|\___\___\___||___/___/

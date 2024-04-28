@@ -21,8 +21,6 @@ public class HJ212Decoder extends ByteToMessageDecoder {
 
         // 检查输入数据的可读字节数是否足够
         if (in.readableBytes() < 8) {
-//            in.retain();
-//            in.release();
             in.skipBytes(in.readableBytes());
             return;
         }
