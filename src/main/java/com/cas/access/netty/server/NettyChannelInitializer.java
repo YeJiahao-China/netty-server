@@ -69,7 +69,7 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
 //                channelPipeline.addLast("delimiterBasedFrameDecoder", delimiterBasedFrameDecoder);
 //            }
             //stringDecoder解码器
-//            channelPipeline.addLast("stringDecoder", new StringDecoder(StandardCharsets.UTF_8));
+            channelPipeline.addLast("stringDecoder", new StringDecoder(StandardCharsets.UTF_8));
 
          //   channelPipeline.addLast("proxyIpDecoder", new ProxyIpDecoder());
             // HJ212协议解码器
@@ -77,7 +77,7 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
 
 
             //stringEncoder编码器
-//            channelPipeline.addLast("stringEncoder", new StringEncoder(StandardCharsets.UTF_8));
+            channelPipeline.addLast("stringEncoder", new StringEncoder(StandardCharsets.UTF_8));
             //读数据handler
             channelPipeline.addLast("readerHandler", readEventHandler);
         } catch (Exception e) {

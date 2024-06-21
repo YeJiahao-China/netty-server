@@ -6,4 +6,4 @@ logging:
 
 netty:
   server:
-    ports: 10101,20202
+    ports: 10101

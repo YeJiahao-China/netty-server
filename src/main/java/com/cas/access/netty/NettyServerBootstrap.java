@@ -1,6 +1,7 @@
 package com.cas.access.netty;
 
 import com.cas.access.netty.config.NettyServerConfiguration;
+import com.cas.access.netty.handler.ServerLoggingHandler;
 import com.cas.access.netty.server.NettyChannelInitializer;
 import com.cas.access.netty.server.GlobalCache;
 import io.netty.bootstrap.ServerBootstrap;
@@ -29,6 +30,10 @@ public class NettyServerBootstrap implements CommandLineRunner {
     public static ServerBootstrap serverBootstrap;
     @Resource
     private NettyChannelInitializer channelInitializer;
+
+    @Resource
+    private ServerLoggingHandler serverLoggingHandler;
+
     @Resource
     private NettyServerConfiguration nettyServerConfiguration;
     private EventLoopGroup boosGroup;
@@ -65,6 +70,8 @@ public class NettyServerBootstrap implements CommandLineRunner {
             group.option(ChannelOption.SO_BACKLOG, 1024);
             // 允许重复使用本地地址和端口
             group.option(ChannelOption.SO_REUSEADDR, true);
+
+            group.handler(serverLoggingHandler);
             //childOption设置主要是针对worker线程组
             // 保持长连接，可以在设置的读写超时时间范围内保持连接
             group.childOption(ChannelOption.SO_KEEPALIVE, true);

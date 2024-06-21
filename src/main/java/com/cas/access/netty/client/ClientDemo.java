@@ -43,7 +43,7 @@ public class ClientDemo {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                for (int i = 1; i <= 10; i++) {
+                for (int i = 1; i <= 1000000; i++) {
                     ChannelFuture channelFuture = null;
                     try {
                         //  111.229.122.17

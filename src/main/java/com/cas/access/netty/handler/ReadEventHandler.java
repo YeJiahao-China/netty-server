@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 /**
  * 客户端TCP报文处理器类，用于处理客户端TCP报文数据
@@ -41,15 +42,42 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
         log.info("[Client-{}:{}]-<读取数据>-[NettyServer-{}:{}]-[ChannelId:{}] - [数据源:{}]", clientIp, clientPort, localIp, localPort, channelId, s);
         // 关闭监听服务端口20202
         NettyServerUtil.closeListen(20202);
+//        channelReadComplete(ctx);
+
+        ctx.writeAndFlush(info.toString()).addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.isDone() || future.isSuccess()){
+                    log.info("通道写操作成功");
+                }else {
+                    log.error("通道不可写, 写缓冲区ChannelOutboundBuffer疑似达到高水位线");
+                }
+            }
+        });
+
+    }
+
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        super.channelRegistered(ctx);
+        InetSocketAddress socketAddress =(InetSocketAddress) ctx.channel().remoteAddress();
+        log.info("SocketChannel[ip:{},port:{}]成功注册",socketAddress.getHostString(),socketAddress.getPort());
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
+        InetSocketAddress socketAddress =(InetSocketAddress) ctx.channel().remoteAddress();
+        log.info("SocketChannel[ip:{},port:{}] Activated",socketAddress.getHostString(),socketAddress.getPort());
     }
 
     /**
      * 服务端接收客户端发送过来的数据结束之后调用
      */
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
-//        ctx.flush();
-    }
+//    @Override
+//    public void channelReadComplete(ChannelHandlerContext ctx) {
+//        ChannelFuture future = ctx.writeAndFlush("success");
+//    }
 
     /**
      * 工程出现异常时调用
@@ -72,5 +100,6 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
         log.error("[NettyServer-{}:{}]-<发生异常>-[Client-{}:{}]-[ChannelId:{}-ChannelSize:{}] - [异常信息:{}]", localIp, localPort, clientIp, clientPort, channelId, GlobalCache.CONNECTION_STATUS_MAP.size(), causeMessage);
         channel.close();
     }
+
 
 }
