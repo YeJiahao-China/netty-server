@@ -1,9 +1,9 @@
 server:
-  port: 2310
+  port: 9898
 
 logging:
   config: classpath:logback.xml
 
 netty:
   server:
-    ports: 10101
+    ports: 1000

@@ -7,8 +7,8 @@ package com.cas.access.netty.enums;
  */
 public enum DelimiterEnum {
 
-    SP_10101(10101, "\r\n"),
-    SP_20202(20202, "####");
+    SP_10101(10000, "\r\n"),
+    SP_20202(20000, "####");
 
     private int serverPort;
     private String delimiter;

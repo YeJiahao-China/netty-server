@@ -19,7 +19,7 @@ import java.nio.charset.Charset;
  */
 @SuppressWarnings({"AlibabaUndefineMagicConstant", "AlibabaRemoveCommentedCode"})
 public class ClientDemo {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         System.out.println("...客户端启动...");
         EventLoopGroup eventLoopGroup = new NioEventLoopGroup(10);
         final Bootstrap bootstrap = new Bootstrap();
@@ -40,51 +40,16 @@ public class ClientDemo {
             }
         });
         // 创建客户端连接
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 1; i <= 1000000; i++) {
-                    ChannelFuture channelFuture = null;
-                    try {
-                        //  111.229.122.17
-                        channelFuture = bootstrap.connect("111.229.122.17", 10101).sync();
-//                channelFuture = bootstrap.connect("127.0.0.1", 10101).sync();
-//                channelFuture = bootstrap.connect("127.0.0.1", 10101).sync();
-                        channelFuture.addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(ChannelFuture future)  {
-                                System.out.println("IO操作完成...");
-                            }
-                        });
-                        channelFuture.get();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+        for (int i = 1; i <= 1; i++) {
+            ChannelFuture channelFuture = null;
+            try {
+                channelFuture = bootstrap.connect("192.168.1.8", 10061).sync();
+//                channelFuture.channel().closeFuture().sync(); // 等待连接关闭
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                eventLoopGroup.shutdownGracefully(); // 关闭EventLoopGroup
             }
-        }).start();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 1; i <= 10; i++) {
-                    ChannelFuture channelFuture = null;
-                    try {
-                        //  111.229.122.17
-                        channelFuture = bootstrap.connect("111.229.122.17", 10101).sync();
-//                channelFuture = bootstrap.connect("127.0.0.1", 10101).sync();
-//                channelFuture = bootstrap.connect("127.0.0.1", 10101).sync();
-                        channelFuture.addListener(new ChannelFutureListener() {
-                            @Override
-                            public void operationComplete(ChannelFuture future)  {
-                                System.out.println("IO操作完成...");
-                            }
-                        });
-                        channelFuture.get();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
+        }
     }
 }

@@ -1,16 +1,7 @@
-package com.cas.access.netty.server;
+package com.cas.access.netty.server.handler;
 
-import com.cas.access.netty.enums.DelimiterEnum;
-import com.cas.access.netty.handler.ConnectEventHandler;
-import com.cas.access.netty.handler.HJ212Decoder;
-import com.cas.access.netty.handler.ProxyIpDecoder;
-import com.cas.access.netty.handler.ReadEventHandler;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -20,21 +11,19 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 
 /**
  * NettyServer连接通道初始化类，用于数据处理线程初始化
- *
- * @author wumengjun
  */
-@SuppressWarnings({"AlibabaRemoveCommentedCode", "AlibabaUndefineMagicConstant"})
 @ChannelHandler.Sharable
 @Component
 @Slf4j
 public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-//    public volatile ChannelPipeline channelPipelinePub = null;
 
     @Resource
     private ReadEventHandler readEventHandler;
@@ -42,8 +31,6 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
     @Resource
     private ConnectEventHandler connectEventHandler;
 
-//    @Resource
-//    private HJ212Decoder hj212Decoder;
 
     @Override
     protected void initChannel(SocketChannel socketChannel) {
@@ -69,12 +56,15 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
 //                channelPipeline.addLast("delimiterBasedFrameDecoder", delimiterBasedFrameDecoder);
 //            }
             //stringDecoder解码器
-            channelPipeline.addLast("stringDecoder", new StringDecoder(StandardCharsets.UTF_8));
+//            channelPipeline.addLast("stringDecoder", new StringDecoder(StandardCharsets.UTF_8));
 
          //   channelPipeline.addLast("proxyIpDecoder", new ProxyIpDecoder());
             // HJ212协议解码器
-         //   channelPipeline.addLast("hj212Decoder", new HJ212Decoder());
-
+            channelPipeline.addLast("idleStateHandler", new IdleStateHandler(10,10,10, TimeUnit.HOURS));
+            channelPipeline.addLast("connectEventHandler",connectEventHandler);
+            // 业务解码器
+//            channelPipeline.addLast("hj212Decoder", new HJ212Decoder());
+            channelPipeline.addLast("stringDecoder", new StringDecoder(Charset.defaultCharset()));
 
             //stringEncoder编码器
             channelPipeline.addLast("stringEncoder", new StringEncoder(StandardCharsets.UTF_8));

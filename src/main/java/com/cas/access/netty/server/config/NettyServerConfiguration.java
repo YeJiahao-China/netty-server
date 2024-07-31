@@ -1,4 +1,4 @@
-package com.cas.access.netty.config;
+package com.cas.access.netty.server.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

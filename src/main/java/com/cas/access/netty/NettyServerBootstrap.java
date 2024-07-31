@@ -1,9 +1,9 @@
 package com.cas.access.netty;
 
-import com.cas.access.netty.config.NettyServerConfiguration;
-import com.cas.access.netty.handler.ServerLoggingHandler;
-import com.cas.access.netty.server.NettyChannelInitializer;
-import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.server.config.NettyServerConfiguration;
+import com.cas.access.netty.server.handler.ServerLoggingHandler;
+import com.cas.access.netty.server.handler.NettyChannelInitializer;
+import com.cas.access.netty.server.ServerConnectionManager;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -16,13 +16,14 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 
 /**
  * @author yjh_c
  * @描述: tcp服务启动类
  */
-@SuppressWarnings({"AlibabaRemoveCommentedCode", "AlibabaCommentsMustBeJavadocFormat"})
 @Component
 @Slf4j
 public class NettyServerBootstrap implements CommandLineRunner {
@@ -30,14 +31,23 @@ public class NettyServerBootstrap implements CommandLineRunner {
     public static ServerBootstrap serverBootstrap;
     @Resource
     private NettyChannelInitializer channelInitializer;
-
     @Resource
     private ServerLoggingHandler serverLoggingHandler;
-
     @Resource
     private NettyServerConfiguration nettyServerConfiguration;
     private EventLoopGroup boosGroup;
     private EventLoopGroup workGroup;
+
+    public static String localIp = "0.0.0.0";
+
+    static {
+        try {
+            InetAddress localHost = InetAddress.getLocalHost();
+            localIp = localHost.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void start() {
         try {
@@ -86,21 +96,15 @@ public class NettyServerBootstrap implements CommandLineRunner {
             //绑定监听端口号，调用sync同步阻塞方法等待绑定操作完成，完成后返回ChannelFuture类似于JDK中Future
             for (int i = 0; i < ports.length; i++) {
                 int finalI = i;
-                ChannelFuture startFuture = serverBootstrap.bind(ports[finalI]).addListener(future -> {
+                ChannelFuture startFuture = serverBootstrap.bind(localIp, ports[finalI]).sync().addListener(future -> {
                     if (future.isSuccess()) {
-                        log.info("NettyServer - 端口{}绑定成功", ports[finalI]);
+                        log.info("NettyServer启动{} - 开启监听端口{}", "成功", ports[finalI]);
                     } else {
-                        log.error("NettyServer - 端口{}绑定失败:{}", ports[finalI], future.cause().getMessage());
-                    }
-                }).sync().addListener(future -> {
-                    if (future.isSuccess()) {
-                        log.info("NettyServer - 启动{} - 监听端口{}", "成功", ports[finalI]);
-                    } else {
-                        log.error("NettyServer - 启动{} - 监听端口{}", "失败", ports[finalI]);
+                        log.error("NettyServer启动{} - 开启监听端口{}", "失败", ports[finalI]);
                     }
                 });
-                GlobalCache.SP_ServerChannel_Map.put(ports[finalI], startFuture.channel());
-                GlobalCache.SP_SocketChannel_Map.put(ports[finalI],new HashSet<>());
+                ServerConnectionManager.portServerChannelMap.put(ports[finalI], startFuture.channel());
+                ServerConnectionManager.portSocketChannelMap.put(ports[finalI], new HashSet<>());
 //            //成功绑定到端口之后,给channel增加一个 管道关闭的监听器并同步阻塞,直到channel关闭,线程才会往下执行,结束进程。
 //                channelFuture.channel().closeFuture().sync();
             }

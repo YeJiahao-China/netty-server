@@ -1,9 +1,6 @@
-package com.cas.access.netty.util;
+package com.cas.access.netty.server.util;
 
 import com.alibaba.fastjson2.JSONObject;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author JHYe

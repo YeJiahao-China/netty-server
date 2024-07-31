@@ -1,7 +1,8 @@
-package com.cas.access.netty.handler;
+package com.cas.access.netty.server.handler;
 
-import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.server.ServerConnectionManager;
 import io.netty.channel.*;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,6 @@ import java.util.Set;
  * @author JHYe
  * @date 2023/10/26
  */
-@SuppressWarnings("DuplicatedCode")
 @ChannelHandler.Sharable
 @Component
 @Slf4j
@@ -34,11 +34,11 @@ public class ConnectEventHandler extends ChannelInboundHandlerAdapter {
         int clientPort = clientAddress.getPort();
         //获取连接通道的唯一标识
         ChannelId channelId = ctx.channel().id();
-        GlobalCache.CONNECTION_STATUS_MAP.put(channelId, ctx.channel());
-        Set<Channel> socketChannels = GlobalCache.SP_SocketChannel_Map.get(localPort);
-        socketChannels.add(ctx.channel());
-        log.info("[Client-{}:{}]-<连接建立>-[NettyServer-{}:{}] - [SPSocketChannelSet.Size:{} - ChannelId:{} - ChannelSize:{}]",
-                clientIp, clientPort, localIp, localPort, socketChannels.size(), channelId, GlobalCache.CONNECTION_STATUS_MAP.size());
+        ServerConnectionManager.totalConnectionMap.put(channelId, (NioSocketChannel) ctx.channel());
+        Set<NioSocketChannel> socketChannels = ServerConnectionManager.portSocketChannelMap.get(localPort);
+        socketChannels.add((NioSocketChannel) ctx.channel());
+        log.info("[Client({}:{})-ChannelId:{}]-<连接建立>-[NettyServer({}:{})] - [当前监听端口总连接数:{} | 总连接数:{}]",
+                clientIp, clientPort, channelId, localIp, localPort, socketChannels.size(), ServerConnectionManager.totalConnectionMap.size());
     }
 
     /**
@@ -56,14 +56,14 @@ public class ConnectEventHandler extends ChannelInboundHandlerAdapter {
         ChannelId channelId = ctx.channel().id();
         String clientIp = ProxyIpDecoder.ChannelId_IP_MAP.get(channelId) == null ? clientAddress.getAddress().getHostAddress() : ProxyIpDecoder.ChannelId_IP_MAP.get(channelId);
         /** 客户端断开连接就从两个全局MAP中移除记录 */
-        if (GlobalCache.CONNECTION_STATUS_MAP.containsKey(channelId)) {
-            GlobalCache.CONNECTION_STATUS_MAP.remove(channelId);
+        if (ServerConnectionManager.totalConnectionMap.containsKey(channelId)) {
+            ServerConnectionManager.totalConnectionMap.remove(channelId);
             ProxyIpDecoder.ChannelId_IP_MAP.remove(channelId);
         }
-        Set<Channel> socketChannels = GlobalCache.SP_SocketChannel_Map.get(localPort);
-        socketChannels.remove(ctx.channel());
-        log.info("[Client-{}:{}]-<断开连接>-[NettyServer-{}:{}] - [SPSocketChannelSet.Size:{} - ChannelId:{} - ChannelSize:{}]",
-                clientIp, clientPort, localIp, localPort, socketChannels.size(), channelId, GlobalCache.CONNECTION_STATUS_MAP.size());
+        Set<NioSocketChannel> socketChannels = ServerConnectionManager.portSocketChannelMap.get(localPort);
+        if (socketChannels != null) socketChannels.remove(ctx.channel());
+        log.info("[Client-({}:{})-ChannelId:{}]-<断开连接>-[NettyServer-({}:{})] - [当前监听端口总连接数:{} | 总连接数:{}]",
+                clientIp, clientPort, channelId, localIp, localPort, socketChannels == null ? 0 : socketChannels.size(), ServerConnectionManager.totalConnectionMap.size());
     }
 
     /**
@@ -83,20 +83,20 @@ public class ConnectEventHandler extends ChannelInboundHandlerAdapter {
         int clientPort = clientAddress.getPort();
         Channel channel = ctx.channel();
         ChannelId channelId = channel.id();
-        GlobalCache.CONNECTION_STATUS_MAP.remove(channelId);
-        Set<Channel> socketChannels = GlobalCache.SP_SocketChannel_Map.get(localPort);
+        ServerConnectionManager.totalConnectionMap.remove(channelId);
+        Set<NioSocketChannel> socketChannels = ServerConnectionManager.portSocketChannelMap.get(localPort);
         socketChannels.remove(channel);
         //判断事件类型，如果为IdleStateEvent
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.READER_IDLE) {
-                log.info("[Client-{}:{}]-<读超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), GlobalCache.CONNECTION_STATUS_MAP.size());
+                log.info("[Client-{}:{}]-<读超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), ServerConnectionManager.totalConnectionMap.size());
                 channel.close(); //超时断开与服务端的连接
             } else if (event.state() == IdleState.WRITER_IDLE) {
-                log.info("[Client-{}:{}]-<写超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), GlobalCache.CONNECTION_STATUS_MAP.size());
+                log.info("[Client-{}:{}]-<写超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), ServerConnectionManager.totalConnectionMap.size());
                 channel.close();  //超时断开与服务端的连接
             } else if (event.state() == IdleState.ALL_IDLE) {
-                log.info("[Client-{}:{}]-<读写超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), GlobalCache.CONNECTION_STATUS_MAP.size());
+                log.info("[Client-{}:{}]-<读写超时断开连接>-[NettyServer-{}:{}] - [ChannelId:{}-ChannelSize:{}]", clientIp, clientPort, localIp, localPort, ctx.channel().id(), ServerConnectionManager.totalConnectionMap.size());
                 channel.close();  //超时断开与服务端的连接
             }
         }

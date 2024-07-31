@@ -1,5 +1,6 @@
 package com.cas.access.netty.client;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
@@ -20,9 +21,15 @@ public class CustomInMsgHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         SocketChannel channel = (SocketChannel) ctx.channel();
-        String str = "我是客户端,端口是:" + channel.localAddress().getPort() + "\r\n";
+        String str = "##0181QN=20240606000056000;ST=22;CN=2061;PW=O447JGPYQ75V3C58D138L2WX;MN=340100001V008;Flag=5;CP=&&DataTime=20240605230000;a34514-Avg=305.000,a34514-Flag=N;a34515-Avg=268.333,a34515-Flag=N&&2340";
         System.out.println(channel.localAddress().getPort() + " 客户端连接成功...");
-        ctx.writeAndFlush(str);
+        ChannelFuture future = ctx.writeAndFlush(str);
+        if (future.isDone()){
+            System.out.println("客户端数据发送完成");
+        }else {
+            System.out.println("客户端数据发送异常");
+        }
+        ctx.close();
     }
 
     /**
@@ -31,6 +38,7 @@ public class CustomInMsgHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         System.out.println("连接关闭" + ctx.channel().localAddress().toString());
+        ctx.close();
     }
 
     /**
@@ -49,7 +57,7 @@ public class CustomInMsgHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        ctx.close();
         System.out.println("异常信息：\r\n" + cause.getMessage());
+        ctx.close();
     }
 }
