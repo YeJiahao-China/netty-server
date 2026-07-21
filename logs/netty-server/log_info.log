@@ -1,0 +1,46 @@
+09:36:16.749 [main] [34mINFO [0;39m c.c.a.NettyServerApplication - [logStarting,55] - Starting NettyServerApplication using Java 1.8.0_402 on DESKTOP-U8O3RK1 with PID 18104 (C:\workspace\Project\netty-server\netty-launcher\target\classes started by Administrator in C:\workspace\Project\netty-server)
+09:36:16.769 [main] [34mINFO [0;39m c.c.a.NettyServerApplication - [logStartupProfileInfo,640] - No active profile set, falling back to 1 default profile: "default"
+09:36:18.846 [main] [34mINFO [0;39m o.a.c.h.Http11NioProtocol - [log,173] - Initializing ProtocolHandler ["http-nio-2310"]
+09:36:18.847 [main] [34mINFO [0;39m o.a.c.c.StandardService - [log,173] - Starting service [Tomcat]
+09:36:18.847 [main] [34mINFO [0;39m o.a.c.c.StandardEngine - [log,173] - Starting Servlet engine: [Apache Tomcat/9.0.60]
+09:36:19.049 [main] [34mINFO [0;39m o.a.c.c.C.[.[.[/] - [log,173] - Initializing Spring embedded WebApplicationContext
+09:36:20.519 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolRegistry - [logInjectionStatus,74] - ProtocolRegistry 注入状态: dbSync=com.cas.access.netty.service.ProtocolJarRegistryService, bindingStore=com.cas.access.netty.service.PortBindingService
+09:36:20.981 [main] [34mINFO [0;39m o.f.c.i.l.VersionPrinter - [info,37] - Flyway Community Edition 8.5.13 by Redgate
+09:36:20.981 [main] [34mINFO [0;39m o.f.c.i.l.VersionPrinter - [info,37] - See what's new here: https://flywaydb.org/documentation/learnmore/releaseNotes#8.5.13
+09:36:20.981 [main] [34mINFO [0;39m o.f.c.i.l.VersionPrinter - [info,37] - 
+09:36:20.992 [main] [34mINFO [0;39m c.z.h.HikariDataSource - [getConnection,110] - HikariPool-1 - Starting...
+09:36:21.804 [main] [34mINFO [0;39m c.z.h.HikariDataSource - [getConnection,123] - HikariPool-1 - Start completed.
+09:36:21.874 [main] [34mINFO [0;39m o.f.c.i.d.b.BaseDatabaseType - [info,37] - Database: jdbc:postgresql://localhost:5432/iot_access_hub (PostgreSQL 18.1)
+09:36:21.981 [main] [34mINFO [0;39m o.f.c.i.c.DbValidate - [info,37] - Successfully validated 2 migrations (execution time 00:00.077s)
+09:36:21.989 [main] [34mINFO [0;39m o.f.c.i.c.DbMigrate - [info,37] - Current version of schema "public": 2
+09:36:21.990 [main] [34mINFO [0;39m o.f.c.i.c.DbMigrate - [info,37] - Schema "public" is up to date. No migration necessary.
+09:36:22.084 [main] [34mINFO [0;39m o.a.c.h.Http11NioProtocol - [log,173] - Starting ProtocolHandler ["http-nio-2310"]
+09:36:22.185 [main] [34mINFO [0;39m c.c.a.NettyServerApplication - [logStarted,61] - Started NettyServerApplication in 6.001 seconds (JVM running for 17.641)
+09:36:22.187 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolBootstrap - [run,62] - 开始执行协议注册...
+09:36:22.188 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolRegistry - [register,102] - 协议注册成功: name=hj212, version=1.0.0, source=builtin
+09:36:22.236 [main] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [syncRegister,84] - DB UPDATE 协议记录: id=1, name=hj212, version=1.0.0
+09:36:22.337 [main] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [getActiveExternalProtocols,205] - 从 DB 加载活跃外部协议: 2 条
+09:36:22.542 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolRegistry - [register,102] - 协议注册成功: name=modbus-tcp, version=1.0.0, source=C:\workspace\Project\netty-server\.\protocols\modbus-protocol-1.0.0.jar
+09:36:22.545 [main] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [syncRegister,84] - DB UPDATE 协议记录: id=27, name=modbus-tcp, version=1.0.0
+09:36:22.545 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolBootstrap - [loadExternalProtocolsFromDb,133] - 从 DB 加载外部协议成功: name=modbus-tcp, jar=C:\workspace\Project\netty-server\.\protocols\modbus-protocol-1.0.0.jar
+09:36:22.550 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolBootstrap - [loadExternalProtocolsFromDb,138] - 外置协议端口绑定（来自 DB）: 10103 → 协议 modbus-tcp
+09:36:22.555 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolBootstrap - [lambda$run$1,106] - 初始端口绑定（来自 DB）: 10101 → 协议 hj212
+09:36:22.555 [main] [34mINFO [0;39m c.c.a.n.p.ProtocolBootstrap - [lambda$run$1,106] - 初始端口绑定（来自 DB）: 10103 → 协议 modbus-tcp
+09:36:22.555 [main] [34mINFO [0;39m c.c.a.n.s.NettyServerBootstrap - [start,46] - NettyServer - 开始启动中...
+09:36:22.555 [main] [34mINFO [0;39m c.c.a.n.s.NettyServerBootstrap - [start,54] - NettyServer - 端口列表: {10101=hj212, 10103=modbus-tcp}
+09:36:23.314 [boss-1-1] [34mINFO [0;39m c.c.a.n.s.NettyServerBootstrap - [lambda$start$0,100] - NettyServer - 端口:10101 绑定成功（协议: hj212）
+09:36:23.316 [boss-1-2] [34mINFO [0;39m c.c.a.n.s.NettyServerBootstrap - [lambda$start$0,100] - NettyServer - 端口:10103 绑定成功（协议: modbus-tcp）
+09:36:23.316 [main] [34mINFO [0;39m c.c.a.NettyServerApplication - [main,22] - (♥◠‿◠)ﾉﾞ  NettyServer启动成功   ლ(´ڡ`ლ)ﾞ 
+09:36:36.615 [http-nio-2310-exec-1] [34mINFO [0;39m o.a.c.c.C.[.[.[/] - [log,173] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+09:36:36.667 [http-nio-2310-exec-1] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,152] - listAllInDb 查询结果: count=3
+09:36:36.667 [http-nio-2310-exec-1] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=modbus-tcp, active=true, deleted=0, source=external
+09:36:36.667 [http-nio-2310-exec-1] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=hj212, active=true, deleted=0, source=builtin
+09:36:36.667 [http-nio-2310-exec-1] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=echo, active=true, deleted=0, source=external
+09:36:37.550 [http-nio-2310-exec-6] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,152] - listAllInDb 查询结果: count=3
+09:36:37.550 [http-nio-2310-exec-6] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=modbus-tcp, active=true, deleted=0, source=external
+09:36:37.550 [http-nio-2310-exec-6] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=hj212, active=true, deleted=0, source=builtin
+09:36:37.551 [http-nio-2310-exec-6] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=echo, active=true, deleted=0, source=external
+09:36:37.726 [http-nio-2310-exec-7] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,152] - listAllInDb 查询结果: count=3
+09:36:37.726 [http-nio-2310-exec-7] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=modbus-tcp, active=true, deleted=0, source=external
+09:36:37.727 [http-nio-2310-exec-7] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=hj212, active=true, deleted=0, source=builtin
+09:36:37.727 [http-nio-2310-exec-7] [34mINFO [0;39m c.c.a.n.s.ProtocolJarRegistryService - [listAllInDb,154] -   协议: name=echo, active=true, deleted=0, source=external

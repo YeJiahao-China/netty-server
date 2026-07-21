@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('API 参考')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">API 参考</div>
+            <div class="page-sub">数据接入控制台对外暴露的 REST 接口</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="tag tag-info"><i class="bi bi-globe"></i> BaseURL: http://host:2310</span>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('api-docs')"></aside>
+
+<main class="content">
+
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-box-seam"></i> 协议管理接口
+            </div>
+        </div>
+        <div>
+            <div class="rest-item">
+                <span class="rest-method post">POST</span>
+                <span class="rest-url">/protocols/reload</span>
+                <div class="rest-desc">重新扫描 protocols/ 目录下的所有 *.jar，热加载新协议。旧连接不受影响，新连接走新版本 Provider。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method get">GET</span>
+                <span class="rest-url">/protocols</span>
+                <div class="rest-desc">列出所有已注册协议 + 端口绑定 + 每端口活跃连接数 + 顶部统计概览。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/protocols/{name}</span>
+                <div class="rest-desc">卸载协议。框架会自动关闭该协议绑定的所有端口监听、强制断开所有活跃连接、调 Provider.destroy()、释放 URLClassLoader 与 jar 文件句柄。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method post">POST</span>
+                <span class="rest-url">/protocols/{name}/bind/{port}</span>
+                <div class="rest-desc">绑定协议到端口，触发 Netty 端口监听。若端口已在监听，会先关闭再重新绑定确保 Pipeline 走新协议。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/protocols/bind/{port}</span>
+                <div class="rest-desc">解绑端口。关闭端口监听 + 踢掉所有客户端连接 + 移除端口→协议映射。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用示例 -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-code-square"></i> 调用示例（curl）
+            </div>
+        </div>
+        <div class="panel-body-inner">
+            <pre style="background: var(--bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto;
+                        font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+                        font-size: 12px; color: var(--text-soft); margin: 0; line-height: 1.7;"># 热加载协议 jar
+curl -X POST http://localhost:2310/protocols/reload
+
+# 查看当前状态
+curl http://localhost:2310/protocols
+
+# 绑定 modbus-tcp 协议到 502 端口
+curl -X POST http://localhost:2310/protocols/modbus-tcp/bind/502
+
+# 解绑端口（关闭监听并踢连接）
+curl -X DELETE http://localhost:2310/protocols/bind/502
+
+# 卸载协议（自动清理所有相关端口与连接）
+curl -X DELETE http://localhost:2310/protocols/modbus-tcp</pre>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-lightbulb"></i> 响应格式约定
+            </div>
+        </div>
+        <div class="panel-body-inner">
+            <p style="font-size: 13px; color: var(--text-soft); margin: 0 0 8px;">
+                所有接口统一返回 JSON，包含以下字段：
+            </p>
+            <ul style="font-size: 13px; color: var(--text-soft); padding-left: 20px; line-height: 1.8;">
+                <li><code class="code-chip">success</code>：布尔，操作是否成功</li>
+                <li><code class="code-chip">reason</code>：失败时的人类可读原因（仅 success=false 时出现）</li>
+                <li><code class="code-chip">message</code>：成功时的描述信息（可选）</li>
+                <li><code class="code-chip">closedPorts</code>：卸载协议时被自动关闭的端口列表</li>
+                <li><code class="code-chip">loaded</code>：reload 时各 Provider 的加载结果列表</li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+</body>
+</html>

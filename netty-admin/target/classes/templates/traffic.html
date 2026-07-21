@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('流量监控')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">流量监控</div>
+            <div class="page-sub">按协议 / 端口 / 时间维度查看流量数据</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="live-tag"><span class="pulse-dot"></span>规划中</span>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('traffic')"></aside>
+
+<main class="content">
+    <div class="placeholder">
+        <div class="placeholder-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <span class="coming-badge"><i class="bi bi-stars"></i> Coming Soon</span>
+        <h2 style="margin-top: 20px;">流量监控</h2>
+        <p>该模块正在规划中，将基于 netty Channel 的流量统计 API 提供多维度可视化，包括上下行速率、累计字节数、消息数等核心指标。</p>
+        <ul class="feature-list">
+            <li><i class="bi bi-check2"></i> 实时上下行速率曲线图（基于 ChannelTrafficShapingHandler）</li>
+            <li><i class="bi bi-check2"></i> 按协议 / 端口维度聚合流量</li>
+            <li><i class="bi bi-check2"></i> 单连接流量 TOP 排行</li>
+            <li><i class="bi bi-check2"></i> 历史流量数据导出（CSV）</li>
+            <li><i class="bi bi-check2"></i> 流量阈值告警</li>
+        </ul>
+        <div style="margin-top: 24px;">
+            <a th:href="@{/}" class="btn btn-ghost btn-sm">
+                <i class="bi bi-arrow-left"></i> 返回概览
+            </a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+</body>
+</html>

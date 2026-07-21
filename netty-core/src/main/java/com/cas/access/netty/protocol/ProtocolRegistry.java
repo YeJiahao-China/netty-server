@@ -1,0 +1,259 @@
+package com.cas.access.netty.protocol;
+
+import com.cas.access.netty.util.NettyServerUtil;
+import io.netty.channel.ChannelFuture;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 协议注册中心：单例 Bean。
+ *
+ * 维护两份索引：
+ *  - {@link #protocols}：name → LoadedProtocol
+ *  - {@link #portBindings}：port → protocolName
+ *
+ * 并发策略：
+ *  - 读操作完全无锁（{@link ConcurrentHashMap}），适配 Netty 高并发 initChannel
+ *  - 写操作（register/unregister/bindPort）整体 synchronized，因属低频运维操作
+ *
+ * 卸载策略（重点）：
+ *  - {@link #unregister(String)}（外部调用，彻底删除协议）：
+ *      1. 关闭该协议绑定的所有端口监听 + 踢掉所有活跃连接
+ *      2. 清理 portBindings 中相关映射
+ *      3. 调 Provider.destroy() 清理资源
+ *      4. close URLClassLoader 释放 jar 文件句柄
+ *    这样保证卸载后没有 Handler 实例引用 Provider 的类，避免 ClassLoader 泄漏
+ *  - {@link #unregisterInternal(String)}（内部调用，热替换覆盖场景）：
+ *      不动端口绑定、不踢连接，仅关 ClassLoader。
+ *      旧连接的 Pipeline 中 Handler 实例继续工作，等连接自然断开后由 GC 回收
+ *
+ * @author yjh_c
+ */
+@Slf4j
+@Component
+public class ProtocolRegistry {
+
+    private final Map<String, LoadedProtocol> protocols = new ConcurrentHashMap<>();
+    private final Map<Integer, String> portBindings = new ConcurrentHashMap<>();
+
+    /**
+     * 数据库镜像回调。
+     * 由 netty-admin 实现（ProtocolJarRegistryService implements ProtocolDbSync）。
+     * 通过 SPI 接口反转依赖，避免 core 反向依赖 admin。
+     * required=false：admin 不在 classpath 或 DB 不可用时退化到纯内存模式。
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ProtocolDbSync dbSync;
+
+    /**
+     * 端口绑定持久化回调。
+     * 由 netty-admin 的 PortBindingService 实现。
+     * required=false：DB 不可用时退化为纯内存模式。
+     */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private PortBindingStore bindingStore;
+
+    /**
+     * 启动时打印 DB 同步组件的注入状态，方便排查「协议没写库」类问题。
+     * required=false 意味着 admin 模块不在 classpath 时为 null（纯内存模式），
+     * 但用户场景下 admin 应该在 classpath，理论上都应该成功注入。
+     */
+    @PostConstruct
+    public void logInjectionStatus() {
+        log.info("ProtocolRegistry 注入状态: dbSync={}, bindingStore={}",
+                dbSync == null ? "NULL(纯内存模式)" : dbSync.getClass().getName(),
+                bindingStore == null ? "NULL(纯内存模式)" : bindingStore.getClass().getName());
+    }
+
+    /* ========== 协议管理 ========== */
+
+    public LoadedProtocol getProvider(String name) {
+        LoadedProtocol lp = protocols.get(name);
+        return (lp != null && lp.isActive()) ? lp : null;
+    }
+
+    public Collection<LoadedProtocol> listAll() {
+        return protocols.values();
+    }
+
+    /**
+     * 注册协议。若同名协议已存在，先卸载旧的（仅关 ClassLoader，不动端口），再注册新的。
+     * 这是热替换覆盖路径：端口绑定保持不变，旧连接继续用旧 Provider，新连接走新 Provider。
+     */
+    public synchronized void register(LoadedProtocol lp) {
+        String key = lp.getName();
+        LoadedProtocol old = protocols.get(key);
+        if (old != null) {
+            log.warn("协议[{}]被覆盖: 旧版本 {} ← 新版本 {}", key, old.getVersion(), lp.getVersion());
+            unregisterInternal(key);
+        }
+        protocols.put(key, lp);
+        log.info("协议注册成功: name={}, version={}, source={}", key, lp.getVersion(), lp.getSource());
+        if (dbSync != null) dbSync.syncRegister(lp);
+    }
+
+    public synchronized boolean unregister(String name) {
+        List<Integer> boundPorts = getBoundPorts(name);
+        boolean closeSuccess = true;
+
+        if (!boundPorts.isEmpty()) {
+            log.info("协议[{}]绑定的端口 {} 将被关闭", name, boundPorts);
+            for (int port : boundPorts) {
+                // 💥 传入超时时间，5秒足够绝大多数正常连接完成关闭
+                if (!NettyServerUtil.closeListen(port, 5)) {
+                    closeSuccess = false;
+                    log.warn("端口[{}]连接未完全关闭，但仍继续卸载协议[{}]", port, name);
+                }
+            }
+            boundPorts.forEach(portBindings::remove);
+        }
+
+        // 即使部分连接超时，也继续执行卸载（超时连接会在后续 GC 中被处理）
+        // 但记录告警以便排查
+        if (!closeSuccess) {
+            log.warn("协议[{}]卸载时存在连接关闭超时，建议观察Metaspace是否泄漏", name);
+        }
+
+        return unregisterInternal(name);
+    }
+
+
+    /**
+     * 卸载协议（彻底删除）。
+     *
+     * 执行步骤：
+     *  1. 取出该协议绑定的所有端口
+     *  2. 对每个端口调用 {@link NettyServerUtil#closeListen(int)}：
+     *     - 关闭端口监听
+     *     - 强制关闭该端口下所有客户端连接（保证 Pipeline 销毁，Handler 实例可被 GC）
+     *  3. 清理 portBindings 中该协议的映射
+     *  4. 调 Provider.destroy() 让实现方清理自身资源
+     *  5. close URLClassLoader 释放 jar 文件句柄（Windows 上解锁 jar 文件）
+     *
+     * @return true=卸载成功；false=协议未注册
+     */
+//    public synchronized boolean unregister(String name) {
+//        // 1. 关闭该协议绑定的所有端口监听 + 踢掉所有活跃连接
+//        List<Integer> boundPorts = getBoundPorts(name);
+//        if (!boundPorts.isEmpty()) {
+//            log.info("协议[{}]绑定的端口 {} 将被关闭，所有活跃连接会被强制断开", name, boundPorts);
+//            for (int port : boundPorts) {
+//                try {
+//                    NettyServerUtil.closeListen(port);
+//                } catch (Exception e) {
+//                    log.error("关闭端口[{}]监听失败: {}", port, e.getMessage(), e);
+//                }
+//            }
+//            // 2. 清理 portBindings
+//            boundPorts.forEach(portBindings::remove);
+//        }
+//        // 3. 卸载 Provider + ClassLoader
+//        return unregisterInternal(name);
+//    }
+
+    /**
+     * 内部卸载：仅调 destroy + close ClassLoader，不动端口、不踢连接。
+     * 仅用于 register 覆盖同名协议时，保持端口绑定连续性。
+     */
+    private boolean unregisterInternal(String name) {
+        LoadedProtocol lp = protocols.remove(name);
+        if (lp == null) {
+            return false;
+        }
+        try {
+            lp.getProvider().destroy();
+        } catch (Throwable t) {
+            log.warn("Provider.destroy() 异常: {}", t.getMessage());
+        }
+        if (lp.getClassLoader() != null) {
+            try {
+                lp.getClassLoader().close();
+            } catch (Exception e) {
+                log.warn("ClassLoader 关闭失败: {}", e.getMessage());
+            }
+        }
+        log.info("协议[{}]已卸载", name);
+
+        if (dbSync != null) dbSync.syncUnload(name);
+        return true;
+    }
+
+    /**
+     * 热升级前置：关闭旧 ClassLoader 释放 jar 文件锁。
+     *
+     * <p>用于「上传新版本 jar 覆盖旧版本」场景：
+     * <ul>
+     *   <li>Windows 上 URLClassLoader 持有 jar 文件句柄，必须先关闭才能覆盖</li>
+     *   <li>仅关闭 ClassLoader，<b>不移除</b> {@code protocols} 条目，<b>不动</b>端口绑定</li>
+     *   <li>已加载的类不受影响，旧连接的 Handler 实例仍可调用 Provider 方法
+     *       （ClassLoader.close 仅阻止后续 loadClass，已加载的类继续可用）</li>
+     *   <li>紧接着应调 {@link #register(LoadedProtocol)} 覆盖条目</li>
+     * </ul>
+     */
+    public synchronized void closeClassLoaderForUpgrade(String name) {
+        LoadedProtocol lp = protocols.get(name);
+        if (lp != null && lp.getClassLoader() != null) {
+            try {
+                lp.getClassLoader().close();
+                log.info("协议[{}]的旧 ClassLoader 已关闭（热升级前置，释放 jar 文件锁）", name);
+            } catch (Exception e) {
+                log.warn("关闭协议[{}]的旧 ClassLoader 失败: {}", name, e.getMessage());
+            }
+        }
+    }
+
+    /* ========== 端口绑定 ========== */
+
+    public void bindPortToProtocol(int port, String protocolName) {
+        if (!protocols.containsKey(protocolName)) {
+            throw new IllegalArgumentException("协议[" + protocolName + "]未注册");
+        }
+        portBindings.put(port, protocolName);
+        if (bindingStore != null) bindingStore.persistBind(port, protocolName);
+    }
+
+    /**
+     * 仅内存绑定（启动加载场景：数据已在 DB，避免无意义的 UPDATE）。
+     * 由 {@link ProtocolBootstrap} 启动时从 DB 装载初始绑定时调用。
+     */
+    public void bindPortToProtocolInternal(int port, String protocolName) {
+        portBindings.put(port, protocolName);
+    }
+
+    public String unbindPort(int port) {
+        String removed = portBindings.remove(port);
+        if (bindingStore != null) bindingStore.persistUnbind(port);
+        return removed;
+    }
+
+    public String getProtocolNameByPort(int port) {
+        return portBindings.get(port);
+    }
+
+    /** 返回端口→协议的快照（按端口升序，便于展示） */
+    public Map<Integer, String> getAllBindings() {
+        return new TreeMap<>(portBindings);
+    }
+
+    /** 返回该协议当前绑定的所有端口（按升序） */
+    public List<Integer> getBoundPorts(String protocolName) {
+        List<Integer> ports = new ArrayList<>();
+        portBindings.forEach((p, n) -> {
+            if (n.equals(protocolName)) {
+                ports.add(p);
+            }
+        });
+        return ports;
+    }
+}

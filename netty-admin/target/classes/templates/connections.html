@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('连接管理')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">连接管理</div>
+            <div class="page-sub">查看和管理所有 TCP 客户端连接</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="live-tag"><span class="pulse-dot"></span>规划中</span>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('connections')"></aside>
+
+<main class="content">
+    <div class="placeholder">
+        <div class="placeholder-icon"><i class="bi bi-people"></i></div>
+        <span class="coming-badge"><i class="bi bi-stars"></i> Coming Soon</span>
+        <h2 style="margin-top: 20px;">连接管理</h2>
+        <p>该模块正在规划中，将提供 TCP 客户端连接的全生命周期管理能力，包括连接列表、设备信息、强制断开、连接搜索等功能。</p>
+        <ul class="feature-list">
+            <li><i class="bi bi-check2"></i> 按端口 / 协议 / IP 筛选连接</li>
+            <li><i class="bi bi-check2"></i> 实时展示每条连接的上下行字节数</li>
+            <li><i class="bi bi-check2"></i> 查看连接详细信息（接入时间、最后活跃、握手数据）</li>
+            <li><i class="bi bi-check2"></i> 一键强制断开指定连接</li>
+            <li><i class="bi bi-check2"></i> 批量操作（关闭某 IP 段所有连接）</li>
+        </ul>
+        <div style="margin-top: 24px;">
+            <a th:href="@{/}" class="btn btn-ghost btn-sm">
+                <i class="bi bi-arrow-left"></i> 返回概览
+            </a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+</body>
+</html>

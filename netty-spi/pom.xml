@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yjh</groupId>
+        <artifactId>netty-server-parent</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <artifactId>netty-spi</artifactId>
+    <name>netty-spi</name>
+    <description>协议 SPI 接口模块：仅暴露 ProtocolDecoderProvider / LoadedProtocol / IdleConfig，
+        可被外部协议 jar 直接 maven 依赖，无需复制接口源码</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

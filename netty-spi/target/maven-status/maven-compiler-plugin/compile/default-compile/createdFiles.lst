@@ -1,0 +1,7 @@
+com\cas\access\netty\protocol\ProtocolDecoderProvider$IdleConfig.class
+com\cas\access\netty\protocol\ProtocolDecoderProvider.class
+com\cas\access\netty\protocol\LoadedProtocol.class
+com\cas\access\netty\protocol\ProtocolDbSync.class
+com\cas\access\netty\protocol\LoadedProtocol$LoadedProtocolBuilder.class
+com\cas\access\netty\protocol\PortBindingStore.class
+com\cas\access\netty\protocol\ProtocolStore.class

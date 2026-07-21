@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('系统日志')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">系统日志</div>
+            <div class="page-sub">本会话内的运维操作记录（页面刷新后清空）</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="clearOpsLog()">
+            <i class="bi bi-eraser"></i> 清空
+        </button>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('logs')"></aside>
+
+<main class="content">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-terminal"></i> 会话操作日志
+            </div>
+            <div class="panel-meta">仅记录浏览器侧触发的 REST 调用</div>
+        </div>
+        <div class="ops-log" id="ops-log" style="max-height: 600px;">
+            <div class="log-line">
+                <span class="log-time">--</span>
+                <span class="log-msg info">暂无操作记录，前往「概览」或「协议管理」触发运维操作即可在此查看。</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-info-circle"></i> 说明
+            </div>
+        </div>
+        <div class="panel-body-inner">
+            <p class="text-muted" style="margin: 0; font-size: 13px; line-height: 1.7;">
+                当前日志仅记录本会话内通过控制台触发的 REST 调用（reload、unload、bind、unbind），不持久化，刷新页面后清空。<br>
+                服务端日志（logback）请前往部署目录的 <code class="code-chip">logs/</code> 查看。
+            </p>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+</body>
+</html>

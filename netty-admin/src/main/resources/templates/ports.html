@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('端口管理')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">端口管理</div>
+            <div class="page-sub">动态新增、关闭服务监听端口</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="live-tag"><span class="pulse-dot"></span>规划中</span>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('ports')"></aside>
+
+<main class="content">
+    <div class="placeholder">
+        <div class="placeholder-icon"><i class="bi bi-plug"></i></div>
+        <span class="coming-badge"><i class="bi bi-stars"></i> Coming Soon</span>
+        <h2 style="margin-top: 20px;">端口管理</h2>
+        <p>该模块正在规划中，将提供独立的端口管理界面，支持可视化新增/关闭 TCP 监听端口、查看端口绑定关系、监控端口连接数。</p>
+        <ul class="feature-list">
+            <li><i class="bi bi-check2"></i> 表单化新增监听端口（选择协议 + 端口号）</li>
+            <li><i class="bi bi-check2"></i> 一键关闭端口（自动踢所有连接）</li>
+            <li><i class="bi bi-check2"></i> 端口绑定协议的快速切换</li>
+            <li><i class="bi bi-check2"></i> 端口健康状态可视化（监听中 / 已关闭 / 异常）</li>
+            <li><i class="bi bi-check2"></i> 端口级连接数实时刷新</li>
+        </ul>
+        <div style="margin-top: 24px;">
+            <a th:href="@{/}" class="btn btn-ghost btn-sm">
+                <i class="bi bi-arrow-left"></i> 返回概览
+            </a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+</body>
+</html>

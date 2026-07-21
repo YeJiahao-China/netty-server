@@ -1,9 +1,0 @@
-server:
-  port: 9898
-
-logging:
-  config: classpath:logback.xml
-
-netty:
-  server:
-    ports: 1000

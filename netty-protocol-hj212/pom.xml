@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yjh</groupId>
+        <artifactId>netty-server-parent</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <artifactId>netty-protocol-hj212</artifactId>
+    <name>netty-protocol-hj212</name>
+    <description>内置协议：HJ212 环保传输协议实现（Decoder + ProtocolProvider）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.yjh</groupId>
+            <artifactId>netty-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>

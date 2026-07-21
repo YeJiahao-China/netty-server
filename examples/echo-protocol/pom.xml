@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>echo-protocol</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <description>Echo 协议示例 - netty-server 协议热插拔调试用</description>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- Netty: 由主项目运行时提供，不打进本 jar -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.97.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- SLF4J API：由主项目运行时提供（日志实现走主项目的 logback） -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--
+            说明：ProtocolDecoderProvider SPI 接口以源码形式直接放在本工程
+            com.cas.access.netty.protocol 包下（保持全限定名一致）。
+            原因：主项目是 Spring Boot fat jar，无法作为 Maven 依赖被解析。
+            运行时通过 parent-first 类加载，JVM 会解析为主项目中的同一份接口，无冲突。
+        -->
+    </dependencies>
+
+    <build>
+        <!-- 输出 jar 名字固定，便于部署脚本引用 -->
+        <finalName>${project.artifactId}-${project.version}</finalName>
+    </build>
+</project>

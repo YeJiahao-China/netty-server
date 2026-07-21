@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- ============ head 片段 ============
+     参数：title（页面标题）
+-->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · netty-server'">netty-server</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<body>
+
+<!-- ============ 左侧菜单 ============
+     参数：active（当前激活菜单的 key）
+-->
+<aside th:fragment="sidebar(active)" class="sidebar">
+    <div class="brand">
+        <div class="brand-logo"><i class="bi bi-diagram-3"></i></div>
+        <div>
+            <div class="brand-title">数据接入控制台</div>
+            <div class="brand-sub">netty-server</div>
+        </div>
+    </div>
+
+    <nav class="menu">
+        <div class="menu-group-label">监控</div>
+        <a class="menu-item" th:href="@{/}" th:classappend="${active == 'dashboard'} ? 'active' : ''">
+            <i class="bi bi-speedometer2"></i><span>概览</span>
+        </a>
+        <a class="menu-item" th:href="@{/traffic}" th:classappend="${active == 'traffic'} ? 'active' : ''">
+            <i class="bi bi-graph-up-arrow"></i><span>流量监控</span>
+            <span class="menu-badge">Soon</span>
+        </a>
+
+        <div class="menu-group-label">接入</div>
+        <a class="menu-item" th:href="@{/connections}" th:classappend="${active == 'connections'} ? 'active' : ''">
+            <i class="bi bi-people"></i><span>连接管理</span>
+            <span class="menu-badge">Soon</span>
+        </a>
+        <a class="menu-item" th:href="@{/ports}" th:classappend="${active == 'ports'} ? 'active' : ''">
+            <i class="bi bi-plug"></i><span>端口管理</span>
+            <span class="menu-badge">Soon</span>
+        </a>
+
+        <div class="menu-group-label">配置</div>
+        <a class="menu-item" th:href="@{/protocols-page}" th:classappend="${active == 'protocols'} ? 'active' : ''">
+            <i class="bi bi-box-seam"></i><span>协议管理</span>
+        </a>
+        <a class="menu-item" th:href="@{/logs}" th:classappend="${active == 'logs'} ? 'active' : ''">
+            <i class="bi bi-terminal"></i><span>系统日志</span>
+        </a>
+
+        <div class="menu-group-label">开发</div>
+        <a class="menu-item" th:href="@{/api-docs}" th:classappend="${active == 'api-docs'} ? 'active' : ''">
+            <i class="bi bi-code-slash"></i><span>API 参考</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <span>v1.0</span>
+        <span class="version-pill">:2310</span>
+    </div>
+</aside>
+
+<!-- ============ Toast 容器 ============-->
+<div th:fragment="toasts" class="toast-container" id="toast-container"></div>
+
+<!-- ============ 公共脚本 ============-->
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/app.js}"></script>
+</th:block>
+
+</body>
+</html>

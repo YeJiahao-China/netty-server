@@ -1,7 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交" />
+    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交">
+      <change afterPath="$PROJECT_DIR$/READEME/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_classic_1_2_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_core_1_2_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson2_fastjson2_2_0_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson2_fastjson2_extension_2_0_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson_2_0_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_annotations_2_13_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_core_2_13_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_databind_2_13_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_all_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_buffer_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_dns_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_haproxy_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http2_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_memcache_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_mqtt_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_redis_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_smtp_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_socks_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_stomp_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_xml_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_common_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_proxy_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_ssl_ocsp_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_classes_macos_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_native_macos_osx_aarch_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_native_macos_osx_x86_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_classes_epoll_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_classes_kqueue_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_epoll_linux_aarch_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_epoll_linux_x86_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_kqueue_osx_aarch_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_kqueue_osx_x86_64_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_unix_common_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_rxtx_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_sctp_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_udt_4_1_97_Final.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_annotation_jakarta_annotation_api_1_3_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_api_2_17_2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_to_slf4j_2_17_2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_projectlombok_lombok_1_18_12.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_jul_to_slf4j_1_7_36.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_slf4j_api_1_7_22.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_2_6_6.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_autoconfigure_2_6_6.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_2_6_6.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_logging_2_6_6.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_commons_2_7_13.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_keyvalue_2_7_13.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_redis_2_7_13.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_aop_5_3_28.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_beans_5_3_28.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_5_3_18.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_support_5_3_28.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_core_5_3_18.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_expression_5_3_18.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_jcl_5_3_18.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_oxm_5_3_28.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_tx_5_3_28.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_yaml_snakeyaml_1_29.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/netty-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/netty-server.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/NettyServerApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/NettyServerBootstrap.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/App.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/ClientDemo.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/CustomInMsgHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/CustomOutMsgHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/controller/NettyServerController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/model/TcpConnection.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/service/NettyServerService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/enums/DelimiterEnum.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/enums/TerminatorEnum.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/ServerConnectionManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/config/NettyServerConfiguration.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ConnectEventHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/HJ212Decoder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/NettyChannelInitializer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ProxyIpDecoder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ReadEventHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ServerLoggingHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/util/PacketUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/util/ServerSupport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/banner.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/logback.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/banner.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/NettyServerApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/NettyServerBootstrap.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$2$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$3$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$3.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/CustomInMsgHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/CustomOutMsgHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/config/NettyServerConfiguration.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/enums/DelimiterEnum.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/enums/TerminatorEnum.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ConnectEventHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/HJ212Decoder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ProxyIpDecoder.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ReadEventHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/server/GlobalCache.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/server/NettyChannelInitializer.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/util/NettyServerUtil.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/util/PacketUtil.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/logback.xml" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,60 +144,118 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="JsFlowSettings">
-    <service-enabled>true</service-enabled>
-    <exe-path />
-    <other-services-enabled>true</other-services-enabled>
-    <auto-save>true</auto-save>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$PROJECT_DIR$/../../../develop/Java8/src.zip!/java/lang/Thread.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/Java8/src.zip!/java/lang/ThreadLocal.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/PooledByteBufAllocator.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/PooledDirectByteBuf.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/PooledUnsafeDirectByteBuf.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/concurrent/DefaultThreadFactory.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/concurrent/FastThreadLocal.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/concurrent/FastThreadLocalThread.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/internal/InternalThreadLocalMap.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final.jar!/io/netty/util/concurrent/MultithreadEventExecutorGroup.class" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/bootstrap/AbstractBootstrap.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/bootstrap/ServerBootstrap.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/ChannelInitializer.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/SingleThreadEventLoop.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/nio/AbstractNioByteChannel.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar!/io/netty/channel/MultithreadEventLoopGroup.class" root0="SKIP_INSPECTION" />
+    <setting file="jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final.jar!/io/netty/channel/nio/NioEventLoopGroup.class" root0="SKIP_INSPECTION" />
+    <setting file="jar://E:/Program Files/Java/jdk1.8.0_202/src.zip!/java/nio/DirectByteBuffer.java" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="InvalidFacetManager">
+    <ignored-facets>
+      <facet id="netty-server/invalid/Spring" />
+    </ignored-facets>
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
-        <option name="mavenHome" value="$PROJECT_DIR$/../../../../Dev/Maven/apache-maven-3.2.2" />
-        <option name="userSettingsFile" value="D:\Dev\Maven\apache-maven-3.2.2\conf\settings.xml" />
+        <option name="customMavenHome" value="C:\develop\maven\apache-maven-3.9.6" />
+        <option name="localRepository" value="C:\develop\maven_house" />
+        <option name="mavenHomeTypeForPersistence" value="CUSTOM" />
+        <option name="useMavenConfig" value="false" />
+        <option name="userSettingsFile" value="C:\develop\maven\apache-maven-3.9.6\conf\settings.xml" />
       </MavenGeneralSettings>
     </option>
-    <option name="enabledProfiles">
-      <list>
-        <option value="jdk-1.8" />
-      </list>
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="downloadDocsAutomatically" value="true" />
+        <option name="downloadSourcesAutomatically" value="true" />
+      </MavenImportingSettings>
     </option>
   </component>
   <component name="MavenRunner">
-    <option name="delegateBuildToMaven" value="true" />
     <option name="jreName" value="1.8" />
     <option name="skipTests" value="true" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="DEPENDENCY_CHECKER_PROBLEMS_TAB" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
   <component name="ProjectId" id="2VYb7i1QBx5q42O7rXFCdJ7YM0T" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
-    <ConfirmationsSetting value="1" id="Add" />
+    <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectViewState">
     <option name="foldersAlwaysOnTop" value="false" />
     <option name="showLibraryContents" value="true" />
     <option name="showVisibilityIcons" value="true" />
+    <option name="sortKey" value="BY_TIME_ASCENDING" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="GO_FMT" value="true" />
-    <property name="RequestMappingsPanelOrder0" value="0" />
-    <property name="RequestMappingsPanelOrder1" value="1" />
-    <property name="RequestMappingsPanelWidth0" value="75" />
-    <property name="RequestMappingsPanelWidth1" value="75" />
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="aspect.path.notification.shown" value="true" />
-    <property name="go.import.settings.migrated" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../netty-server-git" />
-    <property name="nodejs_package_manager_path" value="npm" />
-    <property name="project.structure.last.edited" value="Project" />
-    <property name="project.structure.proportion" value="0.15332031" />
-    <property name="project.structure.side.proportion" value="0.5127021" />
-    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
-  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.UserCache.executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.App.executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;Maven.netty-server [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server [install,--non-recursive].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server [package].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server [validate].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server-parent [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server-parent [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server-parent [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.netty-server-parent [package].executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;Spring Boot.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/workspace/ZKHJ&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;模块&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.runner&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
+    &quot;应用程序.AppTest.executor&quot;: &quot;Run&quot;
+  }
+}</component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\workspace\Project\netty-server\READEME" />
+    </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.cas.access.service.config" />
     </key>
@@ -84,33 +268,6 @@
     </option>
   </component>
   <component name="RunManager" selected="Spring Boot.NettyServerApplication">
-    <configuration name="ClientDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.cas.access.netty.client.ClientDemo" />
-      <module name="netty-server" />
-      <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.cas.access.netty.client.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="TestApp" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.cas.access.netty.test.TestApp" />
-      <module name="netty-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.cas.access.netty.test.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="netty-server" />
       <working_directory value="$PROJECT_DIR$" />
@@ -126,28 +283,116 @@
       <kind value="DIRECTORY" />
       <method v="2" />
     </configuration>
-    <configuration name="NettyServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <configuration name="App" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.app.App" />
       <module name="netty-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.app.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AppTest" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.app.AppTest" />
+      <module name="netty-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.app.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ClientDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.access.netty.client.ClientDemo" />
+      <module name="netty-server" />
+      <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.access.netty.client.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NettyServerApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <envs>
+        <env name="-Dfile.encoding" value="UTF-8" />
+      </envs>
+      <option name="MAIN_CLASS_NAME" value="com.cas.access.NettyServerApplication" />
+      <module name="netty-server" />
+      <option name="PROGRAM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.access.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="UserCache" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cas.app.UserCache" />
+      <module name="netty-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cas.app.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NettyServerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <module name="netty-launcher" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.cas.access.NettyServerApplication" />
-      <option name="ALTERNATIVE_JRE_PATH" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <list>
-      <item itemvalue="Application.ClientDemo" />
-      <item itemvalue="Application.TestApp" />
       <item itemvalue="Spring Boot.NettyServerApplication" />
+      <item itemvalue="应用程序.AppTest" />
+      <item itemvalue="应用程序.App" />
+      <item itemvalue="应用程序.ClientDemo" />
+      <item itemvalue="应用程序.NettyServerApplication" />
+      <item itemvalue="应用程序.UserCache" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.TestApp" />
-        <item itemvalue="Application.ClientDemo" />
+        <item itemvalue="应用程序.AppTest" />
+        <item itemvalue="应用程序.UserCache" />
+        <item itemvalue="应用程序.NettyServerApplication" />
+        <item itemvalue="应用程序.ClientDemo" />
+        <item itemvalue="应用程序.App" />
       </list>
     </recent_temporary>
   </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.26775.15" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.26775.15" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
-    <configuration />
+    <configuration>C:\Users\Administrator\AppData\Roaming\Subversion</configuration>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -175,7 +420,46 @@
       <workItem from="1714269420600" duration="395000" />
       <workItem from="1714269823542" duration="41000" />
       <workItem from="1714269881630" duration="1359000" />
-      <workItem from="1714271906028" duration="7473000" />
+      <workItem from="1714271906028" duration="4743000" />
+      <workItem from="1717590809697" duration="6831000" />
+      <workItem from="1717600390454" duration="117000" />
+      <workItem from="1718363325486" duration="1569000" />
+      <workItem from="1718365527162" duration="4537000" />
+      <workItem from="1719830429108" duration="2776000" />
+      <workItem from="1719834121587" duration="366000" />
+      <workItem from="1724676018474" duration="657000" />
+      <workItem from="1724745227397" duration="8016000" />
+      <workItem from="1725028580819" duration="728000" />
+      <workItem from="1725110075688" duration="2160000" />
+      <workItem from="1725171837959" duration="11937000" />
+      <workItem from="1725798986480" duration="380000" />
+      <workItem from="1730292161298" duration="4342000" />
+      <workItem from="1747204652732" duration="9344000" />
+      <workItem from="1747271713119" duration="20292000" />
+      <workItem from="1747617951251" duration="11640000" />
+      <workItem from="1747710928439" duration="8336000" />
+      <workItem from="1747790017704" duration="14813000" />
+      <workItem from="1747879718855" duration="3069000" />
+      <workItem from="1747964171671" duration="648000" />
+      <workItem from="1747969273884" duration="636000" />
+      <workItem from="1750920077502" duration="765000" />
+      <workItem from="1757925909276" duration="756000" />
+      <workItem from="1757926701351" duration="2948000" />
+      <workItem from="1757988492688" duration="8102000" />
+      <workItem from="1758181239566" duration="3936000" />
+      <workItem from="1758274121021" duration="1492000" />
+      <workItem from="1758621250126" duration="104000" />
+      <workItem from="1764080162036" duration="2159000" />
+      <workItem from="1784187772415" duration="1441000" />
+      <workItem from="1784255479111" duration="17455000" />
+      <workItem from="1784278567248" duration="2661000" />
+      <workItem from="1784281792313" duration="397000" />
+      <workItem from="1784390078237" duration="5795000" />
+      <workItem from="1784397153653" duration="1559000" />
+      <workItem from="1784513787736" duration="3414000" />
+      <workItem from="1784518141241" duration="6674000" />
+      <workItem from="1784525063255" duration="16219000" />
+      <workItem from="1784595250206" duration="599000" />
     </task>
     <task id="LOCAL-00001" summary="初次提交">
       <created>1714267235196</created>
@@ -188,7 +472,7 @@
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="2" />
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.History.Properties">
     <option name="COLUMN_ORDER">
@@ -200,111 +484,20 @@
       </list>
     </option>
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="初次提交" />
     <option name="LAST_COMMIT_MESSAGE" value="初次提交" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="765" y="225" key="#com.intellij.ide.util.MemberChooser" timestamp="1714011291399">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="765" y="225" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1714011291399" />
-    <state x="909" y="337" width="734" height="703" key="#xdebugger.evaluate" timestamp="1714052154249">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="909" y="337" width="734" height="703" key="#xdebugger.evaluate/0.0.1920.1040@0.0.1920.1040" timestamp="1714052154249" />
-    <state x="479" y="94" key="CommitChangelistDialog2" timestamp="1714273912184">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="479" y="94" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1714273912184" />
-    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog" timestamp="1714289237972">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="92" y="92" width="1736" height="856" key="DiffContextDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1714289237972" />
-    <state x="739" y="261" key="FileChooserDialogImpl" timestamp="1714266764456">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="739" y="261" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1714266764456" />
-    <state width="1877" height="227" key="GridCell.Tab.0.bottom" timestamp="1714271881275">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="227" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
-    <state width="1877" height="227" key="GridCell.Tab.0.center" timestamp="1714271881275">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="227" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
-    <state width="1877" height="227" key="GridCell.Tab.0.left" timestamp="1714271881275">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="227" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
-    <state width="1877" height="227" key="GridCell.Tab.0.right" timestamp="1714271881275">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1877" height="227" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714271881275" />
-    <state width="1565" height="576" key="GridCell.Tab.1.bottom" timestamp="1714268868664">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
-    <state width="1565" height="576" key="GridCell.Tab.1.center" timestamp="1714268868663">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
-    <state width="1565" height="576" key="GridCell.Tab.1.left" timestamp="1714268868663">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
-    <state width="1565" height="576" key="GridCell.Tab.1.right" timestamp="1714268868663">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868663" />
-    <state width="1565" height="576" key="GridCell.Tab.2.bottom" timestamp="1714268868664">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.2.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
-    <state width="1565" height="576" key="GridCell.Tab.2.center" timestamp="1714268868664">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.2.center/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
-    <state width="1565" height="576" key="GridCell.Tab.2.left" timestamp="1714268868664">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.2.left/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
-    <state width="1565" height="576" key="GridCell.Tab.2.right" timestamp="1714268868664">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1565" height="576" key="GridCell.Tab.2.right/0.0.1920.1040@0.0.1920.1040" timestamp="1714268868664" />
-    <state x="490" y="175" key="Maven.ArtifactSearchDialog" timestamp="1714271713317">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="490" y="175" key="Maven.ArtifactSearchDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1714271713317" />
-    <state x="440" y="94" key="SettingsEditor" timestamp="1714291039076">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="440" y="94" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1714291039076" />
-    <state x="681" y="261" width="582" height="524" key="StructurePopup" timestamp="1714111645338">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="681" y="261" width="582" height="524" key="StructurePopup/0.0.1920.1040@0.0.1920.1040" timestamp="1714111645338" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1714273337056">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1714273337056" />
-    <state width="968" height="528" key="XDebugger.FullValuePopup" timestamp="1714014033015">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="968" height="528" key="XDebugger.FullValuePopup/0.0.1920.1040@0.0.1920.1040" timestamp="1714014033015" />
-    <state x="753" y="433" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1714267424884">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="753" y="433" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1920.1040@0.0.1920.1040" timestamp="1714267424884" />
-    <state x="467" y="249" width="986" height="756" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1714113431486">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="467" y="249" width="986" height="756" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1920.1040@0.0.1920.1040" timestamp="1714113431486" />
-    <state x="131" y="301" width="672" height="678" key="search.everywhere.popup" timestamp="1714101348090">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="131" y="301" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1714101348090" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -335,11 +528,6 @@
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/ProxyIpDecoder.java</url>
-          <line>40</line>
-          <option name="timeStamp" value="67" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
           <line>289</line>
           <option name="timeStamp" value="71" />
@@ -349,12 +537,125 @@
           <line>299</line>
           <option name="timeStamp" value="72" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/cas/access/netty/handler/ReadEventHandler.java</url>
-          <line>29</line>
-          <option name="timeStamp" value="73" />
+        <line-breakpoint type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/Java8/src.zip!/java/lang/ref/Reference.java</url>
+          <line>211</line>
+          <option name="timeStamp" value="75" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-buffer/4.1.97.Final/netty-buffer-4.1.97.Final-sources.jar!/io/netty/buffer/PoolThreadCache.java</url>
+          <line>213</line>
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/app/UserCache.java</url>
+          <line>44</line>
+          <option name="timeStamp" value="100" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/string/StringDecoder.java</url>
+          <line>76</line>
+          <option name="timeStamp" value="104" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/DefaultChannelPipeline.java</url>
+          <line>1295</line>
+          <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>453</line>
+          <option name="timeStamp" value="111" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>467</line>
+          <option name="timeStamp" value="112" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>299</line>
+          <option name="timeStamp" value="114" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>289</line>
+          <option name="timeStamp" value="115" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>296</line>
+          <option name="timeStamp" value="116" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>291</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>293</line>
+          <option name="timeStamp" value="118" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/internal/ReferenceCountUpdater.java</url>
+          <line>172</line>
+          <option name="timeStamp" value="119" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>454</line>
+          <option name="timeStamp" value="121" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/ByteToMessageDecoder.java</url>
+          <line>449</line>
+          <option name="timeStamp" value="124" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-common/4.1.97.Final/netty-common-4.1.97.Final-sources.jar!/io/netty/util/Recycler.java</url>
+          <line>253</line>
+          <option name="timeStamp" value="125" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/AbstractChannelHandlerContext.java</url>
+          <line>1249</line>
+          <option name="timeStamp" value="126" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/AbstractChannelHandlerContext.java</url>
+          <line>1257</line>
+          <option name="timeStamp" value="127" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/DefaultEventLoop.java</url>
+          <line>37</line>
+          <option name="timeStamp" value="143" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/SingleThreadEventLoop.java</url>
+          <line>52</line>
+          <option name="timeStamp" value="144" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/examples/echo-protocol/src/main/java/com/example/netty/echo/EchoHandler.java</url>
+          <line>21</line>
+          <option name="timeStamp" value="147" />
+        </line-breakpoint>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="io.netty.handler.codec.DecoderException" package="io.netty.handler.codec" />
+          <option name="timeStamp" value="122" />
+        </breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="SpringBootApplicationConfigurationType">
+        <watch expression="registry" language="JAVA" />
+      </configuration>
+    </watches-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>
