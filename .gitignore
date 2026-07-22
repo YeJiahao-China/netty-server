@@ -1,2 +1,41 @@
-/target/
-/.idea/
+# ============ Maven 构建产物 ============
+# 匹配所有层级的 target/ 目录（根目录及各子模块）
+target/
+
+# ============ IDE 配置 ============
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# ============ 日志文件 ============
+logs/
+*.log
+
+# ============ 编译产物 ============
+*.class
+
+# ============ 打包产物 ============
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# 但保留 examples 下的源码 jar 示例（如有需要可注释掉上一行）
+# !examples/**/*.jar
+
+# ============ 系统文件 ============
+.DS_Store
+Thumbs.db
+
+# ============ Claude / AI 工具本地配置 ============
+.claude/settings.local.json
+
+# ============ 协议运行时目录（外部 jar 存放） ============
+/protocols/

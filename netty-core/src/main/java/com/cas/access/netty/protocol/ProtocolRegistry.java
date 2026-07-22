@@ -96,7 +96,7 @@ public class ProtocolRegistry {
         String key = lp.getName();
         LoadedProtocol old = protocols.get(key);
         if (old != null) {
-            log.warn("协议[{}]被覆盖: 旧版本 {} ← 新版本 {}", key, old.getVersion(), lp.getVersion());
+            log.warn("协议[{}]被覆盖", key);
             unregisterInternal(key, true);
         }
         protocols.put(key, lp);
@@ -187,12 +187,11 @@ public class ProtocolRegistry {
         if (lp.getClassLoader() != null) {
             try {
                 lp.getClassLoader().close();
+                log.info("协议[{}]已卸载, classLoader[{}]已关闭", name,lp.getClassLoader());
             } catch (Exception e) {
                 log.warn("ClassLoader 关闭失败: {}", e.getMessage());
             }
         }
-        log.info("协议[{}]已卸载, classLoader[{}]已关闭", name,lp.getClassLoader());
-
         // 热替换不调 syncUnload（syncRegister 会更新 DB）；卸载才调 syncUnload
         if (!hotReplace && dbSync != null) {
             dbSync.syncUnload(name);

@@ -13,11 +13,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @MapperScan("com.cas.access.netty.mapper")
 public class NettyServerApplication {
     public static void main(String[] args) {
-//        SpringApplication.run(NettyServerApplication.class, args);
-//        log.info("(♥◠‿◠)ﾉﾞ  NettyServer启动成功   ლ(´ڡ`ლ)ﾞ ");
         SpringApplication app = new SpringApplication(NettyServerApplication.class);
         // 打印 web 类型
         System.out.println("WebApplicationType: " + app.getWebApplicationType());
+        System.out.println("JDK: " + System.getProperty("java.version"));
         app.run(args);
         log.info("(♥◠‿◠)ﾉﾞ  NettyServer启动成功   ლ(´ڡ`ლ)ﾞ ");
     }

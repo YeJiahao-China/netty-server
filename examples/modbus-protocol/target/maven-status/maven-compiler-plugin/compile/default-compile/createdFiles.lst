@@ -1,6 +1,0 @@
-com\example\netty\modbus\ModbusHandler.class
-com\example\netty\modbus\ModbusDecoder.class
-com\cas\access\netty\protocol\ProtocolDecoderProvider$IdleConfig.class
-com\cas\access\netty\protocol\ProtocolDecoderProvider.class
-com\example\netty\modbus\ModbusProtocolProvider.class
-com\example\netty\modbus\ModbusTestClient.class

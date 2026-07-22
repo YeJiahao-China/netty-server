@@ -66,7 +66,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 entity.setActive(Boolean.TRUE);
                 entity.setLoadedAt(loadedAt);
                 mapper.insert(entity);
-                log.info("DB INSERT 协议记录: name={}, version={}, source={}", lp.getName(), lp.getVersion(), entity.getSource());
+//                log.info("DB INSERT 协议记录: name={}, version={}, source={}", lp.getName(), lp.getVersion(), entity.getSource());
             } else {
                 // 已存在：更新元数据并标记活跃
                 ProtocolJarRegistry update = new ProtocolJarRegistry();
@@ -79,7 +79,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 update.setActive(Boolean.TRUE);
                 update.setLoadedAt(loadedAt);
                 mapper.updateFull(update);
-                log.info("DB UPDATE 协议记录: id={}, name={}, version={}", existing.getId(), lp.getName(), lp.getVersion());
+//                log.info("DB UPDATE 协议记录: id={}, name={}, version={}", existing.getId(), lp.getName(), lp.getVersion());
             }
         } catch (Exception e) {
             log.warn("DB 同步协议注册失败（不影响运行时）: name={}, err={}", lp.getName(), e.getMessage());
@@ -154,11 +154,11 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
      */
     public List<ProtocolJarRegistry> listAllInDb() {
         List<ProtocolJarRegistry> result = mapper.selectAll();
-        log.info("listAllInDb 查询结果: count={}", result.size());
-        for (ProtocolJarRegistry p : result) {
-            log.info("  协议: name={}, active={}, source={}",
-                    p.getName(), p.getActive(), p.getSource());
-        }
+//        log.info("listAllInDb 查询结果: count={}", result.size());
+//        for (ProtocolJarRegistry p : result) {
+//            log.info("  协议: name={}, active={}, source={}",
+//                    p.getName(), p.getActive(), p.getSource());
+//        }
         return result;
     }
 
@@ -266,7 +266,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
         // 物理删除 port_protocol_binding（可能多条）
         portBindingMapper.delete(new LambdaQueryWrapper<PortBinding>()
                 .eq(PortBinding::getProtocolName, name));
-        log.info("DB 物理删除协议: name={}, registryRows={}", name, deletedRows);
+        log.info("DB 物理删除协议: name={}", name);
         return deletedRows > 0;
     }
 }

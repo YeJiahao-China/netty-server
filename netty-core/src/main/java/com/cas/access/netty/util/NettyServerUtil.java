@@ -89,7 +89,7 @@ public class NettyServerUtil {
         // 1. 关闭服务端监听端口（阻止新连接接入）
         try {
             serverSocketChannel.close().sync();
-            log.info("NettyServer关闭服务端口[{}:{}]监听成功",
+            log.info("NettyServer关闭服务端口[{}:{}]监听",
                     ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
         } catch (Exception e) {
             log.error("关闭服务端口[{}]监听异常: {}", port, e.getMessage(), e);

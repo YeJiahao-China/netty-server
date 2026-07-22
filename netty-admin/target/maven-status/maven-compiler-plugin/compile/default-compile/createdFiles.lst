@@ -1,9 +1,0 @@
-com\cas\access\netty\service\ProtocolJarRegistryService.class
-com\cas\access\netty\mapper\ProtocolJarRegistryMapper.class
-com\cas\access\netty\service\PortBindingService.class
-com\cas\access\netty\mapper\PortBindingMapper.class
-com\cas\access\netty\config\MyBatisPlusMetaObjectHandler.class
-com\cas\access\netty\entity\ProtocolJarRegistry.class
-com\cas\access\netty\api\ProtocolController.class
-com\cas\access\netty\api\DashboardController.class
-com\cas\access\netty\entity\PortBinding.class

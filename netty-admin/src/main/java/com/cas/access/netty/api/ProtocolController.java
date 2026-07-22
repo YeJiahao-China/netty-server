@@ -332,20 +332,6 @@ public class ProtocolController {
 
     }
 
-
-    /**
-     * 重新扫描 protocols 目录并加载所有 jar
-     */
-    // @PostMapping("/reload")
-    // public Map<String, Object> reload() {
-    //     List<ProtocolJarLoader.LoadResult> results = jarLoader.scanAndLoad();
-    //     Map<String, Object> resp = ok();
-    //     resp.put("loaded", results.stream()
-    //             .flatMap(r -> r.getProviderInfos().stream())
-    //             .collect(Collectors.toList()));
-    //     return resp;
-    // }
-
     /**
      * 卸载协议（停止运行时 + 标记 active=false，DB 记录保留）。
      * <p>
@@ -414,7 +400,7 @@ public class ProtocolController {
         }
 
         // 5. 删除 jar 文件（彻底删除语义）
-        //    卸载时 ClassLoader 已 close，但 Windows 上 jar 文件句柄释放依赖 GC，
+        //    卸载时 ClassLoader 已 close，
         //    用 GC 重试。删除失败不阻断 purge 主流程（DB 记录已删），仅 warn。
         String jarPath = existing.getJarPath();
         boolean jarDeleted = false;
