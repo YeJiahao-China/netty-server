@@ -4,129 +4,46 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="初次提交">
-      <change afterPath="$PROJECT_DIR$/READEME/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_classic_1_2_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__ch_qos_logback_logback_core_1_2_1.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson2_fastjson2_2_0_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson2_fastjson2_extension_2_0_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_alibaba_fastjson_2_0_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_annotations_2_13_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_core_2_13_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__com_fasterxml_jackson_core_jackson_databind_2_13_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_all_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_buffer_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_dns_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_haproxy_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http2_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_http_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_memcache_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_mqtt_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_redis_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_smtp_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_socks_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_stomp_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_codec_xml_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_common_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_proxy_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_handler_ssl_ocsp_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_classes_macos_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_native_macos_osx_aarch_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_resolver_dns_native_macos_osx_x86_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_classes_epoll_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_classes_kqueue_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_epoll_linux_aarch_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_epoll_linux_x86_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_kqueue_osx_aarch_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_kqueue_osx_x86_64_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_native_unix_common_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_rxtx_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_sctp_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__io_netty_netty_transport_udt_4_1_97_Final.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__jakarta_annotation_jakarta_annotation_api_1_3_5.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_api_2_17_2.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_logging_log4j_log4j_to_slf4j_2_17_2.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_projectlombok_lombok_1_18_12.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_jul_to_slf4j_1_7_36.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_slf4j_slf4j_api_1_7_22.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_2_6_6.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_autoconfigure_2_6_6.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_2_6_6.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_boot_spring_boot_starter_logging_2_6_6.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_commons_2_7_13.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_keyvalue_2_7_13.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_data_spring_data_redis_2_7_13.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_aop_5_3_28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_beans_5_3_28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_5_3_18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_context_support_5_3_28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_core_5_3_18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_expression_5_3_18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_jcl_5_3_18.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_oxm_5_3_28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_springframework_spring_tx_5_3_28.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_yaml_snakeyaml_1_29.xml" beforeDir="false" />
+    <list default="true" id="3d9d050f-02bf-49f3-834c-5f2104643b1d" name="Default Changelist" comment="协议热插拔">
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/netty-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/netty-server.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/NettyServerApplication.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/NettyServerBootstrap.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/App.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/ClientDemo.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/CustomInMsgHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/client/CustomOutMsgHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/controller/NettyServerController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/model/TcpConnection.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/dashboard/service/NettyServerService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/enums/DelimiterEnum.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/enums/TerminatorEnum.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/ServerConnectionManager.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/config/NettyServerConfiguration.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ConnectEventHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/HJ212Decoder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/NettyChannelInitializer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ProxyIpDecoder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ReadEventHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/handler/ServerLoggingHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/util/PacketUtil.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cas/access/netty/server/util/ServerSupport.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/banner.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/logback.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/application.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/banner.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/NettyServerApplication.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/NettyServerBootstrap.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$2$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$2.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$3$1.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo$3.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/ClientDemo.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/CustomInMsgHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/client/CustomOutMsgHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/config/NettyServerConfiguration.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/enums/DelimiterEnum.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/enums/TerminatorEnum.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ConnectEventHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/HJ212Decoder.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ProxyIpDecoder.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/handler/ReadEventHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/server/GlobalCache.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/server/NettyChannelInitializer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/util/NettyServerUtil.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/cas/access/netty/util/PacketUtil.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/logback.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/echo-protocol/target/classes/com/example/netty/echo/EchoProtocolProvider.class" beforeDir="false" afterPath="$PROJECT_DIR$/examples/echo-protocol/target/classes/com/example/netty/echo/EchoProtocolProvider.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/netty-server/log_error.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/netty-server/log_error.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/netty-server/log_info.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/netty-server/log_info.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/api/DashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/api/DashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/api/ProtocolController.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/api/ProtocolController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/entity/PortBinding.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/entity/PortBinding.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/entity/ProtocolJarRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/entity/ProtocolJarRegistry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/mapper/PortBindingMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/mapper/PortBindingMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/mapper/ProtocolJarRegistryMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/mapper/ProtocolJarRegistryMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/service/PortBindingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/service/PortBindingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/service/ProtocolJarRegistryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/java/com/cas/access/netty/service/ProtocolJarRegistryService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/resources/static/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/resources/static/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/src/main/resources/templates/protocols-page.html" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/src/main/resources/templates/protocols-page.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/api/DashboardController.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/api/DashboardController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/api/ProtocolController.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/api/ProtocolController.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/config/MyBatisPlusMetaObjectHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/config/MyBatisPlusMetaObjectHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/entity/PortBinding.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/entity/PortBinding.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/entity/ProtocolJarRegistry.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/entity/ProtocolJarRegistry.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/mapper/PortBindingMapper.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/mapper/PortBindingMapper.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/mapper/ProtocolJarRegistryMapper.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/mapper/ProtocolJarRegistryMapper.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/service/PortBindingService.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/service/PortBindingService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/service/ProtocolJarRegistryService.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/com/cas/access/netty/service/ProtocolJarRegistryService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/static/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/static/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-admin/target/classes/templates/protocols-page.html" beforeDir="false" afterPath="$PROJECT_DIR$/netty-admin/target/classes/templates/protocols-page.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolBootstrap.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolBootstrap.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolJarLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolJarLoader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/src/main/java/com/cas/access/netty/protocol/ProtocolRegistry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolBootstrap.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolBootstrap.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader$LoadResult.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader$LoadResult.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader$ProbeResult.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader$ProbeResult.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolJarLoader.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolRegistry.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-core/target/classes/com/cas/access/netty/protocol/ProtocolRegistry.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-launcher/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/netty-launcher/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-launcher/target/classes/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/netty-launcher/target/classes/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-spi/src/main/java/com/cas/access/netty/protocol/PortBindingStore.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-spi/src/main/java/com/cas/access/netty/protocol/PortBindingStore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-spi/src/main/java/com/cas/access/netty/protocol/ProtocolDbSync.java" beforeDir="false" afterPath="$PROJECT_DIR$/netty-spi/src/main/java/com/cas/access/netty/protocol/ProtocolDbSync.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/netty-spi/target/classes/com/cas/access/netty/protocol/ProtocolDbSync.class" beforeDir="false" afterPath="$PROJECT_DIR$/netty-spi/target/classes/com/cas/access/netty/protocol/ProtocolDbSync.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -213,45 +130,45 @@
     <option name="showVisibilityIcons" value="true" />
     <option name="sortKey" value="BY_TIME_ASCENDING" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
-    &quot;Application.UserCache.executor&quot;: &quot;Debug&quot;,
-    &quot;Maven.App.executor&quot;: &quot;Debug&quot;,
-    &quot;Maven.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
-    &quot;Maven.netty-server [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server [install,--non-recursive].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server [install].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server [package].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server [validate].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server-parent [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server-parent [compile].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server-parent [install].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.netty-server-parent [package].executor&quot;: &quot;Run&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;Spring Boot.NettyServerApplication.executor&quot;: &quot;Debug&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/workspace/ZKHJ&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;模块&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.maven.runner&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
-    &quot;应用程序.AppTest.executor&quot;: &quot;Run&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.NettyServerApplication.executor": "Debug",
+    "Application.UserCache.executor": "Debug",
+    "Maven.App.executor": "Debug",
+    "Maven.NettyServerApplication.executor": "Debug",
+    "Maven.netty-server [clean].executor": "Run",
+    "Maven.netty-server [compile].executor": "Run",
+    "Maven.netty-server [install,--non-recursive].executor": "Run",
+    "Maven.netty-server [install].executor": "Run",
+    "Maven.netty-server [package].executor": "Run",
+    "Maven.netty-server [validate].executor": "Run",
+    "Maven.netty-server-parent [clean].executor": "Run",
+    "Maven.netty-server-parent [compile].executor": "Run",
+    "Maven.netty-server-parent [install].executor": "Run",
+    "Maven.netty-server-parent [package].executor": "Run",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "Spring Boot.NettyServerApplication.executor": "Debug",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/workspace/ZKHJ",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDK",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "reference.settings.project.maven.runner",
+    "vue.rearranger.settings.migration": "true",
+    "应用程序.AppTest.executor": "Run"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\workspace\Project\netty-server\READEME" />
@@ -459,7 +376,9 @@
       <workItem from="1784513787736" duration="3414000" />
       <workItem from="1784518141241" duration="6674000" />
       <workItem from="1784525063255" duration="16219000" />
-      <workItem from="1784595250206" duration="599000" />
+      <workItem from="1784595250206" duration="12131000" />
+      <workItem from="1784682750436" duration="6123000" />
+      <workItem from="1784693764199" duration="4269000" />
     </task>
     <task id="LOCAL-00001" summary="初次提交">
       <created>1714267235196</created>
@@ -468,7 +387,15 @@
       <option name="project" value="LOCAL" />
       <updated>1714267235196</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="协议热插拔">
+      <option name="closed" value="true" />
+      <created>1784598044053</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1784598044054</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -497,7 +424,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="初次提交" />
-    <option name="LAST_COMMIT_MESSAGE" value="初次提交" />
+    <MESSAGE value="协议热插拔" />
+    <option name="LAST_COMMIT_MESSAGE" value="协议热插拔" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -551,11 +479,6 @@
           <url>file://$PROJECT_DIR$/src/test/java/app/UserCache.java</url>
           <line>44</line>
           <option name="timeStamp" value="100" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-codec/4.1.97.Final/netty-codec-4.1.97.Final-sources.jar!/io/netty/handler/codec/string/StringDecoder.java</url>
-          <line>76</line>
-          <option name="timeStamp" value="104" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/DefaultChannelPipeline.java</url>
@@ -636,11 +559,6 @@
           <url>jar://$PROJECT_DIR$/../../../develop/maven_house/io/netty/netty-transport/4.1.97.Final/netty-transport-4.1.97.Final-sources.jar!/io/netty/channel/SingleThreadEventLoop.java</url>
           <line>52</line>
           <option name="timeStamp" value="144" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/examples/echo-protocol/src/main/java/com/example/netty/echo/EchoHandler.java</url>
-          <line>21</line>
-          <option name="timeStamp" value="147" />
         </line-breakpoint>
         <breakpoint enabled="true" type="java-exception">
           <properties class="io.netty.handler.codec.DecoderException" package="io.netty.handler.codec" />

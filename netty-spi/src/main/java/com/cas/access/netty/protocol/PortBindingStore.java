@@ -21,7 +21,7 @@ import java.util.Map;
 public interface PortBindingStore {
 
     /**
-     * 启动时加载所有 enabled=true 且未逻辑删除的绑定。
+     * 启动时加载所有 enabled=true 的绑定。
      *
      * @return port → protocolName 映射（空映射表示无启用绑定）
      */
@@ -29,12 +29,12 @@ public interface PortBindingStore {
 
     /**
      * 持久化一个端口绑定（upsert）。
-     * 若已存在则更新 protocol_name + enabled=true + deleted=0；否则插入。
+     * 若已存在则更新 protocol_name + enabled=true；否则插入。
      */
     void persistBind(int port, String protocolName);
 
     /**
-     * 持久化解绑：逻辑删除（deleted=1）。
+     * 持久化解绑：标记 enabled=false（保留记录）。
      */
     void persistUnbind(int port);
 }

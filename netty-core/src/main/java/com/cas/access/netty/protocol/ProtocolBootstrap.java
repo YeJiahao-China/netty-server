@@ -57,6 +57,10 @@ public class ProtocolBootstrap implements CommandLineRunner {
     @Autowired(required = false)
     private ProtocolStore protocolStore;
 
+    @Autowired(required = false)
+    private ProtocolDbSync protocolDbSync;
+
+
     @Override
     public void run(String... args) {
         log.info("开始执行协议注册...");
@@ -124,6 +128,9 @@ public class ProtocolBootstrap implements CommandLineRunner {
             java.io.File jarFile = new java.io.File(jarPath);
             if (!jarFile.exists()) {
                 log.warn("协议 jar 文件不存在，跳过加载: name={}, path={}", protocolName, jarPath);
+                // 修改数据库字段为无效和已删除
+                protocolDbSync.syncUnload(protocolName);
+                protocolDbSync.clearJarPathAndProvider(protocolName);
                 continue;
             }
 

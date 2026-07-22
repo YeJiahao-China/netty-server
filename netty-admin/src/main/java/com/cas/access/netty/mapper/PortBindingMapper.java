@@ -15,18 +15,35 @@ import java.time.LocalDateTime;
  */
 public interface PortBindingMapper extends BaseMapper<PortBinding> {
     @Select("SELECT * FROM port_protocol_binding WHERE protocol_name = #{name} LIMIT 1")
-    PortBinding selectByNameIgnoreDeleted(String name);
+    PortBinding selectByName(String name);
 
 
     @Update("UPDATE port_protocol_binding " +
             "SET protocol_name = #{protocolName}, " +
             "enabled = #{enabled}, " +
-            "deleted = #{deleted}, " +
             "updated_at = #{updatedAt} " +
             "WHERE port = #{port}")
-    int updateByPortIgnoreLogic(@Param("port") Integer port,
-                                @Param("protocolName") String protocolName,
-                                @Param("enabled") Boolean enabled,
-                                @Param("deleted") Integer deleted,
-                                @Param("updatedAt") LocalDateTime updatedAt);
+    int updateByPort(@Param("port") Integer port,
+                     @Param("protocolName") String protocolName,
+                     @Param("enabled") Boolean enabled,
+                     @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Update("UPDATE port_protocol_binding " +
+            "SET port = #{port}, " +
+            "enabled = #{enabled}, " +
+            "updated_at = #{updatedAt} " +
+            "WHERE protocol_name = #{protocolName}")
+    int updateByProtocol(@Param("port") Integer port,
+                         @Param("protocolName") String protocolName,
+                         @Param("enabled") Boolean enabled,
+                         @Param("updatedAt") LocalDateTime updatedAt);
+
+
+    @Update("UPDATE port_protocol_binding " +
+            "SET enabled = #{enabled}, " +
+            "updated_at = #{updatedAt} " +
+            "WHERE protocol_name = #{protocolName}")
+    int updateEnableByProtocol(@Param("protocolName") String protocolName,
+                               @Param("enabled") Boolean enabled,
+                               @Param("updatedAt") LocalDateTime updatedAt);
 }

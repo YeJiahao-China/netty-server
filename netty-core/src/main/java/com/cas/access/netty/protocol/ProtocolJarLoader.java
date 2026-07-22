@@ -90,7 +90,8 @@ public class ProtocolJarLoader {
         try {
             URLClassLoader cl = new URLClassLoader(
                     new URL[]{jarFile.toURI().toURL()},
-                    Thread.currentThread().getContextClassLoader()
+                    getClass().getClassLoader()
+//                    Thread.currentThread().getContextClassLoader()
             );
             ServiceLoader<ProtocolDecoderProvider> sl =
                     ServiceLoader.load(ProtocolDecoderProvider.class, cl);

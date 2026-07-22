@@ -44,19 +44,16 @@ mybatis-plus:
   type-aliases-package: com.cas.access.netty.entity
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-#    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     db-config:
       id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
 
 netty:
   server:
     protocol:
-      # 协议 jar 扫描目录（相对路径基于工作目录，可改绝对路径）
-      jar-dir: ./protocols
+      # 协议 jar 扫描目录（建议放在项目外部，避免 IDE 监控/索引锁定 jar 文件）
+      jar-dir: C:/netty-protocols
       # 启动时是否自动扫描一次外部协议 jar
       auto-load-on-startup: true

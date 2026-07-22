@@ -38,7 +38,6 @@ public class PortBindingService implements PortBindingStore {
             List<PortBinding> list = mapper.selectList(
                     new LambdaQueryWrapper<PortBinding>()
                             .eq(PortBinding::getEnabled, Boolean.TRUE)
-                            .and(w -> w.eq(PortBinding::getDeleted, 0))
                             .orderByAsc(PortBinding::getPort));
             for (PortBinding b : list) {
                 result.put(b.getPort(), b.getProtocolName());
@@ -53,16 +52,15 @@ public class PortBindingService implements PortBindingStore {
     @Override
     public void persistBind(int port, String protocolName) {
         try {
-            PortBinding existing = mapper.selectByNameIgnoreDeleted(protocolName);
+            PortBinding existing = mapper.selectByName(protocolName);
             if (existing == null) {
                 PortBinding entity = new PortBinding();
                 entity.setPort(port);
                 entity.setProtocolName(protocolName);
                 entity.setEnabled(Boolean.TRUE);
-                entity.setDeleted(0);
                 mapper.insert(entity);
             } else {
-                mapper.updateByPortIgnoreLogic(port, protocolName,true,0,LocalDateTime.now());
+                mapper.updateByPort(port, protocolName, true, LocalDateTime.now());
             }
             log.debug("DB 持久化绑定: {} → {}", port, protocolName);
         } catch (Exception e) {
@@ -77,11 +75,10 @@ public class PortBindingService implements PortBindingStore {
                     new LambdaUpdateWrapper<PortBinding>()
                             .eq(PortBinding::getPort, port)
                             .set(PortBinding::getEnabled, Boolean.FALSE)
-                            .set(PortBinding::getDeleted, 1)
                             .set(PortBinding::getUpdatedAt, LocalDateTime.now()));
-            log.debug("DB 软删绑定: port={}", port);
+            log.debug("DB 禁用绑定: port={}", port);
         } catch (Exception e) {
-            log.warn("DB 软删绑定失败（不影响运行时）: port={}, err={}", port, e.getMessage());
+            log.warn("DB 禁用绑定失败（不影响运行时）: port={}, err={}", port, e.getMessage());
         }
     }
 
@@ -91,7 +88,6 @@ public class PortBindingService implements PortBindingStore {
                     new LambdaUpdateWrapper<PortBinding>()
                             .eq(PortBinding::getProtocolName, name)
                             .set(PortBinding::getEnabled, Boolean.TRUE)
-                            .set(PortBinding::getDeleted, 0)
                             .set(PortBinding::getUpdatedAt, LocalDateTime.now()));
             log.info("DB 启用绑定: protocolName={}", name);
         } catch (Exception e) {
@@ -100,6 +96,6 @@ public class PortBindingService implements PortBindingStore {
     }
 
     public PortBinding selectByName(String name) {
-       return mapper.selectByNameIgnoreDeleted(name);
+       return mapper.selectByName(name);
     }
 }

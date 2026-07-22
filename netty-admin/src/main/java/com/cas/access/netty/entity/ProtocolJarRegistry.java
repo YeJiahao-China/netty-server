@@ -3,7 +3,6 @@ package com.cas.access.netty.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -20,7 +19,7 @@ import java.time.LocalDateTime;
  * <ul>
  *   <li>{@link #source}：{@code builtin}=内置协议 / {@code external}=外部 jar</li>
  *   <li>{@link #jarPath}：仅外部协议有值</li>
- *   <li>{@link #deleted}：逻辑删除字段，1=已删（MyBatis-Plus 自动过滤）</li>
+ *   <li>{@link #active}：是否活跃（在内存中已加载），卸载时置为 false，记录保留</li>
  * </ul>
  *
  * @author yjh_c
@@ -52,10 +51,6 @@ public class ProtocolJarRegistry {
 
     /** 是否活跃 */
     private Boolean active;
-
-    /** 逻辑删除：0=未删 1=已删 */
-    @TableLogic
-    private Integer deleted;
 
     /** 加载时间 */
     private LocalDateTime loadedAt;

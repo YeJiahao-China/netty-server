@@ -1,20 +1,19 @@
 package com.cas.access.netty.protocol;
 
+import com.cas.access.netty.server.GlobalCache;
 import com.cas.access.netty.util.NettyServerUtil;
-import io.netty.channel.ChannelFuture;
+import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 协议注册中心：单例 Bean。
@@ -34,9 +33,10 @@ import java.util.concurrent.TimeUnit;
  *      3. 调 Provider.destroy() 清理资源
  *      4. close URLClassLoader 释放 jar 文件句柄
  *    这样保证卸载后没有 Handler 实例引用 Provider 的类，避免 ClassLoader 泄漏
- *  - {@link #unregisterInternal(String)}（内部调用，热替换覆盖场景）：
- *      不动端口绑定、不踢连接，仅关 ClassLoader。
- *      旧连接的 Pipeline 中 Handler 实例继续工作，等连接自然断开后由 GC 回收
+ *  - {@link #unregisterInternal(String, boolean)}（内部调用）：
+ *      hotReplace=true（register 热替换）：关闭旧端口监听 + 旧连接 + destroy + close CL，不调 syncUnload
+ *      hotReplace=false（unregister 卸载）：仅 destroy + close CL（端口已在 unregister 中关闭），调 syncUnload
+ *      关闭旧连接是为了让 Handler 被 GC → ClassLoader 可回收，避免 Metaspace 泄漏
  *
  * @author yjh_c
  */
@@ -88,18 +88,19 @@ public class ProtocolRegistry {
     }
 
     /**
-     * 注册协议。若同名协议已存在，先卸载旧的（仅关 ClassLoader，不动端口），再注册新的。
-     * 这是热替换覆盖路径：端口绑定保持不变，旧连接继续用旧 Provider，新连接走新 Provider。
+     * 注册协议。若同名协议已存在，先热替换旧的（关旧端口监听+旧连接+destroy+close CL），再注册新的。
+     * 端口绑定关系保持不变，由调用方在 register 完成后重新 bindPort 恢复监听。
+     * 热替换时不调 syncUnload（紧接着 syncRegister 会更新 DB），避免错误清理 port_binding 表。
      */
     public synchronized void register(LoadedProtocol lp) {
         String key = lp.getName();
         LoadedProtocol old = protocols.get(key);
         if (old != null) {
             log.warn("协议[{}]被覆盖: 旧版本 {} ← 新版本 {}", key, old.getVersion(), lp.getVersion());
-            unregisterInternal(key);
+            unregisterInternal(key, true);
         }
         protocols.put(key, lp);
-        log.info("协议注册成功: name={}, version={}, source={}", key, lp.getVersion(), lp.getSource());
+        log.info("协议注册成功: name={}, version={}, source={}, classLoader={}", key, lp.getVersion(), lp.getSource(),lp.getClassLoader());
         if (dbSync != null) dbSync.syncRegister(lp);
     }
 
@@ -118,14 +119,13 @@ public class ProtocolRegistry {
             }
             boundPorts.forEach(portBindings::remove);
         }
-
         // 即使部分连接超时，也继续执行卸载（超时连接会在后续 GC 中被处理）
         // 但记录告警以便排查
         if (!closeSuccess) {
             log.warn("协议[{}]卸载时存在连接关闭超时，建议观察Metaspace是否泄漏", name);
         }
 
-        return unregisterInternal(name);
+        return unregisterInternal(name, false);
     }
 
 
@@ -163,13 +163,21 @@ public class ProtocolRegistry {
 //    }
 
     /**
-     * 内部卸载：仅调 destroy + close ClassLoader，不动端口、不踢连接。
-     * 仅用于 register 覆盖同名协议时，保持端口绑定连续性。
+     * 内部卸载：关闭旧端口监听 + 旧连接 + destroy Provider + close ClassLoader。
+     *
+     * @param name       协议名
+     * @param hotReplace true=热替换（register 覆盖同名协议），不调 syncUnload（syncRegister 会更新 DB）；
+     *                   false=彻底卸载（unregister 调用），调 syncUnload 标记 DB active=false
      */
-    private boolean unregisterInternal(String name) {
+    private boolean unregisterInternal(String name, boolean hotReplace) {
         LoadedProtocol lp = protocols.remove(name);
         if (lp == null) {
             return false;
+        }
+        // 热替换路径：立即关闭旧连接（卸载路径此时 portBindings 已空，无操作）
+        // 旧连接的 Handler 持有 Provider 的 Class 引用，不关闭会导致 ClassLoader 无法 GC
+        if (lp.getClassLoader() != null) {
+            closeOldChannels(name);
         }
         try {
             lp.getProvider().destroy();
@@ -183,10 +191,58 @@ public class ProtocolRegistry {
                 log.warn("ClassLoader 关闭失败: {}", e.getMessage());
             }
         }
-        log.info("协议[{}]已卸载", name);
+        log.info("协议[{}]已卸载, classLoader[{}]已关闭", name,lp.getClassLoader());
 
-        if (dbSync != null) dbSync.syncUnload(name);
+        // 热替换不调 syncUnload（syncRegister 会更新 DB）；卸载才调 syncUnload
+        if (!hotReplace && dbSync != null) {
+            dbSync.syncUnload(name);
+        }
         return true;
+    }
+
+    /**
+     * 关闭旧协议绑定的端口监听（ServerSocketChannel）及所有活跃客户端连接（SocketChannel）。
+     *
+     * <p>用于热替换场景：
+     * <ul>
+     *   <li>关闭 ServerSocketChannel（停止 accept 新连接），防止客户端即时重连
+     *       在新 Provider 就绪前接入。调用方负责在 register 完成后重新
+     *       {@link com.cas.access.netty.util.NettyServerUtil#bindPort} 恢复监听。</li>
+     *   <li>关闭旧客户端连接：旧连接的 Handler 持有旧 Provider 的 Class 引用，
+     *       不关闭会导致 ClassLoader 无法被 GC。</li>
+     * </ul>
+     * <p>不清理 portBindings、不 remove SocketChannelSet（避免 channelInactive 回调 NPE）。
+     * 卸载路径下 {@link #getBoundPorts} 返回空（portBindings 已被 {@link #unregister} 清理），无操作。
+     */
+    private void closeOldChannels(String protocolName) {
+        List<Integer> boundPorts = getBoundPorts(protocolName);
+        for (int port : boundPorts) {
+            // 1. 关闭 ServerSocketChannel（停止 accept 新连接），sync 等待关闭完成
+            Channel serverChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.remove(port);
+            if (serverChannel != null) {
+                try {
+                    serverChannel.close().sync();
+                    log.info("协议[{}]热替换，关闭端口[{}]监听", protocolName, port);
+                } catch (Exception e) {
+                    log.warn("关闭端口[{}]监听异常: {}", port, e.getMessage());
+                }
+            }
+            // 2. 关闭该端口下所有活跃客户端连接（不 remove Set，避免 channelInactive 回调 NPE）
+            Set<Channel> channels = GlobalCache.ServerPost_SocketChannelSet_Map.get(port);
+            if (channels == null) {
+                continue;
+            }
+            int closed = 0;
+            for (Channel ch : new ArrayList<>(channels)) {
+                if (ch.isActive()) {
+                    ch.close();
+                    closed++;
+                }
+            }
+            if (closed > 0) {
+                log.info("协议[{}]热替换，关闭端口[{}]下 {} 个旧连接", protocolName, port, closed);
+            }
+        }
     }
 
     /**

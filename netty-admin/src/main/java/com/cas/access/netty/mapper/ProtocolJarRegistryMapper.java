@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -18,17 +19,26 @@ import java.util.List;
 public interface ProtocolJarRegistryMapper extends BaseMapper<ProtocolJarRegistry> {
 
     @Select("SELECT * FROM protocol_jar_registry WHERE name = #{name} LIMIT 1")
-    ProtocolJarRegistry selectByNameIgnoreDeleted(@Param("name") String name);
+    ProtocolJarRegistry selectByName(@Param("name") String name);
 
     @Select("SELECT * FROM protocol_jar_registry ORDER BY loaded_at DESC")
-    List<ProtocolJarRegistry> selectAllIncludeDeleted();
+    List<ProtocolJarRegistry> selectAll();
 
-    // 自定义更新（完全忽略逻辑删除）
     @Update("UPDATE protocol_jar_registry " +
             "SET version=#{version}, description=#{description}, source=#{source}, " +
-            "jar_path=#{jarPath}, provider_class=#{providerClass}, active=#{active}, deleted=#{deleted}," +
+            "jar_path=#{jarPath}, provider_class=#{providerClass}, active=#{active}, " +
             "loaded_at=#{loadedAt}, updated_at=#{updatedAt} " +
             "WHERE id=#{id}")
-    int updateIgnoreLogic(ProtocolJarRegistry entity);
+    int updateFull(ProtocolJarRegistry entity);
+
+    @Update("UPDATE protocol_jar_registry " +
+            "SET active=#{active}, updated_at=#{updatedAt} " +
+            "WHERE name=#{name}")
+    int updateActiveByName(ProtocolJarRegistry entity);
+
+    @Update("UPDATE protocol_jar_registry " +
+            "SET jar_path=null, provider_class=null, updated_at=#{updatedAt} " +
+            "WHERE name=#{name}")
+    int clearJarPathAndProvider(@Param("name") String name,@Param("updatedAt") LocalDateTime updatedAt);
 
 }

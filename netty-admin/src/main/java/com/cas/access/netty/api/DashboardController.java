@@ -99,7 +99,7 @@ public class DashboardController {
     private void buildFullModel(Model model) {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        // 协议列表（从数据库查询所有协议，包括已删除和未启用的）
+        // 协议列表（从数据库查询所有协议，包括未启用的）
         List<Map<String, Object>> protocols = new ArrayList<>();
         int externalJarCount = 0;
         for (ProtocolJarRegistry p : protocolJarRegistryService.listAllInDb()) {
@@ -110,7 +110,6 @@ public class DashboardController {
             m.put("source", p.getSource());
             m.put("loadedAtText", p.getLoadedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(p.getLoadedAt())));
             m.put("active", p.getActive());
-            m.put("deleted", p.getDeleted());
             m.put("jarPath", p.getJarPath());
             protocols.add(m);
             if ("external".equals(p.getSource())) {

@@ -22,7 +22,9 @@ public interface ProtocolDbSync {
     void syncRegister(LoadedProtocol lp);
 
     /**
-     * 同步协议卸载：通常做逻辑删除（deleted=1）+ active=false。
+     * 同步协议卸载：标记 active=false（保留记录，便于后续 reload 重新启用）。
      */
     void syncUnload(String name);
+
+    void clearJarPathAndProvider(String protocolName);
 }

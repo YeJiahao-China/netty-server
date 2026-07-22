@@ -362,7 +362,6 @@ tbody tr:hover { background: var(--bg); }
 .tag-external  { background: var(--primary-soft); color: var(--primary); }
 .tag-active    { background: var(--success-soft); color: var(--success); }
 .tag-inactive  { background: var(--bg-soft);      color: var(--text-muted); }
-.tag-deleted   { background: var(--danger-soft);  color: var(--danger); }
 .tag-listening { background: var(--success-soft); color: var(--success); }
 .tag-closed    { background: var(--warning-soft); color: #b45309; }
 .tag-info      { background: var(--cyan-soft);    color: var(--cyan); }
@@ -414,6 +413,8 @@ tbody tr:hover { background: var(--bg); }
 .btn-success-ghost { color: var(--success); border-color: transparent; background: transparent; }
 .btn-success-ghost:hover { background: var(--success-soft); color: var(--success); }
 .btn-success-ghost:disabled { color: var(--text-muted); cursor: not-allowed; background: transparent; }
+.btn-primary-ghost { color: var(--primary); border-color: transparent; background: transparent; }
+.btn-primary-ghost:hover { background: var(--primary-soft); color: var(--primary); }
 .btn-block { width: 100%; justify-content: center; }
 
 /* =========================================================================
