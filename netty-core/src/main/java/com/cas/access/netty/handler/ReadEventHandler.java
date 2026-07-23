@@ -28,6 +28,12 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object info) {
         //获取服务端、客户端连接的IP和PORT
+        try {
+            log.info("即将阻塞");
+            Thread.sleep(30000L); //模拟耗时操作,此时执行协议卸载，观察io线程还能不能正常执行结束
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         String localIp = localAddress.getAddress().getHostAddress();
         int localPort = localAddress.getPort();
@@ -36,7 +42,7 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
         int clientPort = clientAddress.getPort();
         //获取此连接通道的唯一标识
         ChannelId channelId = ctx.channel().id();
-        clientIp = ProxyIpDecoder.ChannelId_IP_MAP.get(channelId) == null ? clientAddress.getAddress().getHostAddress() : ProxyIpDecoder.ChannelId_IP_MAP.get(channelId);
+//        clientIp = ProxyIpDecoder.ChannelId_IP_MAP.get(channelId) == null ? clientAddress.getAddress().getHostAddress() : ProxyIpDecoder.ChannelId_IP_MAP.get(channelId);
         //服务端接收到的数据
         String s = info.toString();
         log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", clientIp, clientPort, localIp, localPort, channelId, s);
@@ -76,8 +82,8 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
         ChannelId channelId = channel.id();
         //获取异常消息
         String causeMessage = cause.getMessage();
-        GlobalCache.CONNECTION_STATUS_MAP.remove(channelId);
-        log.error("[NettyServer-{}:{}]-<异常>-[客户端-{}:{}]-[ChannelId:{}-ChannelSize:{}] - [信息:{}]", localIp, localPort, clientIp, clientPort, channelId, GlobalCache.CONNECTION_STATUS_MAP.size(), causeMessage);
+        GlobalCache.removeConnection(channelId);
+        log.error("[NettyServer-{}:{}]-<异常>-[客户端-{}:{}]-[ChannelId:{}-ChannelSize:{}] - [信息:{}]", localIp, localPort, clientIp, clientPort, channelId, GlobalCache.getTotalConnectionCount(), causeMessage);
         channel.close();
     }
 

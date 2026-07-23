@@ -17,36 +17,37 @@ public class EchoHandler extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(EchoHandler.class);
 
     /** 客户端连上来时发送欢迎语 */
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        log.info("[Echo] 客户端连接: {}", ctx.channel().remoteAddress());
-        ctx.writeAndFlush("Echo server ready. Send me anything...\r\n");
-    }
+//    @Override
+//    public void channelActive(ChannelHandlerContext ctx) {
+//        log.info("[Echo] 客户端连接: {}", ctx.channel().remoteAddress());
+//        ctx.writeAndFlush("Echo server ready. Send me anything...\r\n");
+//    }
 
     /** 收到一行数据，原样回写 */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         String line = msg.toString();
         log.info("[Echo] 收到数据: {}", line);
-        ctx.writeAndFlush("Echo: " + line + "\r\n");
+//        ctx.writeAndFlush("Echo: " + line + "\r\n");
+        ctx.fireChannelRead(msg);
     }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("[Echo] 客户端断开: {}", ctx.channel().remoteAddress());
-    }
+//    @Override
+//    public void channelInactive(ChannelHandlerContext ctx) {
+//        log.info("[Echo] 客户端断开: {}", ctx.channel().remoteAddress());
+//    }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("[Echo] 异常: {}", cause.getMessage(), cause);
-        ctx.close();
-    }
-
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        // 简单打印一下 Idle 事件，便于 debug 看超时是否触发
-        Object event = evt.toString();
-        log.warn("[Echo] 收到事件: {}", event);
-        super.userEventTriggered(ctx, evt);
-    }
+//    @Override
+//    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+//        log.error("[Echo] 异常: {}", cause.getMessage(), cause);
+//        ctx.close();
+//    }
+//
+//    @Override
+//    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+//        // 简单打印一下 Idle 事件，便于 debug 看超时是否触发
+//        Object event = evt.toString();
+//        log.warn("[Echo] 收到事件: {}", event);
+//        super.userEventTriggered(ctx, evt);
+//    }
 }

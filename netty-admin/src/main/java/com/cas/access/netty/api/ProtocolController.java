@@ -501,7 +501,7 @@ public class ProtocolController {
             return fail("协议未注册: " + name);
         }
         // 先建立 port→protocol 映射，再绑定端口，避免绑定瞬间连接进来时映射缺失
-        if (GlobalCache.ServerPort_ServerSocketChannel_Map.containsKey(port)) {
+        if (GlobalCache.isListening(port)) {
             NettyServerUtil.closeListen(port);
         }
         registry.bindPortToProtocol(port, name);
@@ -544,8 +544,8 @@ public class ProtocolController {
         registry.getAllBindings().forEach((port, protoName) -> {
             Map<String, Object> b = new LinkedHashMap<>();
             b.put("protocol", protoName);
-            b.put("listening", GlobalCache.ServerPort_ServerSocketChannel_Map.containsKey(port));
-            Set<Channel> channels = GlobalCache.ServerPost_SocketChannelSet_Map.get(port);
+            b.put("listening", GlobalCache.PORT_SERVER_CHANNEL_MAP.containsKey(port));
+            Set<Channel> channels = GlobalCache.PORT_SOCKET_CHANNELS_MAP.get(port);
             b.put("connections", channels == null ? 0 : channels.size());
             bindingViews.put(port, b);
         });

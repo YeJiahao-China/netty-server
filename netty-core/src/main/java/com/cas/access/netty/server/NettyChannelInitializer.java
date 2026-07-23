@@ -1,6 +1,7 @@
 package com.cas.access.netty.server;
 
 import com.cas.access.netty.handler.ConnectEventHandler;
+import com.cas.access.netty.handler.ReadEventHandler;
 import com.cas.access.netty.protocol.LoadedProtocol;
 import com.cas.access.netty.protocol.ProtocolDecoderProvider;
 import com.cas.access.netty.protocol.ProtocolRegistry;
@@ -13,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import javax.naming.CompositeName;
 
 
 /**
@@ -36,13 +36,16 @@ import javax.naming.CompositeName;
 public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
 
     /** 默认空闲超时（秒），Provider 未提供 idleConfig 时使用 */
-    private static final int DEFAULT_IDLE_SECONDS = 600;
+    private static final int DEFAULT_IDLE_SECONDS = 6000;
 
     @Resource
     private ProtocolRegistry protocolRegistry;
 
     @Resource
     private ConnectEventHandler connectEventHandler;
+
+    @Resource
+    private ReadEventHandler readEventHandle;
 
     @Override
     protected void initChannel(SocketChannel socketChannel) {
@@ -74,6 +77,7 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
                     pipeline.addLast(provider.name() + "_" + i, handlers[i]);
                 }
             }
+            pipeline.addLast("readEventHandle", readEventHandle);
             log.info("[Pipeline装配成功] client={}:{} port={} protocol={}",
                     clientIp, clientPort, serverPort, protoName);
         } catch (Exception e) {

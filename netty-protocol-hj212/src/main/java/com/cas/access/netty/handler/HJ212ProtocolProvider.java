@@ -22,11 +22,11 @@ import java.nio.charset.StandardCharsets;
 @Component
 public class HJ212ProtocolProvider implements ProtocolDecoderProvider {
 
-    private final ReadEventHandler readEventHandler;
+//    private final ReadEventHandler readEventHandler;
 
-    public HJ212ProtocolProvider(ReadEventHandler readEventHandler) {
-        this.readEventHandler = readEventHandler;
-    }
+//    public HJ212ProtocolProvider(ReadEventHandler readEventHandler) {
+//        this.readEventHandler = readEventHandler;
+//    }
 
     @Override
     public String name() {
@@ -47,7 +47,7 @@ public class HJ212ProtocolProvider implements ProtocolDecoderProvider {
     public ChannelHandler[] createHandlers() {
         return new ChannelHandler[]{
                 new HJ212Decoder(),
-                readEventHandler,
+//                readEventHandler,
                 new StringEncoder(StandardCharsets.UTF_8)
         };
     }

@@ -45,8 +45,8 @@ public class EchoProtocolProvider implements ProtocolDecoderProvider {
         return new ChannelHandler[]{
                 new LineBasedFrameDecoder(65535),
                 new StringDecoder(StandardCharsets.UTF_8),
-                new EchoHandler(),
-                new StringEncoder(StandardCharsets.UTF_8)
+                new EchoHandler()
+//                new StringEncoder(StandardCharsets.UTF_8)
         };
     }
 

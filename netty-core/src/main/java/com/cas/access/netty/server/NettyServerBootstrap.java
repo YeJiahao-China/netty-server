@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -102,8 +101,8 @@ public class NettyServerBootstrap implements CommandLineRunner {
                         log.error("NettyServer - 端口:{} 绑定失败:{}", port, future.cause().getMessage());
                     }
                 }).sync();
-                GlobalCache.ServerPort_ServerSocketChannel_Map.put(port, sync.channel());
-                GlobalCache.ServerPost_SocketChannelSet_Map.put(port, new HashSet<>());
+                GlobalCache.bindServerChannel(port, sync.channel());
+                GlobalCache.registerPort(port);
             }
         } catch (Exception e) {
             log.error("NettyServer 启动失败: {}", e.getMessage());

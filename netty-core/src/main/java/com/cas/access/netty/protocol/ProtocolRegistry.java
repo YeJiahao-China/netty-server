@@ -112,7 +112,7 @@ public class ProtocolRegistry {
             log.info("协议[{}]绑定的端口 {} 将被关闭", name, boundPorts);
             for (int port : boundPorts) {
                 // 💥 传入超时时间，5秒足够绝大多数正常连接完成关闭
-                if (!NettyServerUtil.closeListen(port, 5)) {
+                if (!NettyServerUtil.closeListen(port, 10)) {
                     closeSuccess = false;
                     log.warn("端口[{}]连接未完全关闭，但仍继续卸载协议[{}]", port, name);
                 }
@@ -217,7 +217,7 @@ public class ProtocolRegistry {
         List<Integer> boundPorts = getBoundPorts(protocolName);
         for (int port : boundPorts) {
             // 1. 关闭 ServerSocketChannel（停止 accept 新连接），sync 等待关闭完成
-            Channel serverChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.remove(port);
+            Channel serverChannel = GlobalCache.removeServerChannel(port);
             if (serverChannel != null) {
                 try {
                     serverChannel.close().sync();
@@ -227,7 +227,7 @@ public class ProtocolRegistry {
                 }
             }
             // 2. 关闭该端口下所有活跃客户端连接（不 remove Set，避免 channelInactive 回调 NPE）
-            Set<Channel> channels = GlobalCache.ServerPost_SocketChannelSet_Map.get(port);
+            Set<Channel> channels = GlobalCache.getSocketChannels(port);
             if (channels == null) {
                 continue;
             }
@@ -237,7 +237,12 @@ public class ProtocolRegistry {
                     ch.close();
                     closed++;
                 }
+                // 移除连接缓存
+//                GlobalCache.removeConnection(ch.id());
             }
+            // 3. 移除该端口对应的连接Set
+//            GlobalCache.unregisterPort(port);
+
             if (closed > 0) {
                 log.info("协议[{}]热替换，关闭端口[{}]下 {} 个旧连接", protocolName, port, closed);
             }

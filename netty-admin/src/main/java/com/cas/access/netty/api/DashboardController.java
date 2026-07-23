@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,8 +125,8 @@ public class DashboardController {
             Map<String, Object> b = new LinkedHashMap<>();
             b.put("port", port);
             b.put("protocol", e.getValue());
-            b.put("listening", GlobalCache.ServerPort_ServerSocketChannel_Map.containsKey(port));
-            Set<Channel> channels = GlobalCache.ServerPost_SocketChannelSet_Map.get(port);
+            b.put("listening", GlobalCache.PORT_SERVER_CHANNEL_MAP.containsKey(port));
+            Set<Channel> channels = GlobalCache.PORT_SOCKET_CHANNELS_MAP.get(port);
             int conns = channels == null ? 0 : channels.size();
             b.put("connections", conns);
             bindings.add(b);

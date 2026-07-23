@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +38,8 @@ public class NettyServerUtil {
 //                    log.error("NettyServer - Add Port{}{}", port, "Fail");
 //                }
 //            });
-            GlobalCache.ServerPort_ServerSocketChannel_Map.put(port, startFuture.channel());
-            GlobalCache.ServerPost_SocketChannelSet_Map.put(port, new HashSet<>());
+            GlobalCache.bindServerChannel(port, startFuture.channel());
+            GlobalCache.registerPort(port);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -56,7 +55,7 @@ public class NettyServerUtil {
      * @param port 端口号
      */
     public static void closeListen(int port) {
-        Channel serverSocketChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.remove(port);
+        Channel serverSocketChannel = GlobalCache.removeServerChannel(port);
         if (serverSocketChannel == null) {
             return;
         }
@@ -64,7 +63,7 @@ public class NettyServerUtil {
         log.info("NettyServer关闭服务端口[{}:{}]监听",
                 ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
 
-        Set<Channel> socketChannelSet = GlobalCache.ServerPost_SocketChannelSet_Map.remove(port);
+        Set<Channel> socketChannelSet = GlobalCache.unregisterPort(port);
         if (socketChannelSet == null || socketChannelSet.isEmpty()) {
             return;
         }
@@ -92,7 +91,7 @@ public class NettyServerUtil {
      * @return true=所有连接在超时前正常关闭, false=存在超时或异常
      */
     public static boolean closeListen(int port, int timeoutSeconds) {
-        Channel serverSocketChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.remove(port);
+        Channel serverSocketChannel = GlobalCache.removeServerChannel(port);
         if (serverSocketChannel == null) {
             log.warn("端口[{}]未找到对应的ServerChannel，跳过关闭", port);
             return true;
@@ -108,13 +107,15 @@ public class NettyServerUtil {
         }
 
         // 2. 收集所有客户端连接的 CloseFuture
-        Set<Channel> socketChannelSet = GlobalCache.ServerPost_SocketChannelSet_Map.remove(port);
+        Set<Channel> socketChannelSet = GlobalCache.unregisterPort(port);
         if (socketChannelSet == null || socketChannelSet.isEmpty()) {
             return true;
         }
 
         List<ChannelFuture> closeFutures = new ArrayList<>(socketChannelSet.size());
         for (Channel socketChannel : socketChannelSet) {
+            // 移除缓存的连接
+            GlobalCache.removeConnection(socketChannel.id());
             if (socketChannel.isActive()) {
                 closeFutures.add(socketChannel.close());
             }
