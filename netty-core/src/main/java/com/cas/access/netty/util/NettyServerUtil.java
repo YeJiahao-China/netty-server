@@ -47,27 +47,39 @@ public class NettyServerUtil {
     }
 
     /**
-     * 关闭端口监听
+     * 关闭端口监听（异步，不等待连接关闭）。
      *
-     * @param port
+     * <p>与 {@link #closeListen(int, int)} 的区别：不同步等待客户端连接关闭，
+     * 适用于对关闭时序无严格要求的场景（如手动解绑端口）。
+     * 两个版本都会清理 {@link GlobalCache} 中的 Map 条目，避免残留引用。
+     *
+     * @param port 端口号
      */
     public static void closeListen(int port) {
-        if (GlobalCache.ServerPort_ServerSocketChannel_Map.containsKey(port)) {
-            Channel serverSocketChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.get(port);
-            serverSocketChannel.close();
-            log.info("NettyServer关闭服务端口[{}:{}]监听", ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
-            Set<Channel> socketChannelSet = GlobalCache.ServerPost_SocketChannelSet_Map.get(port);
-            for (Channel socketChannel : socketChannelSet) {
-                InetSocketAddress socketAddress = (InetSocketAddress) socketChannel.remoteAddress();
-                socketChannel.close().addListener(future -> {
-                    if (future.isSuccess()) {
-                        log.info("NettyServer关闭客户端[{}:{}]成功", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
-                    } else {
-                        log.error("NettyServer关闭客户端[{}:{}]失败, 失败信息:{}", socketAddress.getAddress().getHostAddress(), socketAddress.getPort(), future.cause().getMessage());
-                    }
-                });
+        Channel serverSocketChannel = GlobalCache.ServerPort_ServerSocketChannel_Map.remove(port);
+        if (serverSocketChannel == null) {
+            return;
+        }
+        serverSocketChannel.close();
+        log.info("NettyServer关闭服务端口[{}:{}]监听",
+                ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
 
-            }
+        Set<Channel> socketChannelSet = GlobalCache.ServerPost_SocketChannelSet_Map.remove(port);
+        if (socketChannelSet == null || socketChannelSet.isEmpty()) {
+            return;
+        }
+        for (Channel socketChannel : socketChannelSet) {
+            InetSocketAddress socketAddress = (InetSocketAddress) socketChannel.remoteAddress();
+            socketChannel.close().addListener(future -> {
+                if (future.isSuccess()) {
+                    log.info("NettyServer关闭客户端[{}:{}]成功",
+                            socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
+                } else {
+                    log.error("NettyServer关闭客户端[{}:{}]失败, 失败信息:{}",
+                            socketAddress.getAddress().getHostAddress(), socketAddress.getPort(),
+                            future.cause().getMessage());
+                }
+            });
         }
     }
 

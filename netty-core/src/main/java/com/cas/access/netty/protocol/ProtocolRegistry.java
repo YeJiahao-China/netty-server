@@ -213,7 +213,7 @@ public class ProtocolRegistry {
      * <p>不清理 portBindings、不 remove SocketChannelSet（避免 channelInactive 回调 NPE）。
      * 卸载路径下 {@link #getBoundPorts} 返回空（portBindings 已被 {@link #unregister} 清理），无操作。
      */
-    private void closeOldChannels(String protocolName) {
+    public void closeOldChannels(String protocolName) {
         List<Integer> boundPorts = getBoundPorts(protocolName);
         for (int port : boundPorts) {
             // 1. 关闭 ServerSocketChannel（停止 accept 新连接），sync 等待关闭完成
@@ -245,18 +245,21 @@ public class ProtocolRegistry {
     }
 
     /**
-     * 热升级前置：关闭旧 ClassLoader 释放 jar 文件锁。
+     * 热升级前置：关闭旧端口监听 + 旧连接 + 旧 ClassLoader。
      *
-     * <p>用于「上传新版本 jar 覆盖旧版本」场景：
-     * <ul>
-     *   <li>Windows 上 URLClassLoader 持有 jar 文件句柄，必须先关闭才能覆盖</li>
-     *   <li>仅关闭 ClassLoader，<b>不移除</b> {@code protocols} 条目，<b>不动</b>端口绑定</li>
-     *   <li>已加载的类不受影响，旧连接的 Handler 实例仍可调用 Provider 方法
-     *       （ClassLoader.close 仅阻止后续 loadClass，已加载的类继续可用）</li>
-     *   <li>紧接着应调 {@link #register(LoadedProtocol)} 覆盖条目</li>
-     * </ul>
+     * <p>用于「上传新版本 jar 覆盖旧版本」场景，执行顺序：
+     * <ol>
+     *   <li>关闭 ServerSocketChannel（停止 accept 新连接），防止热替换期间新连接接入</li>
+     *   <li>关闭旧客户端连接：旧连接的 Handler 持有旧 Provider 的 Class 引用，
+     *       不关闭会导致 ClassLoader 无法被 GC</li>
+     *   <li>关闭旧 ClassLoader 释放 jar 文件锁（JDK 9+ 下 close 后文件句柄即释放）</li>
+     * </ol>
+     * <p>不移除 {@code protocols} 条目，不动 portBindings（register 后用于重新 bind）。
+     * 紧接着应调 {@link #register(LoadedProtocol)} 覆盖条目，
+     * register 内部的 {@link #closeOldChannels} 因端口已关闭而 no-op。
      */
     public synchronized void closeClassLoaderForUpgrade(String name) {
+        // 再关闭旧 ClassLoader（释放 jar 文件锁）
         LoadedProtocol lp = protocols.get(name);
         if (lp != null && lp.getClassLoader() != null) {
             try {

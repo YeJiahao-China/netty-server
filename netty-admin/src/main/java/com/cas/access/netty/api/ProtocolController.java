@@ -1,8 +1,6 @@
 package com.cas.access.netty.api;
 
-import com.cas.access.netty.entity.PortBinding;
 import com.cas.access.netty.entity.ProtocolJarRegistry;
-import com.cas.access.netty.protocol.LoadedProtocol;
 import com.cas.access.netty.protocol.ProtocolJarLoader;
 import com.cas.access.netty.protocol.ProtocolProperties;
 import com.cas.access.netty.protocol.ProtocolRegistry;
@@ -12,7 +10,6 @@ import com.cas.access.netty.service.ProtocolJarRegistryService;
 import com.cas.access.netty.util.NettyServerUtil;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,9 +36,6 @@ import java.util.stream.Collectors;
 
 /**
  * 协议管理 HTTP 接口（端口 2310）。
- * 卸载安全策略：
- * - DELETE /protocols/{name} 时，Registry 会自动关闭该协议绑定的端口监听 + 踢连接
- * - 也可手动先 DELETE /protocols/bind/{port} 解绑端口，再 DELETE /protocols/{name}
  *
  * @author yjh_c
  */
@@ -163,9 +157,21 @@ public class ProtocolController {
             // 7. 正式注册（新协议首次注册，不触发热替换）
             jarLoader.loadSingleJar(finalFile.toFile());
 
-            // 8. 绑定端口（写 DB） + 启动监听
+            // 8. 绑定端口（写内存 + DB） + 启动监听
+            //    bindPort 失败（端口被其他进程占用）时回滚：unregister + 删 jar
             registry.bindPortToProtocol(port, protocolName);
-            NettyServerUtil.bindPort(port);
+            try {
+                NettyServerUtil.bindPort(port);
+            } catch (Exception bindEx) {
+                log.error("启动端口[{}]监听失败，回滚协议[{}]注册: {}", port, protocolName, bindEx.getMessage());
+                // unregister 包含：解绑端口 + destroy Provider + close CL + DB active=false
+                registry.unregister(protocolName);
+                try {
+                    Files.deleteIfExists(finalFile);
+                } catch (Exception ignored) {
+                }
+                return fail("端口 " + port + " 启动监听失败（可能被其他程序占用）: " + bindEx.getMessage());
+            }
 
             log.info("协议[{}]上传成功，已绑定端口[{}]并启动监听", protocolName, port);
             Map<String, Object> resp = ok();
@@ -263,73 +269,142 @@ public class ProtocolController {
                 return fail("协议名不匹配：jar 内实际为 [" + probe.getProviderName()
                         + "]，与要更新的协议 [" + name + "] 不符");
             }
-            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+            try {
+                Files.deleteIfExists(probeCopy);
+            } catch (Exception ignored) {
+            }
             probeCopy = null;
-
-            // 6. 关闭旧 ClassLoader（释放 jar 文件锁，Windows 上必须先关闭才能覆盖）
+            registry.closeOldChannels(name);
+            // 6. 关闭旧 ClassLoader（释放 jar 文件锁，JDK 9+ 下 close 后文件句柄即释放）
             registry.closeClassLoaderForUpgrade(name);
 
-            // 7. 覆盖正式 jar 文件（用原 jarPath，不产生残留文件）
-            //    旧 ClassLoader 已在第 6 步关闭，但 Windows 上文件句柄释放依赖 GC。
-            //    先 GC 重试覆盖；仍失败则降级用带时间戳的新文件名（syncRegister 会自动更新 DB jarPath）。
+            // 7. 用新上传的文件名放置 jar，并删除旧 jar 文件（若文件名不同）
+            //    syncRegister 会自动将新 jarPath 写入 DB，保证 DB 记录与磁盘文件一致。
             String oldJarPath = existing.getJarPath();
-            if (oldJarPath == null || oldJarPath.isEmpty()) {
-                return fail("协议[" + name + "] 无 jar 路径记录，无法更新");
-            }
-            String oldFilename = Paths.get(oldJarPath).getFileName().toString();
-            Path finalFile = moveJarFileWithFallback(tempFile, oldFilename);
+            Path finalFile = moveJarFileWithFallback(tempFile, filename);
             tempFile = null;
 
-            // 8. 正式注册（register → unregisterInternal(hotReplace=true) → closeOldChannels）
-            //    closeOldChannels 关闭旧端口监听 + 旧连接
+            // 旧 jar 文件名与新文件名不同时，删除旧文件避免残留
+            if (oldJarPath != null && !oldJarPath.isEmpty()) {
+                Path oldFile = Paths.get(oldJarPath).toAbsolutePath();
+                if (!oldFile.equals(finalFile.toAbsolutePath())) {
+                    try {
+                        Files.deleteIfExists(oldFile);
+                        log.info("旧 jar 文件已删除: {}", oldFile);
+                    } catch (IOException e) {
+                        log.warn("删除旧 jar 文件失败（不影响更新）: {}", oldFile);
+                    }
+                }
+            }
+
+            // 8. 正式注册（register → unregisterInternal(hotReplace=true)）
+            //    closeOldChannels 在第 6a 步已执行，此处 no-op（端口已关闭）
             //    不调 syncUnload（port_binding 表保持不变）
             //    syncRegister 更新 protocol_jar_registry（version、jarPath、loadedAt 等）
             jarLoader.loadSingleJar(finalFile.toFile());
 
             // 9. 重新 bind 所有端口（closeOldChannels 已关闭旧监听，这里恢复）
+            //    单个端口失败不中断其他端口，协议热替换本身已成功
+            List<Integer> reboundPorts = new java.util.ArrayList<>();
+            List<Integer> failedPorts = new java.util.ArrayList<>();
             for (int port : boundPorts) {
-                NettyServerUtil.bindPort(port);
+                try {
+                    NettyServerUtil.bindPort(port);
+                    reboundPorts.add(port);
+                } catch (Exception bindEx) {
+                    log.error("协议[{}]更新后重新绑定端口[{}]失败: {}", name, port, bindEx.getMessage());
+                    failedPorts.add(port);
+                }
             }
 
-            log.info("协议[{}]更新成功，重新绑定端口 {}", name, boundPorts);
+            log.info("协议[{}]更新成功，已绑定端口{}{}",
+                    name, reboundPorts, failedPorts.isEmpty() ? "" : "，失败端口" + failedPorts);
             Map<String, Object> resp = ok();
             resp.put("protocolName", probe.getProviderName());
             resp.put("version", probe.getProviderVersion());
             resp.put("jarPath", finalFile.toString());
-            resp.put("reboundPorts", boundPorts);
+            resp.put("reboundPorts", reboundPorts);
+            if (!failedPorts.isEmpty()) {
+                resp.put("failedPorts", failedPorts);
+            }
             return resp;
         } catch (Exception e) {
             log.error("更新协议失败: name={}, err={}", name, e.getMessage(), e);
             if (tempFile != null) {
-                try { Files.deleteIfExists(tempFile); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (Exception ignored) {
+                }
             }
             if (probeCopy != null) {
-                try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(probeCopy);
+                } catch (Exception ignored) {
+                }
             }
             return fail("更新失败: " + e.getMessage());
         }
     }
 
     /**
-     * 重新启用协议
+     * 重新启用协议（从 DB 记录恢复 jar 加载 + 端口绑定 + 监听）。
+     *
+     * <p>适用场景：协议被 {@link #unload(String)} 卸载后（active=false，port_binding
+     * enabled=false），通过本接口恢复运行。
+     *
+     * <p>流程：
+     * <ol>
+     *   <li>校验 DB 中存在该协议记录</li>
+     *   <li>校验 jarPath 有效且 jar 文件存在</li>
+     *   <li>加载 jar（register 会自动 syncRegister 恢复 active=true）</li>
+     *   <li>查出该协议的所有端口绑定（含 enabled=false 的），逐个恢复：
+     *       bindPortToProtocol（内存 + DB enabled=true）+ NettyServerUtil.bindPort</li>
+     * </ol>
      */
     @PostMapping("/reload/{name}")
     public Map<String, Object> reload(@PathVariable String name) {
-        // 重新启用数据库中未启用或者已删除的协议
-        try {
-            PortBinding portBinding = portBindingService.selectByName(name);
-            ProtocolJarRegistry protocolJarRegistry = protocolJarRegistryService.selectByName(name);
-            jarLoader.loadSingleJar(new File(protocolJarRegistry.getJarPath()));
-            registry.bindPortToProtocol(portBinding.getPort(), name);
-            NettyServerUtil.bindPort(portBinding.getPort());
-            HashMap<String, Object> resp = new HashMap<>();
-            resp.put("result","ok");
-            return resp;
-        } catch (Exception e) {
-            String message = "重新启用协议失败: 请检查协议jar是否存在以及端口是否被占用" + e.getMessage();
-            throw new RuntimeException(message);
+        // 1. 校验协议记录存在
+        ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
+        if (existing == null) {
+            return fail("协议[" + name + "]不存在");
         }
 
+        // 2. 校验 jar 路径有效
+        String jarPath = existing.getJarPath();
+        if (jarPath == null || jarPath.isEmpty()) {
+            return fail("协议[" + name + "]无 jar 路径记录，请重新上传 jar");
+        }
+        File jarFile = new File(jarPath);
+        if (!jarFile.exists()) {
+            return fail("协议[" + name + "]的 jar 文件不存在: " + jarPath);
+        }
+
+        // 3. 查出该协议的所有端口绑定（含 enabled=false 的，卸载时被置为 false）
+        List<Integer> ports = portBindingService.selectAllPortsByProtocol(name);
+
+        try {
+            // 4. 加载 jar（register → syncRegister 自动恢复 active=true）
+            jarLoader.loadSingleJar(jarFile);
+
+            // 5. 逐个恢复端口绑定 + 启动监听
+            //    bindPortToProtocol 会调 persistBind → updateByPort(port, name, true, ...)
+            //    将 DB 中 enabled 恢复为 true
+            List<Integer> boundPorts = new java.util.ArrayList<>();
+            for (int port : ports) {
+                registry.bindPortToProtocol(port, name);
+                NettyServerUtil.bindPort(port);
+                boundPorts.add(port);
+            }
+
+            log.info("协议[{}]重新启用成功，恢复端口绑定 {}", name, boundPorts);
+            Map<String, Object> resp = ok();
+            resp.put("protocolName", name);
+            resp.put("reboundPorts", boundPorts);
+            return resp;
+        } catch (Exception e) {
+            log.error("重新启用协议失败: name={}, err={}", name, e.getMessage(), e);
+            return fail("重新启用协议失败: " + e.getMessage());
+        }
     }
 
     /**
@@ -400,12 +475,12 @@ public class ProtocolController {
         }
 
         // 5. 删除 jar 文件（彻底删除语义）
-        //    卸载时 ClassLoader 已 close，
-        //    用 GC 重试。删除失败不阻断 purge 主流程（DB 记录已删），仅 warn。
+        //    卸载时 ClassLoader 已 close，JDK 9+ 下文件句柄已释放，直接删除即可。
+        //    删除失败不阻断 purge 主流程（DB 记录已删），仅 warn。
         String jarPath = existing.getJarPath();
         boolean jarDeleted = false;
         if (jarPath != null && !jarPath.isEmpty()) {
-            jarDeleted = deleteJarWithGcRetry(Paths.get(jarPath).toAbsolutePath());
+            jarDeleted = deleteJarFile(Paths.get(jarPath).toAbsolutePath());
         }
 
         log.info("协议[{}]已彻底删除（DB 记录已删，jar 文件{}）",
@@ -507,51 +582,16 @@ public class ProtocolController {
         return m;
     }
 
-    /* ========== Windows jar 文件锁处理 ========== */
+    /* ========== jar 文件操作 ========== */
 
     /**
-     * 移动文件，Windows 上目标文件被占用时触发 GC + Finalizer 后重试。
+     * 移动 jar 文件到目标位置，目标被占用时降级使用带时间戳的新文件名。
      *
-     * <p>背景：{@code URLClassLoader.close()} 在 Java 8 + Windows 上不保证立即释放
-     * jar 文件句柄（JDK-8054458）。底层 JarFile 释放依赖 GC，且某些情况下需要
-     * finalizer 执行后才真正释放。{@code System.gc()} + {@code System.runFinalization()}
-     * 促使 JVM 回收 JarFile 并执行 pending finalizer。
+     * <p>JDK 9+ 已修复 {@code URLClassLoader.close()} 不释放 jar 文件句柄的问题
+     * （JDK-8054458），卸载时 {@code close()} 后文件锁即解除。本方法保留降级逻辑
+     * 仅作为极端场景的兜底（例如操作系统文件句柄延迟释放）。
      *
-     * @param source 源文件
-     * @param target 目标文件（已存在则覆盖）
-     * @throws IOException 重试次数用尽后仍失败时抛出最后一次异常
-     */
-    private void moveWithGcRetry(Path source, Path target) throws IOException {
-        final int maxRetries = 4;
-        final long intervalMs = 1000;
-        IOException last = null;
-        for (int i = 0; i <= maxRetries; i++) {
-            try {
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                return;
-            } catch (IOException e) {
-                last = e;
-                if (i == maxRetries) {
-                    break;
-                }
-                log.warn("文件移动失败（可能被旧 ClassLoader 锁定），触发 GC+Finalizer 后重试 ({}/{}): target={}",
-                        i + 1, maxRetries, target);
-                forceGcAndFinalize();
-                sleep(intervalMs);
-            }
-        }
-        throw new IOException("文件移动失败（已重试 " + maxRetries + " 次）: " + target
-                + " — 可能被旧 ClassLoader 锁定，请稍后重试或重启服务", last);
-    }
-
-    /**
-     * 移动 jar 文件到目标位置，如果目标文件被锁定（旧 ClassLoader 未释放），
-     * 降级使用带时间戳的新文件名，避免 upload/update 因文件锁失败。
-     *
-     * <p>降级后旧 jar 文件残留在 protocols 目录，待后续 GC 释放句柄后可手动删除。
-     * 新 jarPath 会通过 {@code syncRegister} 自动更新到 DB。
-     *
-     * @param tempFile 临时文件
+     * @param tempFile          临时文件
      * @param preferredFilename 期望的文件名（可能与旧 jar 同名）
      * @return 最终使用的文件路径
      * @throws IOException 降级后仍失败时抛出
@@ -559,7 +599,7 @@ public class ProtocolController {
     private Path moveJarFileWithFallback(Path tempFile, String preferredFilename) throws IOException {
         Path target = Paths.get(properties.getJarDir(), preferredFilename).toAbsolutePath();
         try {
-            moveWithGcRetry(tempFile, target);
+            Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
             return target;
         } catch (IOException e) {
             // 降级：用带时间戳的新文件名，不覆盖旧 jar
@@ -569,65 +609,32 @@ public class ProtocolController {
             String newName = baseName + "-" + System.currentTimeMillis() + ".jar";
             Path fallback = Paths.get(properties.getJarDir(), newName).toAbsolutePath();
             Files.move(tempFile, fallback, StandardCopyOption.REPLACE_EXISTING);
-            log.warn("旧 jar 文件[{}]被锁定，已降级使用新文件名[{}]", preferredFilename, fallback.getFileName());
+            log.warn("目标 jar 文件[{}]被占用，已降级使用新文件名[{}]", preferredFilename, fallback.getFileName());
             return fallback;
         }
     }
 
     /**
-     * 删除 jar 文件，Windows 上文件被占用时触发 GC + Finalizer 后重试。
+     * 删除 jar 文件。
      *
-     * <p>同 {@link #moveWithGcRetry} 的背景：卸载协议后 jar 文件句柄可能未释放。
+     * <p>JDK 9+ 下卸载协议时 {@code URLClassLoader.close()} 已释放文件句柄，
+     * 直接删除即可。删除失败不阻断 purge 主流程（DB 记录已删），仅 warn。
      *
      * @param jarPath jar 文件路径
-     * @return true=删除成功或文件不存在；false=重试后仍删除失败
+     * @return true=删除成功或文件不存在；false=删除失败
      */
-    private boolean deleteJarWithGcRetry(Path jarPath) {
+    private boolean deleteJarFile(Path jarPath) {
         if (!Files.exists(jarPath)) {
             log.info("jar 文件不存在，跳过删除: {}", jarPath);
             return true;
         }
-        final int maxRetries = 4;
-        final long intervalMs = 1000;
-        for (int i = 0; i <= maxRetries; i++) {
-            try {
-                Files.deleteIfExists(jarPath);
-                log.info("已删除 jar 文件: {}", jarPath);
-                return true;
-            } catch (IOException e) {
-                if (i == maxRetries) {
-                    log.warn("删除 jar 文件失败（已重试 {} 次）: {} — 协议 DB 记录已删，"
-                            + "jar 文件可稍后手动删除或等待 JVM 释放句柄后删除", maxRetries, jarPath);
-                    return false;
-                }
-                log.warn("删除 jar 文件失败（可能被旧 ClassLoader 锁定），触发 GC+Finalizer 后重试 ({}/{}): {}",
-                        i + 1, maxRetries, jarPath);
-                forceGcAndFinalize();
-                sleep(intervalMs);
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 强制触发 GC 并执行 pending finalizer。
-     *
-     * <p>Java 8 + Windows 上 URLClassLoader.close() 后 JarFile 文件句柄可能未释放，
-     * 依赖 GC 回收 JarFile 对象 + finalizer 关闭句柄（JDK-8054458）。
-     * {@code System.gc()} 触发 GC，{@code System.runFinalization()} 强制执行
-     * pending finalizer，两者配合提高文件句柄释放概率。
-     */
-    private void forceGcAndFinalize() {
-        System.gc();
-        System.runFinalization();
-        System.gc();  // 再次 GC 清理 finalizer 释放的对象
-    }
-
-    private void sleep(long ms) {
         try {
-            Thread.sleep(ms);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
+            Files.deleteIfExists(jarPath);
+            log.info("已删除 jar 文件: {}", jarPath);
+            return true;
+        } catch (IOException e) {
+            log.warn("删除 jar 文件失败: {} — 协议 DB 记录已删，jar 文件可稍后手动删除", jarPath);
+            return false;
         }
     }
 }

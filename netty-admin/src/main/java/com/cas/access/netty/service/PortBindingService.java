@@ -98,4 +98,24 @@ public class PortBindingService implements PortBindingStore {
     public PortBinding selectByName(String name) {
        return mapper.selectByName(name);
     }
+
+    /**
+     * 查询协议绑定的所有端口（不限 enabled 状态）。
+     * 用于 reload 场景：卸载时所有 port_binding 被置为 enabled=false，
+     * reload 需要查出这些记录并逐个恢复。
+     */
+    public List<Integer> selectAllPortsByProtocol(String name) {
+        try {
+            return mapper.selectList(
+                            new LambdaQueryWrapper<PortBinding>()
+                                    .eq(PortBinding::getProtocolName, name)
+                                    .orderByAsc(PortBinding::getPort))
+                    .stream()
+                    .map(PortBinding::getPort)
+                    .collect(java.util.stream.Collectors.toList());
+        } catch (Exception e) {
+            log.warn("DB 查询协议所有端口绑定失败: protocol={}, err={}", name, e.getMessage());
+            return java.util.Collections.emptyList();
+        }
+    }
 }
