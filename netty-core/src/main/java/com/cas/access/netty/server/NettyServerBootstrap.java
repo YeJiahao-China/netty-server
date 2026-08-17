@@ -9,13 +9,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
+//import javax.annotation.PreDestroy;
+//import javax.annotation.Resource;
 import java.util.Map;
 
 /**

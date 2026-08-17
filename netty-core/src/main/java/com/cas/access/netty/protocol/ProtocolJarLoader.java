@@ -1,9 +1,10 @@
 package com.cas.access.netty.protocol;
 
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+//import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;

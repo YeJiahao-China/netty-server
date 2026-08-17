@@ -32,14 +32,15 @@
         </dependency>
 
         <!-- MyBatis-Plus -->
+        <!-- ✅ 修改：使用 boot3 专用 starter -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.mybatis</groupId>
-            <artifactId>mybatis-spring</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.mybatis</groupId>-->
+<!--            <artifactId>mybatis-spring</artifactId>-->
+<!--        </dependency>-->
 
         <!-- PostgreSQL -->
         <dependency>
@@ -57,6 +58,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- RocketMQ gRPC Client -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client-java</artifactId>
+            <version>5.2.0</version>
         </dependency>
     </dependencies>
 

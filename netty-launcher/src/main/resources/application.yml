@@ -57,3 +57,12 @@ netty:
       jar-dir: C:/netty-protocols
       # 启动时是否自动扫描一次外部协议 jar
       auto-load-on-startup: true
+
+# ============ RocketMQ ============
+rocketmq:
+  # gRPC 端点（RocketMQ 5.x Proxy 默认端口 8081）
+  endpoint: 127.0.0.1:8081
+  producer:
+    group: netty-server-bridge
+    # 未绑定 topic 的端口数据是否丢弃（true=丢弃，false=抛异常）
+    send-message-timeout: 3000

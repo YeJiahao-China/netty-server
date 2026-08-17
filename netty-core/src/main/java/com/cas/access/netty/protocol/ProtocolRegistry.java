@@ -3,10 +3,11 @@ package com.cas.access.netty.protocol;
 import com.cas.access.netty.server.GlobalCache;
 import com.cas.access.netty.util.NettyServerUtil;
 import io.netty.channel.Channel;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+//import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

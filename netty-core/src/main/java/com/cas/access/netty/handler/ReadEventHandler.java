@@ -1,11 +1,12 @@
 package com.cas.access.netty.handler;
 
-import com.cas.access.netty.protocol.PortBindingStore;
+import com.cas.access.netty.protocol.MessageBridge;
 import com.cas.access.netty.server.GlobalCache;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.InetSocketAddress;
@@ -22,6 +23,9 @@ import java.net.InetSocketAddress;
 //@Scope("prototype")
 public class ReadEventHandler extends ChannelInboundHandlerAdapter {
 
+    @Autowired(required = false)
+    private MessageBridge messageBridge;
+
     /**
      * 服务端处理客户端请求的核心方法，这里接收了客户端发来的信息
      */
@@ -29,19 +33,20 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object info) {
         //获取服务端、客户端连接的IP和PORT
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
-        String localIp = localAddress.getAddress().getHostAddress();
-        int localPort = localAddress.getPort();
+        String serverIp = localAddress.getAddress().getHostAddress();
+        int serverPort = localAddress.getPort();
         InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
         String clientIp = clientAddress.getAddress().getHostAddress();
         int clientPort = clientAddress.getPort();
         //获取此连接通道的唯一标识
         ChannelId channelId = ctx.channel().id();
-//        clientIp = ProxyIpDecoder.ChannelId_IP_MAP.get(channelId) == null ? clientAddress.getAddress().getHostAddress() : ProxyIpDecoder.ChannelId_IP_MAP.get(channelId);
         String s = info.toString();
-        log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", clientIp, clientPort, localIp, localPort, channelId, s);
+        log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", clientIp, clientPort, serverIp, serverPort, channelId, s);
 
-        // TODO 根据当前的TCP监听端口，数据桥接到对应的RocketMQ的LiteTopic
-
+        // 数据桥接：根据当前 TCP 监听端口，将数据发送到对应的 RocketMQ topic
+        if (messageBridge != null) {
+            messageBridge.send(serverPort, s);
+        }
     }
 
     /**

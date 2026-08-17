@@ -12,6 +12,13 @@
     <name>netty-server-parent</name>
     <description>netty-server 多模块父项目：动态协议热插拔 TCP 接入服务</description>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.12</version>
+        <relativePath/>
+    </parent>
+
     <modules>
         <module>netty-spi</module>
         <module>netty-core</module>
@@ -22,23 +29,23 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <!-- 依赖版本集中管理 -->
         <netty.version>4.1.97.Final</netty.version>
-        <spring-boot.version>2.6.6</spring-boot.version>
+        <spring-boot.version>3.2.12</spring-boot.version>
         <lombok.version>1.18.34</lombok.version>
-        <logback.version>1.2.1</logback.version>
+        <logback.version>1.4.14</logback.version>  <!-- 升级 -->
         <fastjson2.version>2.0.5</fastjson2.version>
         <fastjson.version>2.0.5</fastjson.version>
-        <jackson.version>2.13.5</jackson.version>
-        <spring-data-redis.version>2.7.13</spring-data-redis.version>
-        <spring-web.version>5.3.23</spring-web.version>
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
-        <mybatis-spring.version>2.0.7</mybatis-spring.version>
+<!--        <jackson.version>2.13.5</jackson.version>-->
+        <!-- 移除 spring-data-redis.version 和 spring-web.version -->
+        <!-- 移除 mybatis-spring.version -->
+        <mybatis-plus.version>3.5.10</mybatis-plus.version>  <!-- 升级 -->
         <postgresql.version>42.7.3</postgresql.version>
         <flyway.version>8.5.13</flyway.version>
+        <rocketmq-client-java.version>5.2.0</rocketmq-client-java.version>
     </properties>
 
     <dependencyManagement>
@@ -72,23 +79,23 @@
                 <version>${netty.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-starter</artifactId>-->
+<!--                <version>${spring-boot.version}</version>-->
+<!--            </dependency>-->
 
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-web</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-starter-web</artifactId>-->
+<!--                <version>${spring-boot.version}</version>-->
+<!--            </dependency>-->
 
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-thymeleaf</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-starter-thymeleaf</artifactId>-->
+<!--                <version>${spring-boot.version}</version>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>org.projectlombok</groupId>
@@ -113,34 +120,35 @@
                 <version>${fastjson.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.springframework.data</groupId>
-                <artifactId>spring-data-redis</artifactId>
-                <version>${spring-data-redis.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework.data</groupId>-->
+<!--                <artifactId>spring-data-redis</artifactId>-->
+<!--                <version>${spring-data-redis.version}</version>-->
+<!--            </dependency>-->
 
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--                <artifactId>jackson-databind</artifactId>-->
+<!--                <version>${jackson.version}</version>-->
+<!--            </dependency>-->
 
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-web</artifactId>
-                <version>${spring-web.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.springframework</groupId>-->
+<!--                <artifactId>spring-web</artifactId>-->
+<!--                <version>${spring-web.version}</version>-->
+<!--            </dependency>-->
 
+            <!-- ✅ 修改：使用 boot3 专用 starter -->
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.mybatis</groupId>
-                <artifactId>mybatis-spring</artifactId>
-                <version>${mybatis-spring.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>org.mybatis</groupId>-->
+<!--                <artifactId>mybatis-spring</artifactId>-->
+<!--                <version>${mybatis-spring.version}</version>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>org.postgresql</groupId>
@@ -151,6 +159,12 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-core</artifactId>
                 <version>${flyway.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client-java</artifactId>
+                <version>${rocketmq-client-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
