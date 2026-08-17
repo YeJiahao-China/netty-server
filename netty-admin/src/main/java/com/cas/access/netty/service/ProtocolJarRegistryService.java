@@ -2,7 +2,7 @@ package com.cas.access.netty.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.cas.access.netty.entity.PortBinding;
+import com.cas.access.netty.entity.PortProtocolBinding;
 import com.cas.access.netty.entity.ProtocolJarRegistry;
 import com.cas.access.netty.mapper.PortBindingMapper;
 import com.cas.access.netty.mapper.ProtocolJarRegistryMapper;
@@ -128,10 +128,10 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                             .set(ProtocolJarRegistry::getUpdatedAt, LocalDateTime.now()));
 
             portBindingMapper.update(null,
-                    new LambdaUpdateWrapper<PortBinding>()
-                            .eq(PortBinding::getProtocolName, name)
-                            .set(PortBinding::getEnabled, Boolean.TRUE)
-                            .set(PortBinding::getUpdatedAt, LocalDateTime.now()));
+                    new LambdaUpdateWrapper<PortProtocolBinding>()
+                            .eq(PortProtocolBinding::getProtocolName, name)
+                            .set(PortProtocolBinding::getEnabled, Boolean.TRUE)
+                            .set(PortProtocolBinding::getUpdatedAt, LocalDateTime.now()));
 
             log.info("DB 恢复协议: name={}", name);
         } catch (Exception e) {
@@ -217,11 +217,11 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     public List<Integer> getEnabledPortsByProtocol(String protocolName) {
         try {
             return portBindingMapper.selectList(
-                            new LambdaQueryWrapper<PortBinding>()
-                                    .eq(PortBinding::getProtocolName, protocolName)
-                                    .eq(PortBinding::getEnabled, Boolean.TRUE))
+                            new LambdaQueryWrapper<PortProtocolBinding>()
+                                    .eq(PortProtocolBinding::getProtocolName, protocolName)
+                                    .eq(PortProtocolBinding::getEnabled, Boolean.TRUE))
                     .stream()
-                    .map(PortBinding::getPort)
+                    .map(PortProtocolBinding::getPort)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("DB 查询协议端口绑定失败: protocol={}, err={}", protocolName, e.getMessage());
@@ -264,8 +264,8 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
         int deletedRows = mapper.delete(new LambdaQueryWrapper<ProtocolJarRegistry>()
                 .eq(ProtocolJarRegistry::getName, name));
         // 物理删除 port_protocol_binding（可能多条）
-        portBindingMapper.delete(new LambdaQueryWrapper<PortBinding>()
-                .eq(PortBinding::getProtocolName, name));
+        portBindingMapper.delete(new LambdaQueryWrapper<PortProtocolBinding>()
+                .eq(PortProtocolBinding::getProtocolName, name));
         log.info("DB 物理删除协议: name={}", name);
         return deletedRows > 0;
     }

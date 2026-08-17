@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("port_protocol_binding")
-public class PortBinding {
+public class PortProtocolBinding {
 
     @TableId(type = IdType.AUTO)
     private Long id;

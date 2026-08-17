@@ -1,8 +1,10 @@
 package com.cas.access.netty.api;
 
+import com.cas.access.netty.entity.PortProtocolBinding;
 import com.cas.access.netty.entity.ProtocolJarRegistry;
 import com.cas.access.netty.protocol.ProtocolRegistry;
 import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.service.PortBindingService;
 import com.cas.access.netty.service.ProtocolJarRegistryService;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Controller;
@@ -45,7 +47,13 @@ public class DashboardController {
     private ProtocolRegistry registry;
 
     @Resource
+    private PortBindingService portBindingService;
+
+    @Resource
     private ProtocolJarRegistryService protocolJarRegistryService;
+
+    @Resource
+    private com.cas.access.netty.service.PortTopicService portTopicService;
 
     /* ===================== 概览 ===================== */
 
@@ -61,6 +69,14 @@ public class DashboardController {
     public String protocolsPage(Model model) {
         buildFullModel(model);
         return "protocols-page";
+    }
+
+    /* ===================== 数据桥接管理 ===================== */
+
+    @GetMapping("/port-topics-page")
+    public String portTopicsPage(Model model) {
+        buildPortTopicModel(model);
+        return "port-topics-page";
     }
 
     /* ===================== 占位 / 信息页 ===================== */
@@ -97,14 +113,15 @@ public class DashboardController {
      */
     private void buildFullModel(Model model) {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
         // 协议列表（从数据库查询所有协议，包括未启用的）
         List<Map<String, Object>> protocols = new ArrayList<>();
         int externalJarCount = 0;
         for (ProtocolJarRegistry p : protocolJarRegistryService.listAllInDb()) {
+            PortProtocolBinding portProtocolBinding = portBindingService.selectByName(p.getName());
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("name", p.getName());
             m.put("version", p.getVersion());
+            m.put("port", portProtocolBinding.getPort());
             m.put("description", p.getDescription() == null ? "" : p.getDescription());
             m.put("source", p.getSource());
             m.put("loadedAtText", p.getLoadedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(p.getLoadedAt())));
@@ -140,6 +157,35 @@ public class DashboardController {
         summary.put("externalJarCount", externalJarCount);
         summary.put("boundPortCount", bindings.size());
         summary.put("totalConnections", totalConnections);
+        model.addAttribute("summary", summary);
+    }
+
+    /**
+     * 构建数据桥接管理页所需的视图数据。
+     */
+    private void buildPortTopicModel(Model model) {
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        List<Map<String, Object>> topics = new ArrayList<>();
+        int enabledCount = 0;
+        for (com.cas.access.netty.entity.PortTopicBinding b : portTopicService.listAll()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("port", b.getPort());
+            m.put("topicName", b.getTopicName());
+            m.put("enabled", b.getEnabled());
+            m.put("createdAt", b.getCreatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
+            m.put("updatedAt", b.getUpdatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getUpdatedAt())));
+            topics.add(m);
+            if (Boolean.TRUE.equals(b.getEnabled())) {
+                enabledCount++;
+            }
+        }
+        model.addAttribute("topics", topics);
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("totalCount", topics.size());
+        summary.put("enabledCount", enabledCount);
+        summary.put("disabledCount", topics.size() - enabledCount);
         model.addAttribute("summary", summary);
     }
 }

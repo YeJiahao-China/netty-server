@@ -2,7 +2,7 @@ package com.cas.access.netty.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.cas.access.netty.entity.PortBinding;
+import com.cas.access.netty.entity.PortProtocolBinding;
 import com.cas.access.netty.mapper.PortBindingMapper;
 import com.cas.access.netty.protocol.PortBindingStore;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +35,11 @@ public class PortBindingService implements PortBindingStore {
     public Map<Integer, String> loadEnabledBindings() {
         Map<Integer, String> result = new LinkedHashMap<>();
         try {
-            List<PortBinding> list = mapper.selectList(
-                    new LambdaQueryWrapper<PortBinding>()
-                            .eq(PortBinding::getEnabled, Boolean.TRUE)
-                            .orderByAsc(PortBinding::getPort));
-            for (PortBinding b : list) {
+            List<PortProtocolBinding> list = mapper.selectList(
+                    new LambdaQueryWrapper<PortProtocolBinding>()
+                            .eq(PortProtocolBinding::getEnabled, Boolean.TRUE)
+                            .orderByAsc(PortProtocolBinding::getPort));
+            for (PortProtocolBinding b : list) {
                 result.put(b.getPort(), b.getProtocolName());
 //                log.info("从 DB 加载端口{}绑定协议{}", b.getPort(),b.getProtocolName());
             }
@@ -52,9 +52,9 @@ public class PortBindingService implements PortBindingStore {
     @Override
     public void persistBind(int port, String protocolName) {
         try {
-            PortBinding existing = mapper.selectByName(protocolName);
+            PortProtocolBinding existing = mapper.selectByName(protocolName);
             if (existing == null) {
-                PortBinding entity = new PortBinding();
+                PortProtocolBinding entity = new PortProtocolBinding();
                 entity.setPort(port);
                 entity.setProtocolName(protocolName);
                 entity.setEnabled(Boolean.TRUE);
@@ -72,10 +72,10 @@ public class PortBindingService implements PortBindingStore {
     public void persistUnbind(int port) {
         try {
             mapper.update(null,
-                    new LambdaUpdateWrapper<PortBinding>()
-                            .eq(PortBinding::getPort, port)
-                            .set(PortBinding::getEnabled, Boolean.FALSE)
-                            .set(PortBinding::getUpdatedAt, LocalDateTime.now()));
+                    new LambdaUpdateWrapper<PortProtocolBinding>()
+                            .eq(PortProtocolBinding::getPort, port)
+                            .set(PortProtocolBinding::getEnabled, Boolean.FALSE)
+                            .set(PortProtocolBinding::getUpdatedAt, LocalDateTime.now()));
             log.debug("DB 禁用绑定: port={}", port);
         } catch (Exception e) {
             log.warn("DB 禁用绑定失败（不影响运行时）: port={}, err={}", port, e.getMessage());
@@ -85,17 +85,17 @@ public class PortBindingService implements PortBindingStore {
     public void enabledBindings(String name) {
         try {
             mapper.update(null,
-                    new LambdaUpdateWrapper<PortBinding>()
-                            .eq(PortBinding::getProtocolName, name)
-                            .set(PortBinding::getEnabled, Boolean.TRUE)
-                            .set(PortBinding::getUpdatedAt, LocalDateTime.now()));
+                    new LambdaUpdateWrapper<PortProtocolBinding>()
+                            .eq(PortProtocolBinding::getProtocolName, name)
+                            .set(PortProtocolBinding::getEnabled, Boolean.TRUE)
+                            .set(PortProtocolBinding::getUpdatedAt, LocalDateTime.now()));
             log.info("DB 启用绑定: protocolName={}", name);
         } catch (Exception e) {
             throw new RuntimeException("DB 启用绑定失败: " + name, e);
         }
     }
 
-    public PortBinding selectByName(String name) {
+    public PortProtocolBinding selectByName(String name) {
        return mapper.selectByName(name);
     }
 
@@ -107,11 +107,11 @@ public class PortBindingService implements PortBindingStore {
     public List<Integer> selectAllPortsByProtocol(String name) {
         try {
             return mapper.selectList(
-                            new LambdaQueryWrapper<PortBinding>()
-                                    .eq(PortBinding::getProtocolName, name)
-                                    .orderByAsc(PortBinding::getPort))
+                            new LambdaQueryWrapper<PortProtocolBinding>()
+                                    .eq(PortProtocolBinding::getProtocolName, name)
+                                    .orderByAsc(PortProtocolBinding::getPort))
                     .stream()
-                    .map(PortBinding::getPort)
+                    .map(PortProtocolBinding::getPort)
                     .collect(java.util.stream.Collectors.toList());
         } catch (Exception e) {
             log.warn("DB 查询协议所有端口绑定失败: protocol={}, err={}", name, e.getMessage());

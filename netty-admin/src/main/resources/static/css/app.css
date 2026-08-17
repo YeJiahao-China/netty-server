@@ -693,7 +693,8 @@ tbody tr:hover { background: var(--bg); }
 }
 .field input[type="text"],
 .field input[type="number"],
-.field input[type="file"] {
+.field input[type="file"],
+.field select {
     display: block;
     width: 100%;
     padding: 8px 10px;
@@ -706,7 +707,8 @@ tbody tr:hover { background: var(--bg); }
     transition: border-color .15s, box-shadow .15s;
     box-sizing: border-box;
 }
-.field input:focus {
+.field input:focus,
+.field select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-soft);

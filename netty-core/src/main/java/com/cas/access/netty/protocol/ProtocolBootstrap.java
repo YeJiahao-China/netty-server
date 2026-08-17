@@ -12,13 +12,11 @@ import java.util.Map;
 
 /**
  * 协议模块启动初始化器。
- *
  * 执行顺序：
  *  1. 注册所有内置 {@link ProtocolDecoderProvider}（Spring 扫到的 @Component 实现）
  *  2. 扫描并加载外部协议 jar（若 {@code auto-load-on-startup=true}）
  *  3. 从 DB 加载初始端口绑定（{@code port_protocol_binding} 表，仅登记内存映射，
  *     不触发端口监听，由 {@code NettyServerBootstrap} 完成绑定）
- *
  * 必须在 {@code NettyServerBootstrap} 之前执行（{@link Order}(1)），
  * 这样端口绑定后客户端连接到来时 Registry 已就绪，Pipeline 装配不会失败。
  *

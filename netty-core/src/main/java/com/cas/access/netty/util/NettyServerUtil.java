@@ -60,7 +60,7 @@ public class NettyServerUtil {
             return;
         }
         serverSocketChannel.close();
-        log.info("NettyServer关闭服务端口[{}:{}]监听",
+        log.info("NettyServer关闭监听端口[{}:{}]",
                 ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
 
         Set<Channel> socketChannelSet = GlobalCache.unregisterPort(port);
@@ -93,14 +93,14 @@ public class NettyServerUtil {
     public static boolean closeListen(int port, int timeoutSeconds) {
         Channel serverSocketChannel = GlobalCache.removeServerChannel(port);
         if (serverSocketChannel == null) {
-            log.warn("端口[{}]未找到对应的ServerChannel，跳过关闭", port);
+            log.warn("监听端口[{}]未找到对应的ServerSocketChannel，跳过关闭", port);
             return true;
         }
 
         // 1. 关闭服务端监听端口（阻止新连接接入）
         try {
             serverSocketChannel.close().sync();
-            log.info("NettyServer关闭服务端口[{}:{}]监听",
+            log.info("NettyServer关闭监听端口[{}:{}]",
                     ((InetSocketAddress) serverSocketChannel.localAddress()).getHostString(), port);
         } catch (Exception e) {
             log.error("关闭服务端口[{}]监听异常: {}", port, e.getMessage(), e);
@@ -111,6 +111,7 @@ public class NettyServerUtil {
         if (socketChannelSet == null || socketChannelSet.isEmpty()) {
             return true;
         }
+        log.info("NettyServer即将关闭服务端口[{}]上{}个客户端连接", port, socketChannelSet.size());
 
         List<ChannelFuture> closeFutures = new ArrayList<>(socketChannelSet.size());
         for (Channel socketChannel : socketChannelSet) {
@@ -122,29 +123,66 @@ public class NettyServerUtil {
         }
 
         // 3. 💥 核心改造：同步等待所有连接完全关闭 + Pipeline Handler 被移除
-        boolean allSuccess = true;
+//        boolean allSuccess = true;
+//        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(timeoutSeconds);
+//
+//        for (ChannelFuture future : closeFutures) {
+//            long remaining = deadline - System.currentTimeMillis();
+//            if (remaining <= 0) {
+//                log.warn("端口[{}]连接关闭超时，剩余{}个连接未完全关闭", port,
+//                        closeFutures.size() - closeFutures.indexOf(future));
+//                allSuccess = false;
+//                break;
+//            }
+//
+//            try {
+//                if (!future.await(remaining, TimeUnit.MILLISECONDS)) {
+//                    log.warn("端口[{}]某个连接关闭超时", port);
+//                    allSuccess = false;
+//                } else if (!future.isSuccess()) {
+//                    InetSocketAddress addr = (InetSocketAddress) future.channel().remoteAddress();
+//                    log.error("关闭客户端[{}:{}]失败: {}",
+//                            addr.getAddress().getHostAddress(), addr.getPort(),
+//                            future.cause() != null ? future.cause().getMessage() : "unknown");
+//                    allSuccess = false;
+//                } else {
+//                    InetSocketAddress addr = (InetSocketAddress) future.channel().remoteAddress();
+//                    log.info("NettyServer关闭客户端[{}:{}]成功",
+//                            addr.getAddress().getHostAddress(), addr.getPort());
+//                }
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt();
+//                log.warn("等待端口[{}]连接关闭被中断", port);
+//                allSuccess = false;
+//                break;
+//            }
+//        }
         long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(timeoutSeconds);
+        int processedCount = 0;
+        int failCount = 0;
 
         for (ChannelFuture future : closeFutures) {
             long remaining = deadline - System.currentTimeMillis();
-            if (remaining <= 0) {
-                log.warn("端口[{}]连接关闭超时，剩余{}个连接未完全关闭", port,
-                        closeFutures.size() - closeFutures.indexOf(future));
-                allSuccess = false;
-                break;
-            }
+            // 剩余时间可能为负数，但 await 要求非负，因此取最大值 0
+            long waitMillis = Math.max(0, remaining);
 
             try {
-                if (!future.await(remaining, TimeUnit.MILLISECONDS)) {
-                    log.warn("端口[{}]某个连接关闭超时", port);
-                    allSuccess = false;
+                boolean completed = future.await(waitMillis, TimeUnit.MILLISECONDS);
+                if (!completed) {
+                    // 超时
+                    InetSocketAddress addr = (InetSocketAddress) future.channel().remoteAddress();
+                    log.warn("关闭客户端[{}:{}]超时，接收端可能正在读取数据",
+                            addr.getAddress().getHostAddress(), addr.getPort());
+                    failCount++;
                 } else if (!future.isSuccess()) {
+                    // 关闭失败（异常）
                     InetSocketAddress addr = (InetSocketAddress) future.channel().remoteAddress();
                     log.error("关闭客户端[{}:{}]失败: {}",
                             addr.getAddress().getHostAddress(), addr.getPort(),
                             future.cause() != null ? future.cause().getMessage() : "unknown");
-                    allSuccess = false;
+                    failCount++;
                 } else {
+                    // 关闭成功
                     InetSocketAddress addr = (InetSocketAddress) future.channel().remoteAddress();
                     log.info("NettyServer关闭客户端[{}:{}]成功",
                             addr.getAddress().getHostAddress(), addr.getPort());
@@ -152,12 +190,20 @@ public class NettyServerUtil {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.warn("等待端口[{}]连接关闭被中断", port);
-                allSuccess = false;
+                failCount = closeFutures.size() - processedCount; // 剩下未处理的都算失败
                 break;
             }
+            processedCount++;
         }
 
-        return allSuccess;
+        // 最终统计
+        if (failCount > 0) {
+            log.warn("监听端口[{}]连接关闭完成，共{}个连接，其中{}个失败/超时", port, closeFutures.size(), failCount);
+            return false;
+        } else {
+            log.info("监听端口[{}]所有连接已成功关闭", port);
+            return true;
+        }
     }
 
 }

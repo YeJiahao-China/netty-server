@@ -9,7 +9,7 @@ logging:
 spring:
   thymeleaf:
     # 开发期关闭模板缓存，方便调试；生产环境建议改回 true
-    cache: true
+    cache: false
     encoding: UTF-8
 
   # ============ 文件上传（控制台 jar 上传） ============

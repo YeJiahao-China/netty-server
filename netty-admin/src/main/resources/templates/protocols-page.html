@@ -7,7 +7,6 @@
     <div class="topbar-left">
         <div>
             <div class="page-title">协议管理</div>
-            <div class="page-sub">协议的加载、卸载与端口绑定关系</div>
         </div>
     </div>
     <div class="topbar-right">
@@ -69,6 +68,7 @@
                 <tr>
                     <th>协议</th>
                     <th>版本</th>
+                    <th>监听端口</th>
                     <th>来源</th>
                     <th>加载时间</th>
                     <th>状态</th>
@@ -83,6 +83,7 @@
                         <div class="proto-desc" th:if="${p.description}" th:text="${p.description}"></div>
                     </td>
                     <td><span class="code-chip" th:text="${p.version}"></span></td>
+                    <td><span class="code-chip" th:text="${p.port}"></span></td>
                     <td>
                         <span class="tag"
                               th:classappend="${p.source == 'builtin'} ? 'tag-builtin' : 'tag-external'"
@@ -96,17 +97,8 @@
                              <i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃
                         </span>
                     </td>
-<!--                    <td>-->
-<!--                        <span class="mono text-muted text-small" th:if="${p.jarPath}" th:text="${p.jarPath}"></span>-->
-<!--                        <span class="text-muted text-small" th:unless="${p.jarPath}">-</span>-->
-<!--                    </td>-->
-<!--                    <td>-->
-<!--                        <span class="mono text-muted text-small" th:if="${p.jarPath}"-->
-<!--                             th:text="${#strings.substringAfterLast(#strings.replace(p.jarPath,'\\','/'), '/')}"></span>-->
-<!--                        <span class="text-muted text-small" th:unless="${p.jarPath}">-</span>-->
-<!--                    </td>-->
                     <td>
-                <span class="mono text-muted text-small" th:if="${p.jarPath}"
+                        <span class="mono text-muted text-small" th:if="${p.jarPath}"
                             th:text="${p.jarPath.substring(p.jarPath.lastIndexOf('\\') + 1)}"></span>
                         <span class="text-muted text-small" th:unless="${p.jarPath}">-</span>
                     </td>
@@ -148,22 +140,7 @@
     </div>
 
     <!-- 操作日志 -->
-    <div class="panel">
-        <div class="panel-header">
-            <div class="panel-title">
-                <i class="bi bi-terminal"></i> 操作日志
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="clearOpsLog()">
-                <i class="bi bi-eraser"></i> 清空
-            </button>
-        </div>
-        <div class="ops-log" id="ops-log">
-            <div class="log-line">
-                <span class="log-time">--</span>
-                <span class="log-msg info">暂无操作记录</span>
-            </div>
-        </div>
-    </div>
+    <!-- 已移除 -->
 </main>
 
 <!-- 上传协议 Modal -->
@@ -245,12 +222,16 @@
     function purgeProtocol(name) {
         if (!confirm('确定彻底删除协议「' + name + '」？\n\n此操作将物理删除数据库记录，不可恢复！\n如需保留记录以便后续重新启用，请改用「卸载」。')) return;
         fetch('/protocols/' + encodeURIComponent(name) + '/purge', {method: 'DELETE'})
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                return r.json();
+            })
             .then(function (j) {
                 if (j.success) {
                     showToast('协议「' + name + '」已彻底删除', 'success');
                     logOp('彻底删除协议 ' + name, 'success');
-                    setTimeout(function () { location.reload(); }, 1000);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
                 } else {
                     showToast(j.reason || '删除失败', 'error');
                     logOp('删除失败: ' + (j.reason || '未知错误'), 'error');
@@ -379,13 +360,17 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 更新中...';
         fetch('/protocols/' + encodeURIComponent(name) + '/update', {method: 'POST', body: fd})
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                return r.json();
+            })
             .then(function (j) {
                 if (j.success) {
                     closeUpdateModal();
                     showToast('协议「' + j.protocolName + '」已更新到 v' + j.version, 'success');
                     logOp('更新协议 ' + j.protocolName + ' v' + j.version + ' → 端口 ' + (j.reboundPorts || []), 'success');
-                    setTimeout(function () { location.reload(); }, 1000);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
                 } else {
                     showToast(j.reason || '更新失败', 'error');
                     logOp('更新失败: ' + (j.reason || '未知错误'), 'error');

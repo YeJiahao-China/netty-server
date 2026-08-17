@@ -1,7 +1,7 @@
 package com.cas.access.netty.handler;
 
+import com.cas.access.netty.protocol.PortBindingStore;
 import com.cas.access.netty.server.GlobalCache;
-import com.cas.access.netty.util.NettyServerUtil;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -28,32 +28,20 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object info) {
         //获取服务端、客户端连接的IP和PORT
-        try {
-            log.info("即将阻塞");
-            Thread.sleep(30000L); //模拟耗时操作,此时执行协议卸载，观察io线程还能不能正常执行结束
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
         String localIp = localAddress.getAddress().getHostAddress();
         int localPort = localAddress.getPort();
         InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-        String clientIp = null;
+        String clientIp = clientAddress.getAddress().getHostAddress();
         int clientPort = clientAddress.getPort();
         //获取此连接通道的唯一标识
         ChannelId channelId = ctx.channel().id();
 //        clientIp = ProxyIpDecoder.ChannelId_IP_MAP.get(channelId) == null ? clientAddress.getAddress().getHostAddress() : ProxyIpDecoder.ChannelId_IP_MAP.get(channelId);
-        //服务端接收到的数据
         String s = info.toString();
         log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", clientIp, clientPort, localIp, localPort, channelId, s);
-        // 关闭监听服务端口20202
-//        NettyServerUtil.closeListen(20202);
-        ctx.writeAndFlush("OK");
-//        try {
-//            Thread.sleep(30000); // 模拟耗时操作
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
+
+        // TODO 根据当前的TCP监听端口，数据桥接到对应的RocketMQ的LiteTopic
+
     }
 
     /**

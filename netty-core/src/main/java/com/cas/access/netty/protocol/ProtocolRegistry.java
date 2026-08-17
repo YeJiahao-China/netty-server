@@ -112,7 +112,7 @@ public class ProtocolRegistry {
             log.info("协议[{}]绑定的端口 {} 将被关闭", name, boundPorts);
             for (int port : boundPorts) {
                 // 💥 传入超时时间，5秒足够绝大多数正常连接完成关闭
-                if (!NettyServerUtil.closeListen(port, 10)) {
+                if (!NettyServerUtil.closeListen(port, 30)) {
                     closeSuccess = false;
                     log.warn("端口[{}]连接未完全关闭，但仍继续卸载协议[{}]", port, name);
                 }

@@ -22,7 +22,6 @@
         <div class="brand-logo"><i class="bi bi-diagram-3"></i></div>
         <div>
             <div class="brand-title">数据接入控制台</div>
-            <div class="brand-sub">netty-server</div>
         </div>
     </div>
 
@@ -49,6 +48,9 @@
         <div class="menu-group-label">配置</div>
         <a class="menu-item" th:href="@{/protocols-page}" th:classappend="${active == 'protocols'} ? 'active' : ''">
             <i class="bi bi-box-seam"></i><span>协议管理</span>
+        </a>
+        <a class="menu-item" th:href="@{/port-topics-page}" th:classappend="${active == 'port-topics'} ? 'active' : ''">
+            <i class="bi bi-share"></i><span>数据桥接管理</span>
         </a>
         <a class="menu-item" th:href="@{/logs}" th:classappend="${active == 'logs'} ? 'active' : ''">
             <i class="bi bi-terminal"></i><span>系统日志</span>

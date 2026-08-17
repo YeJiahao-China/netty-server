@@ -1,5 +1,6 @@
 package com.cas.access.netty.api;
 
+import com.cas.access.netty.entity.PortProtocolBinding;
 import com.cas.access.netty.entity.ProtocolJarRegistry;
 import com.cas.access.netty.protocol.ProtocolJarLoader;
 import com.cas.access.netty.protocol.ProtocolProperties;
@@ -528,9 +529,11 @@ public class ProtocolController {
     public Map<String, Object> list() {
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("protocols", protocolJarRegistryService.listAllInDb().stream().map(p -> {
+            PortProtocolBinding portProtocolBinding = portBindingService.selectByName(p.getName());
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("name", p.getName());
             m.put("version", p.getVersion());
+            m.put("port", portProtocolBinding.getPort());
             m.put("source", p.getSource());
             m.put("description", p.getDescription());
             m.put("loadedAt", p.getLoadedAt());

@@ -1,7 +1,7 @@
 package com.cas.access.netty.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.cas.access.netty.entity.PortBinding;
+import com.cas.access.netty.entity.PortProtocolBinding;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
  *
  * @author yjh_c
  */
-public interface PortBindingMapper extends BaseMapper<PortBinding> {
+public interface PortBindingMapper extends BaseMapper<PortProtocolBinding> {
     @Select("SELECT * FROM port_protocol_binding WHERE protocol_name = #{name} LIMIT 1")
-    PortBinding selectByName(String name);
+    PortProtocolBinding selectByName(String name);
 
 
     @Update("UPDATE port_protocol_binding " +

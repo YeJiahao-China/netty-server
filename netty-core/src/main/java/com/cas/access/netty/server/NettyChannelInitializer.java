@@ -78,10 +78,10 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
                 }
             }
             pipeline.addLast("readEventHandle", readEventHandle);
-            log.info("[Pipeline装配成功] client={}:{} port={} protocol={}",
+            log.info("[Pipeline装配成功] client={}:{} serverPort={} protocol={}",
                     clientIp, clientPort, serverPort, protoName);
         } catch (Exception e) {
-            log.error("Init ChannelPipeline Error - client={}:{} port={} - {}",
+            log.error("Init ChannelPipeline Error - client={}:{} serverPort={} - {}",
                     clientIp, clientPort, serverPort, e.getMessage(), e);
             socketChannel.close();
         }
