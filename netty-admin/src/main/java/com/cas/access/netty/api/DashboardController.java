@@ -79,6 +79,13 @@ public class DashboardController {
         return "port-topics-page";
     }
 
+    /* ===================== 数据桥接日志 ===================== */
+
+    @GetMapping("/bridge-logs-page")
+    public String bridgeLogsPage(Model model) {
+        return "bridge-logs-page";
+    }
+
     /* ===================== 占位 / 信息页 ===================== */
 
     @GetMapping("/connections")

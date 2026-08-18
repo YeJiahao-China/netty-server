@@ -22,13 +22,7 @@ public class EchoHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         String line = msg.toString();
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime endTime = now.plusMinutes(5);
-        log.info("[Echo] 收到数据: {}, 即将空转5分钟", line);
 //        ctx.writeAndFlush("Echo: " + line + "\r\n");
-        while (LocalDateTime.now().isBefore(endTime)){
-//            log.info("等待时间未到");
-        }
         ctx.fireChannelRead(msg);
     }
 

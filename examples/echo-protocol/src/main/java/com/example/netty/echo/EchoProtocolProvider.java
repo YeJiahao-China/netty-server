@@ -26,7 +26,7 @@ public class EchoProtocolProvider implements ProtocolDecoderProvider {
 
     @Override
     public String name() {
-        return "echo2";
+        return "echo0";
     }
 
     @Override

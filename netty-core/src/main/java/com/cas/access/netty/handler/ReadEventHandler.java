@@ -2,6 +2,7 @@ package com.cas.access.netty.handler;
 
 import com.cas.access.netty.protocol.MessageBridge;
 import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.util.NettyServerUtil;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -9,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.InetSocketAddress;
 
 /**
  * 客户端TCP报文处理器类，用于处理客户端TCP报文数据
@@ -31,21 +31,20 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object info) {
-        //获取服务端、客户端连接的IP和PORT
-        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
-        String serverIp = localAddress.getAddress().getHostAddress();
-        int serverPort = localAddress.getPort();
-        InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-        String clientIp = clientAddress.getAddress().getHostAddress();
-        int clientPort = clientAddress.getPort();
         //获取此连接通道的唯一标识
         ChannelId channelId = ctx.channel().id();
         String s = info.toString();
-        log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", clientIp, clientPort, serverIp, serverPort, channelId, s);
+        log.info("[客户端-{}:{}]-<Read>-[NettyServer-{}:{}]-[ChannelId:{}] - [源数据:{}]", NettyServerUtil.getClientIp(ctx), NettyServerUtil.getClientPort(ctx), NettyServerUtil.getServerIp(ctx), NettyServerUtil.getServerPort(ctx), channelId, s);
 
-        // 数据桥接：根据当前 TCP 监听端口，将数据发送到对应的 RocketMQ topic
+        // 数据桥接：异步提交到业务线程池，不阻塞 Netty IO 线程
         if (messageBridge != null) {
-            messageBridge.send(serverPort, s);
+            messageBridge.send(
+                    NettyServerUtil.getServerPort(ctx),
+                    NettyServerUtil.getServerIp(ctx),
+                    NettyServerUtil.getClientPort(ctx),
+                    NettyServerUtil.getClientIp(ctx),
+                    s
+            );
         }
     }
 
@@ -63,20 +62,13 @@ public class ReadEventHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        //获取服务端、客户端连接的IP和PORT
-        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
-        String localIp = localAddress.getAddress().getHostAddress();
-        int localPort = localAddress.getPort();
-        InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-        String clientIp = clientAddress.getAddress().getHostAddress();
-        int clientPort = clientAddress.getPort();
         //获取客户端连接通道的唯一标识
         Channel channel = ctx.channel();
         ChannelId channelId = channel.id();
         //获取异常消息
         String causeMessage = cause.getMessage();
         GlobalCache.removeConnection(channelId);
-        log.error("[NettyServer-{}:{}]-<异常>-[客户端-{}:{}]-[ChannelId:{}-ChannelSize:{}] - [信息:{}]", localIp, localPort, clientIp, clientPort, channelId, GlobalCache.getTotalConnectionCount(), causeMessage);
+        log.error("[NettyServer-{}:{}]-<异常>-[客户端-{}:{}]-[ChannelId:{}-ChannelSize:{}] - [信息:{}]", NettyServerUtil.getServerIp(ctx), NettyServerUtil.getServerPort(ctx), NettyServerUtil.getClientIp(ctx), NettyServerUtil.getClientPort(ctx), channelId, GlobalCache.getTotalConnectionCount(), causeMessage);
         channel.close();
     }
 

@@ -4,6 +4,7 @@ import com.cas.access.netty.server.NettyServerBootstrap;
 import com.cas.access.netty.server.GlobalCache;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
@@ -18,6 +19,27 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class NettyServerUtil {
+
+
+    public static String getServerIp(ChannelHandlerContext ctx) {
+        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
+        return localAddress.getAddress().getHostAddress();
+    }
+
+    public static int getServerPort(ChannelHandlerContext ctx) {
+        InetSocketAddress localAddress = (InetSocketAddress) ctx.channel().localAddress();
+        return localAddress.getPort();
+    }
+
+    public static String getClientIp(ChannelHandlerContext ctx) {
+        InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+        return clientAddress.getAddress().getHostAddress();
+    }
+
+    public static int getClientPort(ChannelHandlerContext ctx) {
+        InetSocketAddress clientAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+        return clientAddress.getPort();
+    }
 
     /**
      * 新增服务监听端口
@@ -83,10 +105,10 @@ public class NettyServerUtil {
     }
 
 
-
     /**
      * 关闭指定端口的监听及所有活跃连接，并同步等待 Pipeline 完全清理
-     * @param port 端口号
+     *
+     * @param port           端口号
      * @param timeoutSeconds 等待超时时间（秒），防止恶意客户端阻塞卸载流程
      * @return true=所有连接在超时前正常关闭, false=存在超时或异常
      */

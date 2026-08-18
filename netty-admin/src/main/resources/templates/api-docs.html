@@ -54,6 +54,46 @@
         </div>
     </div>
 
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-journal-text"></i> 数据桥接日志接口
+            </div>
+        </div>
+        <div>
+            <div class="rest-item">
+                <span class="rest-method get">GET</span>
+                <span class="rest-url">/bridge-logs?page=1&amp;size=20&amp;serverPort=502&amp;success=true</span>
+                <div class="rest-desc">分页查询桥接日志，支持按端口和成功状态过滤。返回 data、total、pages、current、size。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method get">GET</span>
+                <span class="rest-url">/bridge-logs/{id}</span>
+                <div class="rest-desc">查询单条日志详情（含完整原始报文和错误信息）。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method get">GET</span>
+                <span class="rest-url">/bridge-logs/stats</span>
+                <div class="rest-desc">返回统计信息：总数、成功数、失败数、成功率。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/bridge-logs/{id}</span>
+                <div class="rest-desc">按 ID 删除单条日志。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/bridge-logs/batch?ids=1,2,3</span>
+                <div class="rest-desc">批量删除日志，ids 为逗号分隔的 ID 列表。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/bridge-logs/clear</span>
+                <div class="rest-desc">清空所有桥接日志（不可恢复）。</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 使用示例 -->
     <div class="panel">
         <div class="panel-header">

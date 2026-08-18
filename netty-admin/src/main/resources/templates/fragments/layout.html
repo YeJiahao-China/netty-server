@@ -52,6 +52,11 @@
         <a class="menu-item" th:href="@{/port-topics-page}" th:classappend="${active == 'port-topics'} ? 'active' : ''">
             <i class="bi bi-share"></i><span>数据桥接管理</span>
         </a>
+
+        <div class="menu-group-label">日志</div>
+        <a class="menu-item" th:href="@{/bridge-logs-page}" th:classappend="${active == 'bridge-logs'} ? 'active' : ''">
+            <i class="bi bi-journal-text"></i><span>数据桥接日志</span>
+        </a>
         <a class="menu-item" th:href="@{/logs}" th:classappend="${active == 'logs'} ? 'active' : ''">
             <i class="bi bi-terminal"></i><span>系统日志</span>
         </a>

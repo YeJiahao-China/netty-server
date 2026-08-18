@@ -11,6 +11,8 @@
         <version>1.0</version>
     </parent>
 
+
+
     <artifactId>netty-admin</artifactId>
     <name>netty-admin</name>
     <description>管理控制台：REST API、Thymeleaf 模板、静态资源、DB 实体/Mapper/Service、Flyway 迁移脚本</description>
@@ -37,10 +39,6 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.mybatis</groupId>-->
-<!--            <artifactId>mybatis-spring</artifactId>-->
-<!--        </dependency>-->
 
         <!-- PostgreSQL -->
         <dependency>
@@ -66,6 +64,28 @@
             <artifactId>rocketmq-client-java</artifactId>
             <version>5.2.0</version>
         </dependency>
+
+        <!-- Spring Retry：为数据桥接提供标准重试 + 指数退避策略 -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>19</source>
+                    <target>19</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

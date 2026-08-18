@@ -70,7 +70,7 @@ public class NettyChannelInitializer extends ChannelInitializer<SocketChannel> {
             int readIdle  = idle == null ? DEFAULT_IDLE_SECONDS : idle.readIdleSeconds;
             int writeIdle = idle == null ? DEFAULT_IDLE_SECONDS : idle.writeIdleSeconds;
             int allIdle   = idle == null ? DEFAULT_IDLE_SECONDS : idle.allIdleSeconds;
-            pipeline.addLast("idleStateHandler", new IdleStateHandler(readIdle, writeIdle, allIdle));
+//            pipeline.addLast("idleStateHandler", new IdleStateHandler(readIdle, writeIdle, allIdle));
             pipeline.addLast("connectEventHandler", connectEventHandler);
             ChannelHandler[] handlers = provider.createHandlers();
             if (handlers != null && handlers.length > 0) {
