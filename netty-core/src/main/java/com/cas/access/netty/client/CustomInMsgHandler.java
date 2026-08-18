@@ -1,10 +1,10 @@
 package com.cas.access.netty.client;
 
+import com.cas.access.netty.util.DateUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.SocketChannel;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -41,7 +41,7 @@ public class CustomInMsgHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " client receive：" + msg.toString());
+        System.out.println(DateUtils.format(new Date()) + " client receive：" + msg.toString());
     }
 
     /**

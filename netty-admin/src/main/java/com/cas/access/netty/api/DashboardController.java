@@ -6,13 +6,13 @@ import com.cas.access.netty.protocol.ProtocolRegistry;
 import com.cas.access.netty.server.GlobalCache;
 import com.cas.access.netty.service.PortBindingService;
 import com.cas.access.netty.service.ProtocolJarRegistryService;
+import com.cas.access.netty.util.DateUtils;
 import io.netty.channel.Channel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -119,7 +119,6 @@ public class DashboardController {
      * 构建概览/协议管理页所需的视图数据：protocols、bindings、summary。
      */
     private void buildFullModel(Model model) {
-        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         // 协议列表（从数据库查询所有协议，包括未启用的）
         List<Map<String, Object>> protocols = new ArrayList<>();
         int externalJarCount = 0;
@@ -131,7 +130,7 @@ public class DashboardController {
             m.put("port", portProtocolBinding.getPort());
             m.put("description", p.getDescription() == null ? "" : p.getDescription());
             m.put("source", p.getSource());
-            m.put("loadedAtText", p.getLoadedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(p.getLoadedAt())));
+            m.put("loadedAtText", p.getLoadedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(p.getLoadedAt())));
             m.put("active", p.getActive());
             m.put("jarPath", p.getJarPath());
             protocols.add(m);
@@ -171,8 +170,6 @@ public class DashboardController {
      * 构建数据桥接管理页所需的视图数据。
      */
     private void buildPortTopicModel(Model model) {
-        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
         List<Map<String, Object>> topics = new ArrayList<>();
         int enabledCount = 0;
         for (com.cas.access.netty.entity.PortTopicBinding b : portTopicService.listAll()) {
@@ -180,8 +177,8 @@ public class DashboardController {
             m.put("port", b.getPort());
             m.put("topicName", b.getTopicName());
             m.put("enabled", b.getEnabled());
-            m.put("createdAt", b.getCreatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
-            m.put("updatedAt", b.getUpdatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getUpdatedAt())));
+            m.put("createdAt", b.getCreatedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
+            m.put("updatedAt", b.getUpdatedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(b.getUpdatedAt())));
             topics.add(m);
             if (Boolean.TRUE.equals(b.getEnabled())) {
                 enabledCount++;

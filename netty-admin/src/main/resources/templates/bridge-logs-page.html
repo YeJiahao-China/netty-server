@@ -234,6 +234,9 @@
                 + '<td class="text-right">'
                 + '<button class="btn btn-sm btn-primary-ghost" onclick="showDetail(' + r.id + ')">'
                 + '<i class="bi bi-eye"></i> 详情</button> '
+                + (r.success ? '' :
+                '<button class="btn btn-sm btn-warning-ghost" onclick="resendLog(' + r.id + ')">'
+                + '<i class="bi bi-arrow-repeat"></i> 重试</button> ')
                 + '<button class="btn btn-sm btn-danger-ghost" onclick="deleteLog(' + r.id + ')">'
                 + '<i class="bi bi-trash3"></i></button>'
                 + '</td>'
@@ -344,6 +347,25 @@
 
     function closeDetailModal() {
         document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    /* ========== 重入队 ========== */
+    function resendLog(id) {
+        if (!confirm('确定重试发送日志 #' + id + ' 的原始报文？\n成功后该日志将被自动删除。')) return;
+        fetch('/bridge-logs/' + id + '/resend', { method: 'POST' })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.success) {
+                    showToast('重入队成功，日志已删除', 'success');
+                    loadStats();
+                    loadData();
+                } else {
+                    showToast(j.reason || '重入队失败', 'error');
+                }
+            })
+            .catch(function (err) {
+                showToast('请求异常: ' + err.message, 'error');
+            });
     }
 
     /* ========== 删除 ========== */

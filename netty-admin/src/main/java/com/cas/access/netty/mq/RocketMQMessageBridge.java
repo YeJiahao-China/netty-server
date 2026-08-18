@@ -243,6 +243,55 @@ public class RocketMQMessageBridge implements MessageBridge {
         }
     }
 
+    @Override
+    public boolean resend(final int serverPort, final String serverIp,
+                          final int clientPort, final String clientIp,
+                          final String topicName, final String data) {
+        long start = System.currentTimeMillis();
+
+        // 限流：重入队也需要限流，防止堆积大量失败任务时冲垮系统
+        if (!concurrencyLimiter.tryAcquire()) {
+            log.warn("重入队触发限流，跳过: server={}:{} client={}:{} topic={}",
+                    serverIp, serverPort, clientIp, clientPort, topicName);
+            return false;
+        }
+
+        try {
+            // Producer 未就绪
+            if (producer == null) {
+                log.error("重入队失败: Producer未就绪 server={}:{} client={}:{} topic={}",
+                        serverIp, serverPort, clientIp, clientPort, topicName);
+                return false;
+            }
+
+            ClientServiceProvider provider = ClientServiceProvider.loadService();
+            final byte[] body = data.getBytes(StandardCharsets.UTF_8);
+
+            retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
+                Message message = provider.newMessageBuilder()
+                        .setTopic(topicName)
+                        .setKeys(String.valueOf(serverPort))
+                        .setBody(body)
+                        .build();
+                producer.send(message);
+                return null;
+            });
+
+            long cost = System.currentTimeMillis() - start;
+            log.info("重入队成功: server={}:{} client={}:{} topic={} cost={}ms",
+                    serverIp, serverPort, clientIp, clientPort, topicName, cost);
+            return true;
+
+        } catch (Exception e) {
+            long cost = System.currentTimeMillis() - start;
+            log.error("重入队失败(已重试耗尽): server={}:{} client={}:{} topic={} cost={}ms error={}",
+                    serverIp, serverPort, clientIp, clientPort, topicName, cost, e.getMessage());
+            return false;
+        } finally {
+            concurrencyLimiter.release();
+        }
+    }
+
     /**
      * 快速填充失败日志并落库（用于绑定缺失、Producer 未就绪等前置校验失败场景）。
      */

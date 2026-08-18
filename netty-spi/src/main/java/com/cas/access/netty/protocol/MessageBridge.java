@@ -20,4 +20,22 @@ public interface MessageBridge {
      * @param data       原始数据内容
      */
     void send(int serverPort, String serverIp, int clientPort, String clientIp, String data);
+
+    /**
+     * 手动重入队（重试发送指定日志）。
+     * <p>
+     * 与 {@link #send} 不同，本方法会：
+     * 1. 同步执行发送（或等待异步完成），以便调用方判断是否成功；
+     * 2. 不自动写入 bridge_log（由调用方负责删除/保留原日志）。
+     *
+     * @param serverPort 服务端端口
+     * @param serverIp   服务端 IP
+     * @param clientPort 客户端端口
+     * @param clientIp   客户端 IP
+     * @param topicName  目标 Topic（来自日志记录）
+     * @param data       原始数据
+     * @return true 表示发送成功，false 表示发送失败（已耗尽重试）
+     */
+    boolean resend(int serverPort, String serverIp, int clientPort, String clientIp,
+                   String topicName, String data);
 }

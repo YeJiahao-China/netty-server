@@ -2,17 +2,21 @@ package com.cas.access.netty.api;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cas.access.netty.entity.BridgeLog;
+import com.cas.access.netty.entity.PortTopicBinding;
+import com.cas.access.netty.protocol.MessageBridge;
 import com.cas.access.netty.service.BridgeLogService;
+import com.cas.access.netty.service.PortTopicService;
+import com.cas.access.netty.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,8 +38,11 @@ public class BridgeLogController {
     @Resource
     private BridgeLogService bridgeLogService;
 
-    private static final SimpleDateFormat FMT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    @Resource
+    private MessageBridge messageBridge;
 
+    @Resource
+    private PortTopicService portTopicService;
     /**
      * 分页查询桥接日志，支持按端口和成功状态过滤。
      *
@@ -152,6 +159,54 @@ public class BridgeLogController {
         return resp;
     }
 
+    /**
+     * 重入队：重新发送日志中的原始数据到 RocketMQ。
+     * <p>
+     * 发送成功后物理删除该日志；发送失败则保留原日志。
+     */
+    @PostMapping("/{id}/resend")
+    public Map<String, Object> resend(@PathVariable Long id) {
+        BridgeLog logEntity = bridgeLogService.getById(id);
+        if (logEntity == null) {
+            return fail("日志不存在: " + id);
+        }
+
+        // 校验必要字段
+        if (logEntity.getRawData() == null || logEntity.getRawData().isEmpty()) {
+            return fail("原始报文为空，无法重入队");
+        }
+        PortTopicBinding portTopicBinding = portTopicService.selectByPort(logEntity.getServerPort());
+        String topicName = portTopicBinding.getTopicName();
+        if (topicName == null || topicName.isEmpty()) {
+            return fail("Topic 为空，无法重入队");
+        }
+
+        log.info("收到重入队请求: id={}, server={}:{}, client={}:{}, topic={}",
+                id, logEntity.getServerIp(), logEntity.getServerPort(),
+                logEntity.getClientIp(), logEntity.getClientPort(), topicName);
+
+
+        boolean success = messageBridge.resend(
+                logEntity.getServerPort(),
+                logEntity.getServerIp(),
+                logEntity.getClientPort(),
+                logEntity.getClientIp(),
+                topicName,
+                logEntity.getRawData()
+        );
+
+        if (success) {
+            bridgeLogService.deleteById(id);
+            log.info("重入队成功并已删除原日志: id={}", id);
+            Map<String, Object> resp = ok();
+            resp.put("message", "重入队成功，日志已删除");
+            return resp;
+        } else {
+            log.warn("重入队失败，保留原日志: id={}", id);
+            return fail("重入队失败，日志已保留，请检查服务状态或稍后重试");
+        }
+    }
+
     /* ===================== 私有方法 ===================== */
 
     private Map<String, Object> toMap(BridgeLog b) {
@@ -167,7 +222,7 @@ public class BridgeLogController {
         m.put("costMs", b.getCostMs());
         m.put("rawData", b.getRawData());
         m.put("errorMsg", b.getErrorMsg());
-        m.put("createdAt", b.getCreatedAt() == null ? "" : FMT.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
+        m.put("createdAt", b.getCreatedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
         return m;
     }
 

@@ -2,6 +2,7 @@ package com.cas.access.netty.api;
 
 import com.cas.access.netty.entity.PortTopicBinding;
 import com.cas.access.netty.service.PortTopicService;
+import com.cas.access.netty.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -43,14 +43,13 @@ public class PortTopicController {
     public Map<String, Object> list() {
         Map<String, Object> resp = ok();
         List<Map<String, Object>> list = new ArrayList<>();
-        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         for (PortTopicBinding b : portTopicService.listAll()) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("port", b.getPort());
             m.put("topicName", b.getTopicName());
             m.put("enabled", b.getEnabled());
-            m.put("createdAt", b.getCreatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
-            m.put("updatedAt", b.getUpdatedAt() == null ? "" : fmt.format(java.sql.Timestamp.valueOf(b.getUpdatedAt())));
+            m.put("createdAt", b.getCreatedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(b.getCreatedAt())));
+            m.put("updatedAt", b.getUpdatedAt() == null ? "" : DateUtils.format(java.sql.Timestamp.valueOf(b.getUpdatedAt())));
             list.add(m);
         }
         resp.put("data", list);
