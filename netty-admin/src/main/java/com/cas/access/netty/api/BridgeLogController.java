@@ -181,6 +181,12 @@ public class BridgeLogController {
             return fail("Topic 为空，无法重入队");
         }
 
+        // 监听端口对应的topic已更新，立即更新桥接日志信息
+        if (!topicName.equals(logEntity.getTopicName())) {
+            logEntity.setTopicName(topicName);
+            bridgeLogService.updateById(logEntity);
+        }
+
         log.info("收到重入队请求: id={}, server={}:{}, client={}:{}, topic={}",
                 id, logEntity.getServerIp(), logEntity.getServerPort(),
                 logEntity.getClientIp(), logEntity.getClientPort(), topicName);

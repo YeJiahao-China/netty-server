@@ -111,4 +111,8 @@ public class BridgeLogService {
                 new LambdaQueryWrapper<BridgeLog>().eq(BridgeLog::getSuccess, success)
         );
     }
+
+    public void updateById(BridgeLog logEntity) {
+        bridgeLogMapper.updateById(logEntity);
+    }
 }
