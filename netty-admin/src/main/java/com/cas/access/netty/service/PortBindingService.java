@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.cas.access.netty.entity.PortProtocolBinding;
 import com.cas.access.netty.mapper.PortBindingMapper;
 import com.cas.access.netty.protocol.PortBindingStore;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;

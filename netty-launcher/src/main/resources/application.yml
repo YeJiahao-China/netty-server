@@ -62,6 +62,13 @@ netty:
 rocketmq:
   # gRPC 端点（RocketMQ 5.x Proxy 默认端口 8081）
   endpoint: 127.0.0.1:8081
+  namesrvAddr: 127.0.0.1:9876
+  dashboard:
+    url: http://127.0.0.1:8082  # 确保这里是你 Dashboard 真实的访问地址
+  broker:
+    name: broker-default        # 请打开 Dashboard 的 Cluster 页面，确认你的 Broker Name 是什么，填在这里
+  cluster:
+    name: DefaultCluster
   producer:
     group: netty-server-bridge
     # 未绑定 topic 的端口数据是否丢弃（true=丢弃，false=抛异常）

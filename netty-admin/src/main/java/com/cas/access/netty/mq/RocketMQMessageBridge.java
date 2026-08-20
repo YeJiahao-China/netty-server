@@ -2,14 +2,13 @@ package com.cas.access.netty.mq;
 
 import com.cas.access.netty.entity.BridgeLog;
 import com.cas.access.netty.entity.PortTopicBinding;
+import com.cas.access.netty.mq.RocketMQTopicManager;
 import com.cas.access.netty.protocol.MessageBridge;
 import com.cas.access.netty.service.BridgeLogService;
 import com.cas.access.netty.service.PortTopicService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.apis.ClientConfiguration;
-import org.apache.rocketmq.client.apis.ClientServiceProvider;
-import org.apache.rocketmq.client.apis.message.Message;
-import org.apache.rocketmq.client.apis.producer.Producer;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.message.Message;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
@@ -17,28 +16,22 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 
-/**
- * RocketMQ 数据桥接实现：
- * <ol>
- *   <li>异步提交到业务线程池，不阻塞 Netty IO 线程；</li>
- *   <li>发送失败采用 Spring RetryTemplate + 指数退避策略重试（初始 100ms，倍数 2.0，最大 4 次）；</li>
- *   <li>每次桥接成功/失败都落库 bridge_log，失败时保留完整原始报文和客户端/服务端地址。</li>
- * </ol>
- * 使用 rocketmq-client-java 5.0.7（gRPC 协议）。
- */
-
 @Slf4j
 @Component
 public class RocketMQMessageBridge implements MessageBridge {
 
-    @Value("${rocketmq.endpoint:127.0.0.1:8081}")
-    private String endpoint;
+    // 【修改】：Remoting 客户端直连 NameServer，不再需要 Proxy (8081)
+    @Value("${rocketmq.namesrvAddr:127.0.0.1:9876}")
+    private String namesrvAddr;
+
+    @Value("${rocketmq.producer.group:netty-server-bridge}")
+    private String producerGroup;
 
     @Resource(name = "bridgeSendVirtualExecutor")
     private ExecutorService bridgeSendVirtualExecutor;
@@ -55,22 +48,23 @@ public class RocketMQMessageBridge implements MessageBridge {
     @Resource
     private BridgeLogService bridgeLogService;
 
-    private volatile Producer producer;
+    @Resource
+    private RocketMQTopicManager rocketMQTopicManager;
+
+    // 【修改】：替换为经典的 DefaultMQProducer
+    private volatile DefaultMQProducer producer;
 
     @PostConstruct
     public void init() {
         try {
-            ClientServiceProvider provider = ClientServiceProvider.loadService();
-            ClientConfiguration configuration = ClientConfiguration.newBuilder()
-                    .setEndpoints(endpoint)
-                    .build();
-            producer = provider.newProducerBuilder()
-                    .setClientConfiguration(configuration)
-                    .setTopics()
-                    .build();
-            log.info("RocketMQ Producer 启动成功, endpoint={}", endpoint);
+            producer = new DefaultMQProducer(producerGroup);
+            producer.setNamesrvAddr(namesrvAddr);
+            // 针对虚拟线程环境，设置合理的超时时间，防止网络抖动误判
+            producer.setSendMsgTimeout(3000);
+            producer.start();
+            log.info("RocketMQ Remoting Producer 启动成功, namesrvAddr={}", namesrvAddr);
         } catch (Exception e) {
-            log.error("RocketMQ Producer 启动失败, endpoint={}", endpoint, e);
+            log.error("RocketMQ Producer 启动失败, namesrvAddr={}", namesrvAddr, e);
         }
     }
 
@@ -78,7 +72,7 @@ public class RocketMQMessageBridge implements MessageBridge {
     public void destroy() {
         if (producer != null) {
             try {
-                producer.close();
+                producer.shutdown();
                 log.info("RocketMQ Producer 已关闭");
             } catch (Exception e) {
                 log.warn("RocketMQ Producer 关闭异常", e);
@@ -92,24 +86,25 @@ public class RocketMQMessageBridge implements MessageBridge {
                      final String data) {
         // 1、查询端口绑定
         PortTopicBinding binding = portTopicService.selectByPort(serverPort);
-        // 1. 尝试获取许可（限流），等同于原线程池的队列容量控制
+
+        // 2. 尝试获取许可（限流），等同于原线程池的队列容量控制
         if (!concurrencyLimiter.tryAcquire()) {
             log.warn("数据桥接并发数已满，触发限流: serverPort={}, client={}:{}, availablePermits={}",
                     serverPort, clientIp, clientPort, concurrencyLimiter.availablePermits());
 
             // 【核心优化】：限流被拒时，异步记录失败日志到数据库。
-            // 注意：必须放入虚拟线程异步执行，绝不能阻塞当前的 Netty IO 线程！
-            // 同时，这里直接提交，不需要获取 Semaphore 许可，避免许可泄漏。
             bridgeSendVirtualExecutor.execute(() -> saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding));
             return;
         }
+
         log.info("成功获取数据桥接许可，剩余可用Limiter={}", concurrencyLimiter.availablePermits());
-        // 2. 提交到虚拟线程异步执行，Netty IO 线程立即返回
+
+        // 3. 提交到虚拟线程异步执行，Netty IO 线程立即返回
         bridgeSendVirtualExecutor.execute(() -> {
             try {
                 doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
             } finally {
-                // 3. 无论成功失败，必须释放许可！防止并发数泄漏
+                // 4. 无论成功失败，必须释放许可！防止并发数泄漏
                 concurrencyLimiter.release();
                 log.info("数据桥接结束释放许可，剩余可用Limiter={}", concurrencyLimiter.availablePermits());
             }
@@ -118,7 +113,6 @@ public class RocketMQMessageBridge implements MessageBridge {
 
     /**
      * 异步记录被限流丢弃的日志。
-     * 独立抽取方法，避免在 send 方法中代码过于臃肿。
      */
     private void saveRejectedLog(int serverPort, String serverIp, int clientPort, String clientIp, String data, PortTopicBinding portTopicBinding) {
         try {
@@ -128,7 +122,8 @@ public class RocketMQMessageBridge implements MessageBridge {
             bridgeLog.setClientPort(clientPort);
             bridgeLog.setClientIp(clientIp);
             bridgeLog.setRawData(data);
-            bridgeLog.setTopicName(portTopicBinding.getTopicName());
+            // 【修复】：防止 binding 为 null 时引发 NullPointerException
+            bridgeLog.setTopicName(portTopicBinding != null ? portTopicBinding.getTopicName() : null);
             bridgeLog.setSuccess(false);
             bridgeLog.setRetryCount(0);
             bridgeLog.setCostMs(0);
@@ -137,7 +132,6 @@ public class RocketMQMessageBridge implements MessageBridge {
 
             bridgeLogService.save(bridgeLog);
         } catch (Exception e) {
-            // 兜底：如果连限流日志都落库失败，只打印 error 日志，避免异常抛出影响系统
             log.error("限流失败日志落库异常: server={}:{} client={}:{} error={}",
                     serverIp, serverPort, clientIp, clientPort, e.getMessage(), e);
         }
@@ -145,7 +139,6 @@ public class RocketMQMessageBridge implements MessageBridge {
 
     /**
      * 数据桥接主流程：查询绑定 → 校验 Producer → RetryTemplate 重试发送 → 落库日志。
-     * 外层做了兜底 try-catch，确保任何情况下都至少写入一条失败的 bridge_log。
      */
     private void doBridge(int serverPort, String serverIp,
                           int clientPort, String clientIp,
@@ -168,7 +161,6 @@ public class RocketMQMessageBridge implements MessageBridge {
             String topicName = binding.getTopicName();
             bridgeLog.setTopicName(topicName);
 
-            // 2、Producer 未就绪
             if (producer == null) {
                 finishWithFailure(bridgeLog, totalStart, 0, "Producer 未初始化", null);
                 log.error("数据桥接失败: server={}:{} client={}:{} topic={} Producer未就绪 raw={}",
@@ -176,19 +168,20 @@ public class RocketMQMessageBridge implements MessageBridge {
                 return;
             }
 
-            // 3、使用 RetryTemplate 执行发送（指数退避重试）
-            ClientServiceProvider provider = ClientServiceProvider.loadService();
+            // 动态创建 Topic (调用我们优化后的单参数方法)
+//            rocketMQTopicManager.createTopicIfNotExist(topicName);
+
             final byte[] body = data.getBytes(StandardCharsets.UTF_8);
             final int[] retryCountHolder = {0};
 
             try {
                 retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
                     retryCountHolder[0] = context.getRetryCount();
-                    Message message = provider.newMessageBuilder()
-                            .setTopic(topicName)
-                            .setKeys(String.valueOf(serverPort))
-                            .setBody(body)
-                            .build();
+
+                    // 【修改】：使用 Remoting 客户端的 Message 构建方式
+                    Message message = new Message(topicName, body);
+                    message.setKeys(String.valueOf(serverPort));
+
                     producer.send(message);
                     return null;
                 });
@@ -223,7 +216,7 @@ public class RocketMQMessageBridge implements MessageBridge {
             }
 
         } catch (Throwable t) {
-            // 兜底：任何未预期的异常（例如查库异常、loadService 失败等）
+            // 兜底：任何未预期的异常
             long cost = System.currentTimeMillis() - totalStart;
             bridgeLog.setSuccess(false);
             bridgeLog.setRetryCount(0);
@@ -249,7 +242,6 @@ public class RocketMQMessageBridge implements MessageBridge {
                           final String topicName, final String data) {
         long start = System.currentTimeMillis();
 
-        // 限流：重入队也需要限流，防止堆积大量失败任务时冲垮系统
         if (!concurrencyLimiter.tryAcquire()) {
             log.warn("重入队触发限流，跳过: server={}:{} client={}:{} topic={}",
                     serverIp, serverPort, clientIp, clientPort, topicName);
@@ -257,22 +249,18 @@ public class RocketMQMessageBridge implements MessageBridge {
         }
 
         try {
-            // Producer 未就绪
             if (producer == null) {
                 log.error("重入队失败: Producer未就绪 server={}:{} client={}:{} topic={}",
                         serverIp, serverPort, clientIp, clientPort, topicName);
                 return false;
             }
 
-            ClientServiceProvider provider = ClientServiceProvider.loadService();
             final byte[] body = data.getBytes(StandardCharsets.UTF_8);
 
             retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
-                Message message = provider.newMessageBuilder()
-                        .setTopic(topicName)
-                        .setKeys(String.valueOf(serverPort))
-                        .setBody(body)
-                        .build();
+                // 【修改】：使用 Remoting 客户端的 Message 构建方式
+                Message message = new Message(topicName, body);
+                message.setKeys(String.valueOf(serverPort));
                 producer.send(message);
                 return null;
             });
@@ -293,7 +281,7 @@ public class RocketMQMessageBridge implements MessageBridge {
     }
 
     /**
-     * 快速填充失败日志并落库（用于绑定缺失、Producer 未就绪等前置校验失败场景）。
+     * 快速填充失败日志并落库
      */
     private void finishWithFailure(BridgeLog bridgeLog, long totalStart,
                                    int retryCount, String errorMsg, String topicName) {

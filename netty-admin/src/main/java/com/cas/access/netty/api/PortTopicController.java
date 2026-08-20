@@ -1,6 +1,7 @@
 package com.cas.access.netty.api;
 
 import com.cas.access.netty.entity.PortTopicBinding;
+import com.cas.access.netty.mq.RocketMQTopicManager;
 import com.cas.access.netty.service.PortTopicService;
 import com.cas.access.netty.util.DateUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -35,6 +36,9 @@ public class PortTopicController {
 
     @Resource
     private PortTopicService portTopicService;
+
+    @Resource
+    private RocketMQTopicManager rocketMQTopicManager;
 
     /**
      * 查询所有端口-主题绑定。
@@ -102,6 +106,8 @@ public class PortTopicController {
             return fail("端口 " + port + " 已绑定主题[" + existing.getTopicName() + "]，请先解绑或使用更新接口");
         }
         portTopicService.upsertPortTopicBind(port, topicName.trim());
+        // 在RocketMQ中创建Topic
+        rocketMQTopicManager.createTopicIfNotExist(topicName.trim());
         log.info("端口[{}]绑定主题[{}]", port, topicName);
         Map<String, Object> resp = ok();
         resp.put("port", port);
@@ -123,6 +129,8 @@ public class PortTopicController {
             return fail("端口 " + port + " 未绑定主题，请先新增");
         }
         boolean ok = portTopicService.updateTopicName(port, topicName.trim());
+        // 在RocketMQ中创建Topic
+        rocketMQTopicManager.createTopicIfNotExist(topicName.trim());
         if (!ok) {
             return fail("更新失败");
         }

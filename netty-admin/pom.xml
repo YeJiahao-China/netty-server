@@ -59,11 +59,23 @@
         </dependency>
 
         <!-- RocketMQ gRPC Client -->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.rocketmq</groupId>-->
+<!--            <artifactId>rocketmq-client-java</artifactId>-->
+<!--            <version>5.2.0</version>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client-java</artifactId>
-            <version>5.2.0</version>
+            <artifactId>rocketmq-client</artifactId>
+            <version>5.5.0</version>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.apache.rocketmq</groupId>-->
+<!--            <artifactId>rocketmq-tools</artifactId>-->
+<!--            <version>5.5.0</version> &lt;!&ndash; 与你服务端的版本保持一致 &ndash;&gt;-->
+<!--        </dependency>-->
 
         <!-- Spring Retry：为数据桥接提供标准重试 + 指数退避策略 -->
         <dependency>
@@ -75,17 +87,17 @@
             <artifactId>spring-aspects</artifactId>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>19</source>
-                    <target>19</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+<!--    <build>-->
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-compiler-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <source>21</source>-->
+<!--                    <target>21</target>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--        </plugins>-->
+<!--    </build>-->
 
 </project>

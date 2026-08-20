@@ -8,7 +8,7 @@ import com.cas.access.netty.protocol.PortTopicSync;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -121,7 +121,7 @@ public class PortTopicService implements PortTopicSync {
     public boolean updateTopicName(int port, String topicName) {
         try {
             int rows = portTopicMapper.updateByPort(port, topicName, true, LocalDateTime.now());
-            log.info("更新数据桥接: port={}, topic={}, rows={}", port, topicName, rows);
+            log.info("更新数据桥接: port={}, topic={}", port, topicName);
             return rows > 0;
         } catch (Exception e) {
             log.warn("更新数据桥接失败: port={}", port, e);
