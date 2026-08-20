@@ -14,6 +14,9 @@ public interface PortTopicMapper extends BaseMapper<PortTopicBinding> {
     @Select("SELECT * FROM port_topic_binding WHERE port = #{port} LIMIT 1")
     PortTopicBinding selectByPort(int port);
 
+    @Select("SELECT * FROM port_topic_binding WHERE port = #{port} and enabled = 't' LIMIT 1")
+    PortTopicBinding selectAvailableByPort(int port);
+
     @Select("SELECT * FROM port_topic_binding ORDER BY port ASC")
     List<PortTopicBinding> selectAll();
 

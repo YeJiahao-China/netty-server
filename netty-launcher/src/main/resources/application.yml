@@ -4,6 +4,9 @@ server:
     uri-encoding: UTF-8
 
 logging:
+  level:
+    # 关闭 Thymeleaf 片段插入处理器的 WARN 日志
+    org.thymeleaf.standard.processor.AbstractStandardFragmentInsertionTagProcessor: ERROR
   config: classpath:logback.xml
 
 spring:

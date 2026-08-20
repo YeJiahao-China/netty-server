@@ -29,12 +29,12 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- 🌟 终极方案：直接在启动模块显式声明，防止多模块传递丢失 -->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.rocketmq</groupId>-->
-<!--            <artifactId>rocketmq-tools</artifactId>-->
-<!--            <version>5.5.0</version>-->
-<!--        </dependency>-->
+        <!-- 🌟 显式声明，彻底斩断传递依赖在 IDEA 运行时的玄学问题 -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client-java</artifactId>
+            <version>5.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>

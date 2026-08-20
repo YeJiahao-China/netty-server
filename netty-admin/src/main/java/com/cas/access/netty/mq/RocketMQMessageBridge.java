@@ -2,21 +2,24 @@ package com.cas.access.netty.mq;
 
 import com.cas.access.netty.entity.BridgeLog;
 import com.cas.access.netty.entity.PortTopicBinding;
-import com.cas.access.netty.mq.RocketMQTopicManager;
 import com.cas.access.netty.protocol.MessageBridge;
 import com.cas.access.netty.service.BridgeLogService;
 import com.cas.access.netty.service.PortTopicService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.client.apis.ClientConfiguration;
+import org.apache.rocketmq.client.apis.ClientServiceProvider;
+import org.apache.rocketmq.client.apis.message.Message;
+import org.apache.rocketmq.client.apis.producer.Producer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+// 【修复】：Spring Boot 3 必须统一使用 jakarta 包，防止 javax 冲突报错
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
+
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.concurrent.ExecutorService;
@@ -26,12 +29,9 @@ import java.util.concurrent.Semaphore;
 @Component
 public class RocketMQMessageBridge implements MessageBridge {
 
-    // 【修改】：Remoting 客户端直连 NameServer，不再需要 Proxy (8081)
-    @Value("${rocketmq.namesrvAddr:127.0.0.1:9876}")
-    private String namesrvAddr;
-
-    @Value("${rocketmq.producer.group:netty-server-bridge}")
-    private String producerGroup;
+    // 【修改】：gRPC 客户端直连 Proxy (8081)
+    @Value("${rocketmq.endpoint:127.0.0.1:8081}")
+    private String endpoint;
 
     @Resource(name = "bridgeSendVirtualExecutor")
     private ExecutorService bridgeSendVirtualExecutor;
@@ -51,20 +51,22 @@ public class RocketMQMessageBridge implements MessageBridge {
     @Resource
     private RocketMQTopicManager rocketMQTopicManager;
 
-    // 【修改】：替换为经典的 DefaultMQProducer
-    private volatile DefaultMQProducer producer;
+    // 【修改】：替换为 gRPC 的 Producer 接口
+    private volatile Producer producer;
 
     @PostConstruct
     public void init() {
         try {
-            producer = new DefaultMQProducer(producerGroup);
-            producer.setNamesrvAddr(namesrvAddr);
-            // 针对虚拟线程环境，设置合理的超时时间，防止网络抖动误判
-            producer.setSendMsgTimeout(3000);
-            producer.start();
-            log.info("RocketMQ Remoting Producer 启动成功, namesrvAddr={}", namesrvAddr);
+            ClientServiceProvider provider = ClientServiceProvider.loadService();
+            ClientConfiguration configuration = ClientConfiguration.newBuilder()
+                    .setEndpoints(endpoint)
+                    .build();
+            producer = provider.newProducerBuilder()
+                    .setClientConfiguration(configuration)
+                    .build();
+            log.info("RocketMQ gRPC Producer 启动成功, endpoint={}", endpoint);
         } catch (Exception e) {
-            log.error("RocketMQ Producer 启动失败, namesrvAddr={}", namesrvAddr, e);
+            log.error("RocketMQ Producer 启动失败, endpoint={}", endpoint, e);
         }
     }
 
@@ -72,7 +74,7 @@ public class RocketMQMessageBridge implements MessageBridge {
     public void destroy() {
         if (producer != null) {
             try {
-                producer.shutdown();
+                producer.close(); // gRPC 客户端使用 close() 关闭
                 log.info("RocketMQ Producer 已关闭");
             } catch (Exception e) {
                 log.warn("RocketMQ Producer 关闭异常", e);
@@ -80,35 +82,87 @@ public class RocketMQMessageBridge implements MessageBridge {
         }
     }
 
+    /**
+     * 常规数据发送
+     * @param serverPort 服务端 TCP 监听端口
+     * @param serverIp   服务端 IP
+     * @param clientPort 客户端远端端口
+     * @param clientIp   客户端远端 IP
+     * @param data       原始数据内容
+     */
     @Override
     public void send(final int serverPort, final String serverIp,
                      final int clientPort, final String clientIp,
                      final String data) {
         // 1、查询端口绑定
-        PortTopicBinding binding = portTopicService.selectByPort(serverPort);
+        PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+        bridgeSendVirtualExecutor.execute(() -> doBridge(serverPort, serverIp, clientPort, clientIp, data, binding));
 
-        // 2. 尝试获取许可（限流），等同于原线程池的队列容量控制
-        if (!concurrencyLimiter.tryAcquire()) {
-            log.warn("数据桥接并发数已满，触发限流: serverPort={}, client={}:{}, availablePermits={}",
-                    serverPort, clientIp, clientPort, concurrencyLimiter.availablePermits());
 
-            // 【核心优化】：限流被拒时，异步记录失败日志到数据库。
-            bridgeSendVirtualExecutor.execute(() -> saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding));
-            return;
-        }
-
-        log.info("成功获取数据桥接许可，剩余可用Limiter={}", concurrencyLimiter.availablePermits());
+        // 2.常规的数据桥接不需要限流，暂时注释掉 ###尝试获取许可（限流），等同于原线程池的队列容量控制
+//        if (!concurrencyLimiter.tryAcquire()) {
+//            log.warn("数据桥接并发数已满，触发限流: serverPort={}, client={}:{}, availablePermits={}",
+//                    serverPort, clientIp, clientPort, concurrencyLimiter.availablePermits());
+//
+//            // 【核心优化】：限流被拒时，异步记录失败日志到数据库。
+//            bridgeSendVirtualExecutor.execute(() -> saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding));
+//            return;
+//        }
 
         // 3. 提交到虚拟线程异步执行，Netty IO 线程立即返回
-        bridgeSendVirtualExecutor.execute(() -> {
-            try {
-                doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
-            } finally {
-                // 4. 无论成功失败，必须释放许可！防止并发数泄漏
-                concurrencyLimiter.release();
-                log.info("数据桥接结束释放许可，剩余可用Limiter={}", concurrencyLimiter.availablePermits());
+//        bridgeSendVirtualExecutor.execute(() -> {
+//            try {
+//                doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
+//            } finally {
+//                // 4. 无论成功失败，必须释放许可！防止并发数泄漏
+//                concurrencyLimiter.release();
+//            }
+//        });
+    }
+
+    @Override
+    public boolean resend(final int serverPort, final String serverIp,
+                          final int clientPort, final String clientIp,
+                          final String topicName, final String data) {
+
+        if (!concurrencyLimiter.tryAcquire()) {
+            log.warn("重投递触发限流，跳过: server={}:{} client={}:{} topic={}",
+                    serverIp, serverPort, clientIp, clientPort, topicName);
+            return false;
+        }
+        try {
+            if (producer == null) {
+                log.error("重投递失败: Producer未就绪 server={}:{} client={}:{} topic={}",
+                        serverIp, serverPort, clientIp, clientPort, topicName);
+                return false;
             }
-        });
+
+            final byte[] body = data.getBytes(StandardCharsets.UTF_8);
+            ClientServiceProvider provider = ClientServiceProvider.loadService();
+
+            retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
+                // 【修改】：使用 gRPC 客户端的 Message 构建方式
+                Message message = provider.newMessageBuilder()
+                        .setTopic(topicName)
+                        .setKeys(String.valueOf(serverPort))
+                        .setBody(body)
+                        .build();
+                producer.send(message);
+                return null;
+            });
+
+            log.info("重投递成功: server={}:{} client={}:{} topic={} ",
+                    serverIp, serverPort, clientIp, clientPort, topicName);
+            return true;
+
+        } catch (Exception e) {
+            log.error("重投递失败(已重试耗尽/未达到重试标准): server={}:{} client={}:{} topic={} error={}",
+                    serverIp, serverPort, clientIp, clientPort, topicName, e.getMessage());
+            return false;
+        } finally {
+            concurrencyLimiter.release();
+            log.info("释放重投递许可, 剩余Limiter={}", concurrencyLimiter.availablePermits());
+        }
     }
 
     /**
@@ -168,20 +222,27 @@ public class RocketMQMessageBridge implements MessageBridge {
                 return;
             }
 
-            // 动态创建 Topic (调用我们优化后的单参数方法)
+            // 【恢复】：动态创建 Topic (通过 HTTP 调用 Dashboard)
 //            rocketMQTopicManager.createTopicIfNotExist(topicName);
 
             final byte[] body = data.getBytes(StandardCharsets.UTF_8);
             final int[] retryCountHolder = {0};
 
+            // gRPC 客户端的 Provider
+            ClientServiceProvider provider = ClientServiceProvider.loadService();
+
             try {
                 retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
                     retryCountHolder[0] = context.getRetryCount();
 
-                    // 【修改】：使用 Remoting 客户端的 Message 构建方式
-                    Message message = new Message(topicName, body);
-                    message.setKeys(String.valueOf(serverPort));
+                    // 【修改】：使用 gRPC 客户端的 Message 构建方式
+                    Message message = provider.newMessageBuilder()
+                            .setTopic(topicName)
+                            .setKeys(String.valueOf(serverPort))
+                            .setBody(body)
+                            .build();
 
+                    // gRPC 发送，失败会自动抛出异常被 RetryTemplate 捕获
                     producer.send(message);
                     return null;
                 });
@@ -195,9 +256,9 @@ public class RocketMQMessageBridge implements MessageBridge {
                 bridgeLog.setCreatedAt(LocalDateTime.now());
                 bridgeLogService.save(bridgeLog);
 
-                log.info("数据桥接成功: server={}:{} client={}:{} topic={} retry={} cost={}ms dataLen={}",
+                log.info("数据桥接成功: server={}:{} client={}:{} topic={} retry={} cost={}ms data={}",
                         serverIp, serverPort, clientIp, clientPort, topicName,
-                        retryCountHolder[0], cost, data.length());
+                        retryCountHolder[0], cost, data);
 
             } catch (Exception e) {
                 // 重试耗尽，最终失败
@@ -236,49 +297,6 @@ public class RocketMQMessageBridge implements MessageBridge {
         }
     }
 
-    @Override
-    public boolean resend(final int serverPort, final String serverIp,
-                          final int clientPort, final String clientIp,
-                          final String topicName, final String data) {
-        long start = System.currentTimeMillis();
-
-        if (!concurrencyLimiter.tryAcquire()) {
-            log.warn("重入队触发限流，跳过: server={}:{} client={}:{} topic={}",
-                    serverIp, serverPort, clientIp, clientPort, topicName);
-            return false;
-        }
-
-        try {
-            if (producer == null) {
-                log.error("重入队失败: Producer未就绪 server={}:{} client={}:{} topic={}",
-                        serverIp, serverPort, clientIp, clientPort, topicName);
-                return false;
-            }
-
-            final byte[] body = data.getBytes(StandardCharsets.UTF_8);
-
-            retryTemplate.execute((RetryCallback<Void, Exception>) context -> {
-                // 【修改】：使用 Remoting 客户端的 Message 构建方式
-                Message message = new Message(topicName, body);
-                message.setKeys(String.valueOf(serverPort));
-                producer.send(message);
-                return null;
-            });
-
-            long cost = System.currentTimeMillis() - start;
-            log.info("重入队成功: server={}:{} client={}:{} topic={} cost={}ms",
-                    serverIp, serverPort, clientIp, clientPort, topicName, cost);
-            return true;
-
-        } catch (Exception e) {
-            long cost = System.currentTimeMillis() - start;
-            log.error("重入队失败(已重试耗尽): server={}:{} client={}:{} topic={} cost={}ms error={}",
-                    serverIp, serverPort, clientIp, clientPort, topicName, cost, e.getMessage());
-            return false;
-        } finally {
-            concurrencyLimiter.release();
-        }
-    }
 
     /**
      * 快速填充失败日志并落库

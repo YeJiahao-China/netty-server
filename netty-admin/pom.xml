@@ -59,17 +59,17 @@
         </dependency>
 
         <!-- RocketMQ gRPC Client -->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.rocketmq</groupId>-->
-<!--            <artifactId>rocketmq-client-java</artifactId>-->
-<!--            <version>5.2.0</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client</artifactId>
-            <version>5.5.0</version>
+            <artifactId>rocketmq-client-java</artifactId>
+            <version>5.2.0</version>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.apache.rocketmq</groupId>-->
+<!--            <artifactId>rocketmq-client</artifactId>-->
+<!--            <version>5.5.0</version>-->
+<!--        </dependency>-->
 
 <!--        <dependency>-->
 <!--            <groupId>org.apache.rocketmq</groupId>-->

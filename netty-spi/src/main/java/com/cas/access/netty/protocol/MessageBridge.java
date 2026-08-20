@@ -22,7 +22,7 @@ public interface MessageBridge {
     void send(int serverPort, String serverIp, int clientPort, String clientIp, String data);
 
     /**
-     * 手动重入队（重试发送指定日志）。
+     * 手动重投递（重试发送指定日志）。
      * <p>
      * 与 {@link #send} 不同，本方法会：
      * 1. 同步执行发送（或等待异步完成），以便调用方判断是否成功；

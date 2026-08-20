@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * 客户端TCP报文处理器类，用于处理客户端TCP报文数据
  * 同时也保存全局的客户端连接情况
  *
- * @author wumengjun  yjh
+ * @author   yjh
  */
 @ChannelHandler.Sharable
 @Component

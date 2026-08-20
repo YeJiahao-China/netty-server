@@ -5,11 +5,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cas.access.netty.entity.BridgeLog;
 import com.cas.access.netty.mapper.BridgeLogMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.cursor.Cursor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * 数据桥接日志 Service。
@@ -114,5 +119,35 @@ public class BridgeLogService {
 
     public void updateById(BridgeLog logEntity) {
         bridgeLogMapper.updateById(logEntity);
+    }
+
+    /**
+     * 使用 MyBatis Cursor 流式遍历失败日志，按批回调。
+     * <p>
+     * PostgreSQL server-side cursor 逐批从数据库拉取（fetchSize=500），
+     * 内存中仅持有当前批次，不会将全量数据加载到 JVM 堆。
+     * <p>
+     * 必须在事务内调用（{@link Transactional} 已声明）。
+     *
+     * @param batchSize      每批回调的条数
+     * @param batchConsumer  每批回调（在 HTTP 线程同步执行）
+     */
+    @Transactional(readOnly = true)
+    public void streamFailedLogs(int batchSize, Consumer<List<BridgeLog>> batchConsumer) {
+        try (Cursor<BridgeLog> cursor = bridgeLogMapper.selectFailedCursor()) {
+            List<BridgeLog> batch = new ArrayList<>(batchSize);
+            for (BridgeLog log : cursor) {
+                batch.add(log);
+                if (batch.size() >= batchSize) {
+                    batchConsumer.accept(batch);
+                    batch = new ArrayList<>(batchSize);
+                }
+            }
+            if (!batch.isEmpty()) {
+                batchConsumer.accept(batch);
+            }
+        } catch (IOException e) {
+            log.error("游标读取失败日志异常", e);
+        }
     }
 }

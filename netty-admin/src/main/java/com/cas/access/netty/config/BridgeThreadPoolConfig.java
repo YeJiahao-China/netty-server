@@ -81,7 +81,36 @@ public class BridgeThreadPoolConfig {
         exceptionMap.put(Exception.class, true);
         exceptionMap.put(InterruptedException.class, false);
 
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(retryMaxAttempts, exceptionMap);
+        // 【核心优化】：自定义 RetryPolicy，精准拦截“Topic 不存在”等无需重试的业务异常
+        // 第三个参数 true 表示 traverseCauses，允许解析被包装的异常（如 ExecutionException）
+        // 【核心优化】：自定义 RetryPolicy，精准拦截“Topic 不存在”等无需重试的业务异常
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(retryMaxAttempts, exceptionMap, true) {
+            @Override
+            public boolean canRetry(RetryContext context) {
+                Throwable lastException = context.getLastThrowable();
+                if (lastException != null) {
+                    String exClassName = lastException.getClass().getName();
+                    String exMessage = lastException.getMessage();
+
+                    if (exClassName.contains("rocketmq") && exClassName.contains("Exception")) {
+                        if (exMessage != null && (
+                                exMessage.contains("No topic route info") ||
+                                        exMessage.contains("40402") ||
+                                        exMessage.contains("CODE: 17")
+                        )) {
+                            // 🌟 防重机制：利用 RetryContext 存储标记，确保只打印一次日志
+                            String logPrintedKey = "NON_RETRYABLE_LOG_PRINTED";
+                            if (context.getAttribute(logPrintedKey) == null) {
+                                log.warn("🛑 检测到 Topic 不存在或路由错误，直接放弃重试: {}", exMessage);
+                                context.setAttribute(logPrintedKey, Boolean.TRUE);
+                            }
+                            return false; // 明确终止重试
+                        }
+                    }
+                }
+                return super.canRetry(context);
+            }
+        };
 
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(retryInitialBackoffMs);

@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 数据桥接日志管理 HTTP 接口（端口 2310）。
@@ -43,6 +45,9 @@ public class BridgeLogController {
 
     @Resource
     private PortTopicService portTopicService;
+
+    @Resource(name = "bridgeSendVirtualExecutor")
+    private ExecutorService bridgeSendVirtualExecutor;
     /**
      * 分页查询桥接日志，支持按端口和成功状态过滤。
      *
@@ -160,7 +165,7 @@ public class BridgeLogController {
     }
 
     /**
-     * 重入队：重新发送日志中的原始数据到 RocketMQ。
+     * 重投递：重新发送日志中的原始数据到 RocketMQ。
      * <p>
      * 发送成功后物理删除该日志；发送失败则保留原日志。
      */
@@ -173,13 +178,13 @@ public class BridgeLogController {
 
         // 校验必要字段
         if (logEntity.getRawData() == null || logEntity.getRawData().isEmpty()) {
-            return fail("原始报文为空，无法重入队");
+            return fail("原始报文为空，无法重投递");
         }
-        PortTopicBinding portTopicBinding = portTopicService.selectByPort(logEntity.getServerPort());
+        PortTopicBinding portTopicBinding = portTopicService.selectAvailableByPort(logEntity.getServerPort());
+        if (portTopicBinding==null  || portTopicBinding.getTopicName() == null || portTopicBinding.getTopicName().isEmpty()) {
+            return fail("暂无可用Topic绑定，无法重投递");
+        }
         String topicName = portTopicBinding.getTopicName();
-        if (topicName == null || topicName.isEmpty()) {
-            return fail("Topic 为空，无法重入队");
-        }
 
         // 监听端口对应的topic已更新，立即更新桥接日志信息
         if (!topicName.equals(logEntity.getTopicName())) {
@@ -187,7 +192,7 @@ public class BridgeLogController {
             bridgeLogService.updateById(logEntity);
         }
 
-        log.info("收到重入队请求: id={}, server={}:{}, client={}:{}, topic={}",
+        log.info("收到重投递请求: id={}, server={}:{}, client={}:{}, topic={}",
                 id, logEntity.getServerIp(), logEntity.getServerPort(),
                 logEntity.getClientIp(), logEntity.getClientPort(), topicName);
 
@@ -202,15 +207,79 @@ public class BridgeLogController {
         );
 
         if (success) {
-            bridgeLogService.deleteById(id);
-            log.info("重入队成功并已删除原日志: id={}", id);
+            logEntity.setSuccess(true);
+            bridgeLogService.updateById(logEntity);
+            log.info("重投递成功并已更新原日志: id={}", id);
             Map<String, Object> resp = ok();
-            resp.put("message", "重入队成功，日志已删除");
+            resp.put("message", "重投递成功，日志已更新");
             return resp;
         } else {
-            log.warn("重入队失败，保留原日志: id={}", id);
-            return fail("重入队失败，日志已保留，请检查服务状态或稍后重试");
+            log.warn("重投递失败，保留原日志: id={}", id);
+            return fail("重投递失败，日志已保留，请检查服务状态或稍后重投递");
         }
+    }
+
+    /**
+     * 批量重投递：MyBatis Cursor 流式查询全部失败日志，分批提交到虚拟线程池异步重投递。
+     * <p>
+     * HTTP 线程只负责游标遍历和提交任务，不阻塞等待发送完成。
+     *
+     * @param batchSize 每批提交到线程池的数量（默认 500）
+     */
+    @PostMapping("/batch-resend")
+    public Map<String, Object> batchResend(
+            @RequestParam(value = "batchSize", defaultValue = "500") int batchSize) {
+
+        log.info("收到批量重投递请求: batchSize={}", batchSize);
+
+        final AtomicInteger submittedCount = new AtomicInteger(0);
+
+        bridgeLogService.streamFailedLogs(batchSize, batch -> {
+            for (BridgeLog logEntity : batch) {
+                final Long logId = logEntity.getId();
+                PortTopicBinding portTopicBinding = portTopicService.selectAvailableByPort(logEntity.getServerPort());
+                final String rawData = logEntity.getRawData();
+
+                // 跳过无效数据
+                if (rawData == null || rawData.isEmpty() || portTopicBinding==null || portTopicBinding.getTopicName() == null || portTopicBinding.getTopicName().isEmpty()) {
+                    if (portTopicBinding != null) {
+                        log.warn("批量重投递跳过无效日志: id={}, topic={}, rawDataEmpty={}",
+                                logId, portTopicBinding.getTopicName(), rawData == null || rawData.isEmpty());
+                    }
+                    continue;
+                }
+                submittedCount.incrementAndGet();
+                bridgeSendVirtualExecutor.execute(() -> {
+                    try {
+                        boolean success = messageBridge.resend(
+                                logEntity.getServerPort(),
+                                logEntity.getServerIp(),
+                                logEntity.getClientPort(),
+                                logEntity.getClientIp(),
+                                portTopicBinding.getTopicName(),
+                                rawData
+                        );
+                        if (success) {
+                            logEntity.setTopicName(portTopicBinding.getTopicName());
+                            logEntity.setSuccess(true);
+                            bridgeLogService.updateById(logEntity);
+                            log.info("批量重投递成功，日志状态已更新: id={}", logId);
+                        } else {
+                            log.warn("批量重投递失败，保留日志: id={}", logId);
+                        }
+                    } catch (Exception e) {
+                        log.error("批量重投递异常: id={}, error={}", logId, e.getMessage(), e);
+                    }
+                });
+            }
+        });
+
+        log.info("批量重投递任务已全部提交到虚拟线程池: 共 {} 条", submittedCount.get());
+
+        Map<String, Object> resp = ok();
+        resp.put("submitted", submittedCount.get());
+        resp.put("message", "已提交 " + submittedCount.get() + " 条失败日志到虚拟线程池异步重投递");
+        return resp;
     }
 
     /* ===================== 私有方法 ===================== */

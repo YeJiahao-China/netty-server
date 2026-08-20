@@ -78,6 +78,13 @@ public class PortTopicService implements PortTopicSync {
     }
 
     /**
+     * 按端口号查询绑定记录。
+     */
+    public PortTopicBinding selectAvailableByPort(int port) {
+        return portTopicMapper.selectAvailableByPort(port);
+    }
+
+    /**
      * 按端口号物理删除绑定记录。
      */
     public boolean deleteByPort(int port) {
