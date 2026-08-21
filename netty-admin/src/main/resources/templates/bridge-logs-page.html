@@ -110,11 +110,12 @@
 </div>
 
 <div th:replace="fragments/layout :: toasts"></div>
+<div th:replace="fragments/layout :: confirm-modal"></div>
 <th:block th:replace="fragments/layout :: scripts"></th:block>
 
 <script>
     var currentPage = 1;
-    var pageSize = 20;
+    var pageSize = 10;
     var totalPages = 1;
 
     function refresh() {
@@ -350,56 +351,59 @@
 
     /* ========== 重投递 ========== */
     function resendLog(id) {
-        if (!confirm('确定重投递日志 #' + id + ' 的原始报文？\n成功后该日志状态将更新为成功。')) return;
-        fetch('/bridge-logs/' + id + '/resend', { method: 'POST' })
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (j.success) {
-                    showToast('重投递成功，日志状态已更新', 'success');
-                    loadStats();
-                    loadData();
-                } else {
-                    showToast(j.reason || '重投递失败', 'error');
-                }
-            })
-            .catch(function (err) {
-                showToast('请求异常: ' + err.message, 'error');
-            });
+        showConfirm('确定重投递日志 #' + id + ' 的原始报文？\n成功后该日志状态将更新为成功。', function () {
+            fetch('/bridge-logs/' + id + '/resend', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    if (j.success) {
+                        showToast('重投递成功，日志状态已更新', 'success');
+                        loadStats();
+                        loadData();
+                    } else {
+                        showToast(j.reason || '重投递失败', 'error');
+                    }
+                })
+                .catch(function (err) {
+                    showToast('请求异常: ' + err.message, 'error');
+                });
+        }, { title: '重投递确认', icon: 'bi-arrow-repeat', iconColor: 'var(--warning)', btnClass: 'btn-warning-ghost', btnText: '重投递' });
     }
 
     /* ========== 批量重投递 ========== */
     function batchResend() {
-        if (!confirm('确定重投递所有失败日志？\n系统将分批查询并提交到虚拟线程池异步重投递，\n成功发送的日志状态将更新为成功。')) return;
-        fetch('/bridge-logs/batch-resend', { method: 'POST' })
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (j.success) {
-                    showToast(j.message || '重投递已提交', 'success');
-                    loadStats();
-                    loadData();
-                } else {
-                    showToast(j.reason || '重投递失败', 'error');
-                }
-            })
-            .catch(function (err) {
-                showToast('请求异常: ' + err.message, 'error');
-            });
+        showConfirm('确定重投递所有失败日志？\n系统将分批查询并提交到虚拟线程池异步重投递，\n成功发送的日志状态将更新为成功。', function () {
+            fetch('/bridge-logs/batch-resend', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    if (j.success) {
+                        showToast(j.message || '重投递已提交', 'success');
+                        loadStats();
+                        loadData();
+                    } else {
+                        showToast(j.reason || '重投递失败', 'error');
+                    }
+                })
+                .catch(function (err) {
+                    showToast('请求异常: ' + err.message, 'error');
+                });
+        }, { title: '一键重投递', icon: 'bi-arrow-repeat', iconColor: 'var(--warning)', btnClass: 'btn-warning-ghost', btnText: '一键重投递' });
     }
 
     /* ========== 删除 ========== */
     function deleteLog(id) {
-        if (!confirm('确定删除日志 #' + id + '？')) return;
-        fetch('/bridge-logs/' + id, { method: 'DELETE' })
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (j.success) {
-                    showToast('日志已删除', 'success');
-                    loadStats();
-                    loadData();
-                } else {
-                    showToast(j.reason || '删除失败', 'error');
-                }
-            });
+        showConfirm('确定删除日志 #' + id + '？\n此操作不可恢复。', function () {
+            fetch('/bridge-logs/' + id, { method: 'DELETE' })
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    if (j.success) {
+                        showToast('日志已删除', 'success');
+                        loadStats();
+                        loadData();
+                    } else {
+                        showToast(j.reason || '删除失败', 'error');
+                    }
+                });
+        }, { title: '删除确认', icon: 'bi-trash3', iconColor: 'var(--danger)', btnClass: 'btn-danger-ghost', btnText: '删除' });
     }
 
     /* ========== 工具 ========== */

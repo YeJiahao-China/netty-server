@@ -27,6 +27,54 @@ function showToast(message, type) {
 }
 
 /* ============ 操作日志 ============ */
+
+/* ============ 通用确认弹窗 ============ */
+function showConfirm(message, onConfirm, opts) {
+    opts = opts || {};
+    var modal = document.getElementById('confirm-modal');
+    if (!modal) return;
+    var titleEl = document.getElementById('confirm-title');
+    var msgEl = document.getElementById('confirm-message');
+    var iconEl = document.getElementById('confirm-icon');
+    var okBtn = document.getElementById('confirm-ok-btn');
+
+    titleEl.textContent = opts.title || '确认操作';
+    msgEl.textContent = message;
+
+    // 图标样式
+    var iconClass = opts.icon || 'bi-exclamation-triangle';
+    var iconColor = opts.iconColor || 'var(--warning)';
+    iconEl.className = 'bi ' + iconClass;
+    iconEl.style.color = iconColor;
+
+    // 确认按钮样式
+    okBtn.className = 'btn btn-sm ' + (opts.btnClass || 'btn-primary');
+    okBtn.textContent = opts.btnText || '确定';
+
+    // 重新绑定事件（先克隆移除旧监听）
+    var newBtn = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newBtn, okBtn);
+    newBtn.addEventListener('click', function () {
+        hideConfirm();
+        if (onConfirm) onConfirm();
+    });
+
+    modal.classList.remove('hidden');
+
+    // 点击遮罩关闭
+    modal.onclick = function (e) {
+        if (e.target === modal) hideConfirm();
+    };
+}
+
+function hideConfirm() {
+    var modal = document.getElementById('confirm-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.onclick = null;
+    }
+}
+
 function logOp(message, type) {
     const logBox = document.getElementById('ops-log');
     if (!logBox) return;

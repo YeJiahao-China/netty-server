@@ -35,6 +35,10 @@
             <artifactId>rocketmq-client-java</artifactId>
             <version>5.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

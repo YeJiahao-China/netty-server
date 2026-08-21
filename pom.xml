@@ -110,6 +110,13 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
+            <!-- MyBatis-Plus 3.5.9+ 需单独引入 jsqlparser 模块（分页拦截器依赖） -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
