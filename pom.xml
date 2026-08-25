@@ -20,11 +20,8 @@
     </parent>
 
     <modules>
-        <module>netty-spi</module>
-        <module>netty-core</module>
-        <module>netty-protocol-hj212</module>
-        <module>netty-admin</module>
-        <module>netty-launcher</module>
+        <module>iot-access</module>
+        <module>iot-parser</module>
     </modules>
 
     <properties>
@@ -51,29 +48,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- ============ 内部模块 ============ -->
-            <dependency>
-                <groupId>com.yjh</groupId>
-                <artifactId>netty-spi</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.yjh</groupId>
-                <artifactId>netty-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.yjh</groupId>
-                <artifactId>netty-protocol-hj212</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.yjh</groupId>
-                <artifactId>netty-admin</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <!-- ============ 第三方依赖 ============ -->
+            <!-- ============ 第三方依赖（iot-access / iot-parser 共享版本） ============ -->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>

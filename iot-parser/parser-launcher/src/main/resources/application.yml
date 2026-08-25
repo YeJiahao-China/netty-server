@@ -1,0 +1,39 @@
+server:
+  port: 2311
+  tomcat:
+    uri-encoding: UTF-8
+
+logging:
+  level:
+    root: INFO
+
+spring:
+  # ============ PostgreSQL 数据源 ============
+  datasource:
+    url: jdbc:postgresql://localhost:5432/iot_access_hub?stringtype=unspecified
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+# ============ MyBatis-Plus ============
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.cas.access.parser.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# ============ RocketMQ（消费端，待实现） ============
+rocketmq:
+  endpoint: 127.0.0.1:8081
+  namesrvAddr: 127.0.0.1:9876
+  consumer:
+    group: iot-parser-consumer

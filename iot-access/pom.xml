@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.yjh</groupId>
+        <artifactId>netty-server-parent</artifactId>
+        <version>1.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>iot-access</artifactId>
+    <name>iot-access</name>
+    <packaging>pom</packaging>
+    <description>物联网设备数据接入模块（独立 Spring Boot）：TCP 接入、协议热插拔、RocketMQ 生产</description>
+
+    <modules>
+        <module>netty-spi</module>
+        <module>netty-core</module>
+        <module>netty-protocol-hj212</module>
+        <module>netty-admin</module>
+        <module>netty-launcher</module>
+    </modules>
+
+    <!-- iot-access 内部模块版本管理（第三方依赖版本继承自 netty-server-parent） -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.yjh</groupId>
+                <artifactId>netty-spi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yjh</groupId>
+                <artifactId>netty-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yjh</groupId>
+                <artifactId>netty-protocol-hj212</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yjh</groupId>
+                <artifactId>netty-admin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
