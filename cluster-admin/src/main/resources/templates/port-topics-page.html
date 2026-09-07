@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('数据桥接管理')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">数据桥接管理</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="openBindModal()">
+            <i class="bi bi-plus-lg"></i> 新增数据桥接
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="refresh()">
+            <i class="bi bi-refresh"></i> 刷新
+        </button>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('port-topics')"></aside>
+
+<main class="content">
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-blue"><i class="bi bi-share"></i></div>
+            <div class="stat-label">绑定总数</div>
+            <div class="stat-value" id="stat-total">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-label">已启用</div>
+            <div class="stat-value" id="stat-enabled">-</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-purple"><i class="bi bi-pause-circle"></i></div>
+            <div class="stat-label">已停用</div>
+            <div class="stat-value" id="stat-disabled">-</div>
+        </div>
+    </div>
+
+    <!-- 绑定列表 -->
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-share"></i> 端口-主题绑定
+            </div>
+            <div class="panel-meta" id="panel-count"></div>
+        </div>
+        <div class="panel-body">
+            <div id="empty-tip" class="empty" style="display:none;">
+                <i class="bi bi-inbox"></i>
+                暂无绑定记录，点击「新增数据桥接」创建
+            </div>
+            <table id="bind-table" style="display:none;">
+                <thead>
+                <tr>
+                    <th>端口</th>
+                    <th>Topic 名称</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>更新时间</th>
+                    <th class="text-right">操作</th>
+                </tr>
+                </thead>
+                <tbody id="bind-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- 新增绑定 Modal -->
+<div id="bind-modal" class="modal-mask hidden">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3><i class="bi bi-plus-lg"></i> 新增端口-主题绑定</h3>
+            <button class="modal-close" onclick="closeBindModal()" aria-label="关闭">&times;</button>
+        </div>
+        <form id="bind-form" onsubmit="submitBind(event)">
+            <label class="field">
+                <span class="field-label">TCP 监听端口 <span class="req">*</span></span>
+                <select id="bind-port" name="port" required>
+                    <option value="">请选择端口</option>
+                </select>
+                <span class="field-hint">仅显示已启用协议绑定且未绑定 Topic 的端口</span>
+            </label>
+            <label class="field">
+                <span class="field-label">RocketMQ LiteTopic 名称 <span class="req">*</span></span>
+                <input type="text" id="bind-topic" name="topicName"
+                       placeholder="如 device-data-10101" required>
+                <span class="field-hint">设备报文将桥接转发到此 Topic</span>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeBindModal()">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="bind-submit">
+                    <i class="bi bi-check-lg"></i> 确认绑定
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 编辑 Topic Modal -->
+<div id="edit-modal" class="modal-mask hidden">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3><i class="bi bi-pencil"></i> 编辑 Topic 名称</h3>
+            <button class="modal-close" onclick="closeEditModal()" aria-label="关闭">&times;</button>
+        </div>
+        <form id="edit-form" onsubmit="submitEdit(event)">
+            <input type="hidden" id="edit-port">
+            <div class="field" style="margin-bottom: 14px;">
+                <span class="field-label">端口</span>
+                <div id="edit-port-display" style="font-weight: 600; font-size: 14px; padding: 6px 0;"></div>
+            </div>
+            <label class="field">
+                <span class="field-label">RocketMQ LiteTopic 名称 <span class="req">*</span></span>
+                <input type="text" id="edit-topic" name="topicName" required>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeEditModal()">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="edit-submit">
+                    <i class="bi bi-check-lg"></i> 保存
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<div th:replace="fragments/layout :: confirm-modal"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        loadData();
+        document.getElementById('bind-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeBindModal();
+        });
+        var editModal = document.getElementById('edit-modal');
+        if (editModal) {
+            editModal.addEventListener('click', function (e) {
+                if (e.target === this) closeEditModal();
+            });
+        }
+    });
+
+    function refresh() { loadData(); }
+
+    /* ========== 数据加载 ========== */
+    function loadData() {
+        fetch('/port-topics')
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.success) {
+                    renderTable(j.data || []);
+                    renderStats(j.data || []);
+                } else {
+                    showToast(j.reason || '加载失败', 'error');
+                }
+            })
+            .catch(function (err) {
+                showToast('请求异常: ' + err.message, 'error');
+            });
+    }
+
+    function renderStats(data) {
+        var total = data.length;
+        var enabled = 0;
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].enabled) enabled++;
+        }
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-enabled').textContent = enabled;
+        document.getElementById('stat-disabled').textContent = total - enabled;
+    }
+
+    function renderTable(data) {
+        var tbody = document.getElementById('bind-tbody');
+        var emptyTip = document.getElementById('empty-tip');
+        var table = document.getElementById('bind-table');
+        var countEl = document.getElementById('panel-count');
+
+        countEl.textContent = '共 ' + data.length + ' 条';
+
+        if (data.length === 0) {
+            table.style.display = 'none';
+            emptyTip.style.display = 'block';
+            return;
+        }
+        table.style.display = '';
+        emptyTip.style.display = 'none';
+
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+            var t = data[i];
+            var statusTag = t.enabled
+                ? '<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 启用</span>'
+                : '<span class="tag tag-inactive">已停用</span>';
+            var toggleBtn = t.enabled
+                ? '<button class="btn btn-sm btn-warning-ghost" onclick="toggleEnabled(' + t.port + ', false)"><i class="bi bi-pause-circle"></i> 停用</button>'
+                : '<button class="btn btn-sm btn-success-ghost" onclick="toggleEnabled(' + t.port + ', true)"><i class="bi bi-play-circle"></i> 启用</button>';
+
+            html += '<tr>'
+                + '<td><span class="code-chip">' + t.port + '</span></td>'
+                + '<td><span class="mono">' + esc(t.topicName) + '</span></td>'
+                + '<td>' + statusTag + '</td>'
+                + '<td><span class="mono text-muted" style="font-size:11px;">' + esc(t.createdAt || '-') + '</span></td>'
+                + '<td><span class="mono text-muted" style="font-size:11px;">' + esc(t.updatedAt || '-') + '</span></td>'
+                + '<td class="text-right">'
+                + '<button class="btn btn-sm btn-primary-ghost" onclick="openEditModal(' + t.port + ',\'' + esc(t.topicName) + '\')"><i class="bi bi-pencil"></i> 编辑</button> '
+                + toggleBtn + ' '
+                + '<button class="btn btn-sm btn-danger-ghost" onclick="deleteBind(' + t.port + ',\'' + esc(t.topicName) + '\')"><i class="bi bi-trash3"></i></button>'
+                + '</td>'
+                + '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    /* ========== 新增绑定 Modal ========== */
+    function openBindModal() {
+        document.getElementById('bind-form').reset();
+        var select = document.getElementById('bind-port');
+        select.innerHTML = '<option value="">加载中...</option>';
+        document.getElementById('bind-modal').classList.remove('hidden');
+
+        fetch('/port-topics/available-ports')
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.success) {
+                    var ports = j.ports || [];
+                    if (ports.length === 0) {
+                        select.innerHTML = '<option value="">无可用端口</option>';
+                    } else {
+                        var html = '<option value="">请选择端口</option>';
+                        for (var i = 0; i < ports.length; i++) {
+                            html += '<option value="' + ports[i] + '">' + ports[i] + '</option>';
+                        }
+                        select.innerHTML = html;
+                    }
+                } else {
+                    select.innerHTML = '<option value="">加载失败</option>';
+                }
+            })
+            .catch(function () {
+                select.innerHTML = '<option value="">加载失败</option>';
+            });
+    }
+
+    function closeBindModal() {
+        document.getElementById('bind-modal').classList.add('hidden');
+    }
+
+    function submitBind(e) {
+        e.preventDefault();
+        var port = document.getElementById('bind-port').value;
+        var topicName = document.getElementById('bind-topic').value.trim();
+        var submitBtn = document.getElementById('bind-submit');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 提交中...';
+
+        var params = new URLSearchParams();
+        params.append('port', port);
+        params.append('topicName', topicName);
+
+        fetch('/port-topics', {method: 'POST', body: params})
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.success) {
+                    closeBindModal();
+                    showToast('端口 ' + port + ' 已绑定到 Topic「' + topicName + '」', 'success');
+                    setTimeout(function () { loadData(); }, 500);
+                } else {
+                    showToast(j.reason || '绑定失败', 'error');
+                }
+            })
+            .catch(function (err) {
+                showToast('请求异常: ' + err.message, 'error');
+            })
+            .finally(function () {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check-lg"></i> 确认绑定';
+            });
+    }
+
+    /* ========== 编辑 Topic Modal ========== */
+    function openEditModal(port, topic) {
+        document.getElementById('edit-form').reset();
+        document.getElementById('edit-port').value = port;
+        document.getElementById('edit-port-display').textContent = port;
+        document.getElementById('edit-topic').value = topic;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.add('hidden');
+    }
+
+    function submitEdit(e) {
+        e.preventDefault();
+        var port = document.getElementById('edit-port').value;
+        var topicName = document.getElementById('edit-topic').value.trim();
+        var submitBtn = document.getElementById('edit-submit');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 保存中...';
+
+        var params = new URLSearchParams();
+        params.append('topicName', topicName);
+
+        fetch('/port-topics/' + encodeURIComponent(port), {method: 'PUT', body: params})
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.success) {
+                    closeEditModal();
+                    showToast('端口 ' + port + ' 的 Topic 已更新为「' + topicName + '」', 'success');
+                    setTimeout(function () { loadData(); }, 500);
+                } else {
+                    showToast(j.reason || '更新失败', 'error');
+                }
+            })
+            .catch(function (err) {
+                showToast('请求异常: ' + err.message, 'error');
+            })
+            .finally(function () {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check-lg"></i> 保存';
+            });
+    }
+
+    /* ========== 启用/停用 ========== */
+    function toggleEnabled(port, enabled) {
+        var action = enabled ? '启用' : '停用';
+        showConfirm('确定' + action + '端口 ' + port + ' 的主题绑定？', function () {
+            var params = new URLSearchParams();
+            params.append('enabled', enabled);
+
+            fetch('/port-topics/' + encodeURIComponent(port) + '/enabled', {method: 'PUT', body: params})
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    if (j.success) {
+                        showToast('端口 ' + port + ' 的绑定已' + action, 'success');
+                        loadData();
+                    } else {
+                        showToast(j.reason || action + '失败', 'error');
+                    }
+                })
+                .catch(function (err) {
+                    showToast('请求异常: ' + err.message, 'error');
+                });
+        }, { title: action + '确认', icon: 'bi-pause-circle', iconColor: 'var(--warning)', btnClass: 'btn-warning-ghost', btnText: action });
+    }
+
+    /* ========== 删除 ========== */
+    function deleteBind(port, topic) {
+        showConfirm('确定删除端口 ' + port + '（Topic: ' + topic + '）的绑定？\n此操作将物理删除记录，不可恢复！', function () {
+            fetch('/port-topics/' + encodeURIComponent(port) + '/force', {method: 'DELETE'})
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    if (j.success) {
+                        showToast('端口 ' + port + ' 的绑定已删除', 'success');
+                        loadData();
+                    } else {
+                        showToast(j.reason || '删除失败', 'error');
+                    }
+                })
+                .catch(function (err) {
+                    showToast('请求异常: ' + err.message, 'error');
+                });
+        }, { title: '删除确认', icon: 'bi-trash3', iconColor: 'var(--danger)', btnClass: 'btn-danger-ghost', btnText: '删除' });
+    }
+
+    /* ========== 工具 ========== */
+    function esc(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+</script>
+</body>
+</html>

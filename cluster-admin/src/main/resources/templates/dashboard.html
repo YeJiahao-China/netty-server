@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head(title='概览')"></head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">概览</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span class="live-tag" id="live-tag">
+            <span class="pulse-dot"></span>
+            <span id="live-indicator">实时</span>
+        </span>
+        <button class="btn btn-primary btn-sm" onclick="reloadProtocols()">
+            <i class="bi bi-arrow-clockwise"></i> 重新扫描
+        </button>
+        <button class="btn btn-sm" onclick="toggleAutoRefresh()" id="btn-auto-refresh">
+            <i class="bi bi-pause-circle"></i> 暂停刷新
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="refresh()" title="刷新页面">
+            <i class="bi bi-refresh"></i>
+        </button>
+    </div>
+</header>
+
+<!-- 左侧菜单 -->
+<aside th:replace="fragments/layout :: sidebar(active='dashboard')"></aside>
+
+<!-- 主内容区 -->
+<main class="content">
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-blue"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-label">已加载协议</div>
+            <div class="stat-value" id="stat-protocol-count">0</div>
+            <div class="stat-trend" id="st-external"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-cyan"><i class="bi bi-plug"></i></div>
+            <div class="stat-label">绑定端口</div>
+            <div class="stat-value" id="stat-port-count">0</div>
+            <div class="stat-trend up" id="st-ports-bound">监听中</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-green"><i class="bi bi-people"></i></div>
+            <div class="stat-label">活跃客户端连接</div>
+            <div class="stat-value" id="stat-conn-count">0</div>
+            <div class="stat-trend">实时刷新（5s 间隔）</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-purple"><i class="bi bi-lightning-charge"></i></div>
+            <div class="stat-label">系统状态</div>
+            <div class="stat-value" style="font-size: 22px; padding-top: 4px;">
+                <span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:11px;"></i> 运行中</span>
+            </div>
+            <div class="stat-trend">管理中心 :2312 · 接入 :2310 · 解析 :2311</div>
+        </div>
+    </div>
+
+    <!-- 中部：协议 + 端口绑定 -->
+    <div class="grid">
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="bi bi-box-seam"></i> 已加载协议
+                </div>
+                <div class="panel-meta">
+                    <span id="proto-count-meta">0 个</span>
+                    <a th:href="@{/protocols-page}" class="btn btn-ghost btn-sm" style="margin-left: 8px;">
+                        管理 <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="proto-empty" class="empty hidden">
+                    <i class="bi bi-inbox"></i>
+                    暂无已加载协议
+                </div>
+                <table id="proto-table">
+                    <thead>
+                    <tr><th>协议</th><th>版本</th><th>来源</th><th>状态</th></tr>
+                    </thead>
+                    <tbody id="proto-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 右侧：绑定新协议 + 端口绑定 -->
+        <div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="bi bi-plus-circle"></i> 绑定新协议到端口
+                    </div>
+                </div>
+                <div class="panel-body-inner">
+                    <form onsubmit="bindPort(event)">
+                        <div class="form-group">
+                            <label class="form-label">协议</label>
+                            <select id="bind-protocol" class="form-control" required>
+                                <option value="">-- 选择协议 --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">端口</label>
+                            <input type="number" id="bind-port" class="form-control"
+                                   placeholder="例如 10104" min="1" max="65535" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="bi bi-link-45deg"></i> 绑定并监听端口
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="bi bi-list-ul"></i> 当前端口绑定
+                    </div>
+                    <div class="panel-meta" id="binding-count-meta">共 0 个</div>
+                </div>
+                <div class="panel-body">
+                    <div id="bind-empty" class="empty hidden">
+                        <i class="bi bi-inbox"></i>
+                        暂无端口绑定
+                    </div>
+                    <table id="bindings-table">
+                        <thead>
+                        <tr>
+                            <th>端口</th><th>协议</th><th>监听</th><th>连接</th><th class="text-right">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="bind-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+
+<script>
+    let autoRefreshTimer = null;
+    const AUTO_REFRESH_INTERVAL = 5000;
+
+    function reloadProtocols() {
+        callApi('POST', '/protocols/reload/all', '已指令所有节点重新扫描 protocols 目录');
+    }
+
+    function unloadProtocol(name) {
+        if (!confirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开。')) return;
+        callApi('DELETE', '/protocols/' + encodeURIComponent(name), '指令已发送到所有节点');
+    }
+
+    function unbindPort(port) {
+        if (!confirm('确定解绑端口 ' + port + '？\n该端口下所有客户端连接将被强制断开。')) return;
+        callApi('DELETE', '/protocols/bind/' + port, '指令已发送到所有节点');
+    }
+
+    function bindPort(event) {
+        event.preventDefault();
+        const protocol = document.getElementById('bind-protocol').value;
+        const port = document.getElementById('bind-port').value;
+        if (!protocol || !port) { showToast('请选择协议并填写端口', 'error'); return; }
+        callApi('POST', '/protocols/' + encodeURIComponent(protocol) + '/bind/' + port,
+                '指令已发送到所有节点');
+    }
+
+    function sourceTag(source) {
+        const builtin = source === 'builtin';
+        return `<span class="tag ${builtin ? 'tag-builtin' : 'tag-external'}">${builtin ? '内置' : '外部 jar'}</span>`;
+    }
+
+    function activeTag(active) {
+        return active
+            ? `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`
+            : `<span class="tag tag-inactive">已停用</span>`;
+    }
+
+    async function refreshStats() {
+        try {
+            const resp = await fetch('/protocols', { method: 'GET' });
+            const data = await resp.json();
+            if (!data || data.success === false) return;
+
+            const s = data.summary || {};
+            document.getElementById('stat-protocol-count').textContent = s.protocolCount || 0;
+            document.getElementById('stat-port-count').textContent     = s.boundPortCount || 0;
+            document.getElementById('stat-conn-count').textContent     = s.totalConnections || 0;
+            const ext = s.externalJarCount || 0;
+            document.getElementById('st-external').textContent = ext > 0 ? '含 ' + ext + ' 个外部 jar' : '';
+            document.getElementById('st-ports-bound').textContent = '监听中 ' + (s.boundPortCount || 0) + ' 个';
+
+            const protocols = data.protocols || [];
+            document.getElementById('proto-count-meta').textContent = protocols.length + ' 个';
+
+            // 协议表
+            const protoEmpty = document.getElementById('proto-empty');
+            const protoTbody = document.getElementById('proto-tbody');
+            protoTbody.innerHTML = '';
+            if (protocols.length === 0) {
+                protoEmpty.classList.remove('hidden');
+            } else {
+                protoEmpty.classList.add('hidden');
+                for (const p of protocols) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML =
+                        `<td><div class="proto-name">${p.name || ''}</div>${p.description ? `<div class="proto-desc">${p.description}</div>` : ''}</td>` +
+                        `<td><span class="code-chip">${p.version || ''}</span></td>` +
+                        `<td>${sourceTag(p.source)}</td>` +
+                        `<td>${activeTag(!!p.active)}</td>`;
+                    protoTbody.appendChild(tr);
+                }
+            }
+
+            // 绑定下拉
+            const sel = document.getElementById('bind-protocol');
+            const old = sel.value;
+            sel.innerHTML = '<option value="">-- 选择协议 --</option>';
+            for (const p of protocols) {
+                const opt = document.createElement('option');
+                opt.value = p.name;
+                opt.textContent = (p.name || '') + ' (' + (p.version || '') + ')';
+                sel.appendChild(opt);
+            }
+            if (old) sel.value = old;
+
+            // bindings：{ port: { protocol, listening, connections } }
+            const bindings = data.bindings || {};
+            const keys = Object.keys(bindings).sort((a,b)=>+a - +b);
+            document.getElementById('binding-count-meta').textContent = '共 ' + keys.length + ' 个';
+
+            const bindEmpty = document.getElementById('bind-empty');
+            const bindTbody = document.getElementById('bind-tbody');
+            bindTbody.innerHTML = '';
+            if (keys.length === 0) { bindEmpty.classList.remove('hidden'); }
+            else {
+                bindEmpty.classList.add('hidden');
+                for (const port of keys) {
+                    const b = bindings[port] || {};
+                    const conn = b.connections || 0;
+                    const tr = document.createElement('tr');
+                    tr.dataset.port = port;
+                    tr.innerHTML =
+                        `<td><span class="code-chip">${port}</span></td>` +
+                        `<td><span class="tag tag-info">${b.protocol || ''}</span></td>` +
+                        `<td>${b.listening
+                            ? `<span class="tag tag-listening"><i class="bi bi-broadcast" style="font-size:10px;"></i> 监听中</span>`
+                            : `<span class="tag tag-closed"><i class="bi bi-exclamation-triangle" style="font-size:10px;"></i> 未监听</span>`}</td>` +
+                        `<td><span class="conn-bar ${conn>0?'online':'zero'}"><span class="dot"></span><span class="conn-count">${conn}</span></span></td>` +
+                        `<td class="text-right"><button class="btn btn-sm btn-warning-ghost" data-port="${port}" onclick="unbindPort(this.dataset.port)"><i class="bi bi-x-circle"></i> 解绑</button></td>`;
+                    bindTbody.appendChild(tr);
+                }
+            }
+        } catch (e) { console.warn('refreshStats failed:', e); }
+    }
+
+    function toggleAutoRefresh() {
+        const btn = document.getElementById('btn-auto-refresh');
+        const tag = document.getElementById('live-tag');
+        const indicator = document.getElementById('live-indicator');
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+            btn.innerHTML = '<i class="bi bi-play-circle"></i> 恢复刷新';
+            tag.classList.add('paused');
+            indicator.textContent = '已暂停';
+            logOp('自动刷新已暂停', 'warn');
+        } else {
+            autoRefreshTimer = setInterval(refreshStats, AUTO_REFRESH_INTERVAL);
+            btn.innerHTML = '<i class="bi bi-pause-circle"></i> 暂停刷新';
+            tag.classList.remove('paused');
+            indicator.textContent = '实时';
+            logOp('自动刷新已恢复（每 ' + (AUTO_REFRESH_INTERVAL / 1000) + ' 秒）', 'success');
+        }
+    }
+
+    function refresh() { location.reload(); }
+
+    (function init() {
+        refreshStats();
+        autoRefreshTimer = setInterval(refreshStats, AUTO_REFRESH_INTERVAL);
+    })();
+</script>
+</body>
+</html>

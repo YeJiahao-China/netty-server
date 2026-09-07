@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('协议管理')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">协议管理</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="openUploadModal()">
+            <i class="bi bi-cloud-upload"></i> 上传协议
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="reloadProtocols()">
+            <i class="bi bi-arrow-clockwise"></i> 重新扫描
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="refresh()">
+            <i class="bi bi-refresh"></i> 刷新
+        </button>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('protocols')"></aside>
+
+<main class="content">
+
+    <!-- 统计卡片（精简） -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-blue"><i class="bi bi-box-seam"></i></div>
+            <div class="stat-label">已加载协议</div>
+            <div class="stat-value" id="st-protocol">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-purple"><i class="bi bi-file-earmark-zip"></i></div>
+            <div class="stat-label">外部协议 Jar</div>
+            <div class="stat-value" id="st-external">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-cyan"><i class="bi bi-plug"></i></div>
+            <div class="stat-label">绑定端口</div>
+            <div class="stat-value" id="st-port">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-green"><i class="bi bi-people"></i></div>
+            <div class="stat-label">活跃连接</div>
+            <div class="stat-value" id="st-conn">0</div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-box-seam"></i> 已加载协议
+            </div>
+            <div class="panel-meta" id="meta-count">共 0 个</div>
+        </div>
+        <div class="panel-body">
+            <div id="proto-empty" class="empty hidden">
+                <i class="bi bi-inbox"></i> 暂无已加载协议
+            </div>
+            <table id="proto-table">
+                <thead>
+                <tr>
+                    <th>协议</th><th>版本</th><th>监听端口</th><th>来源</th><th>加载时间</th>
+                    <th>状态</th><th>Jar 路径</th><th class="text-right">操作</th>
+                </tr>
+                </thead>
+                <tbody id="proto-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- 上传协议 Modal -->
+<div id="upload-modal" class="modal-mask hidden">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3><i class="bi bi-cloud-upload"></i> 上传协议 Jar</h3>
+            <button class="modal-close" onclick="closeUploadModal()" aria-label="关闭">&times;</button>
+        </div>
+        <form id="upload-form" onsubmit="uploadProtocol(event)">
+            <label class="field">
+                <span class="field-label">Jar 文件 <span class="req">*</span></span>
+                <input type="file" id="upload-file" accept=".jar" name="file" required
+                       onchange="onFilePicked(event)">
+                <span class="field-hint">仅支持 .jar，最大 50MB</span>
+            </label>
+            <label class="field">
+                <span class="field-label">协议名 <span class="req">*</span></span>
+                <input type="text" id="upload-name" name="protocolName"
+                       placeholder="如 echo，需与 jar 内 SPI 声明一致" required>
+            </label>
+            <label class="field">
+                <span class="field-label">监听端口 <span class="req">*</span></span>
+                <input type="number" id="upload-port" name="port"
+                       min="1024" max="65535" placeholder="1024-65535" required>
+                <span class="field-hint">端口必须未被其他协议占用</span>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUploadModal()">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="upload-submit">
+                    <i class="bi bi-box-arrow-in-down"></i> 上传并分发（全网）
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 更新协议 Modal -->
+<div id="update-modal" class="modal-mask hidden">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3><i class="bi bi-arrow-repeat"></i> 更新协议 Jar（全网分发）</h3>
+            <button class="modal-close" onclick="closeUpdateModal()" aria-label="关闭">&times;</button>
+        </div>
+        <form id="update-form" onsubmit="updateProtocol(event)">
+            <input type="hidden" id="update-name">
+            <div class="field" style="margin-bottom: 14px;">
+                <span class="field-label">协议名</span>
+                <div id="update-name-display" style="font-weight: 600; font-size: 14px; padding: 6px 0;"></div>
+            </div>
+            <label class="field">
+                <span class="field-label">新版本 Jar 文件 <span class="req">*</span></span>
+                <input type="file" id="update-file" accept=".jar" name="file" required>
+                <span class="field-hint">上传新版本 jar 覆盖旧版本，将广播到所有节点热替换</span>
+            </label>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUpdateModal()">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="update-submit">
+                    <i class="bi bi-arrow-repeat"></i> 更新（全网）
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="fragments/layout :: toasts"></div>
+<div th:replace="fragments/layout :: confirm-modal"></div>
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+
+<script>
+    function reloadProtocols() {
+        callApi('POST', '/protocols/reload/all', '已指令所有节点重新扫描 protocols 目录');
+    }
+
+    function unloadProtocol(name) {
+        showConfirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开（全网节点）。', function () {
+            callApi('DELETE', '/protocols/' + encodeURIComponent(name), '指令已发送到所有节点');
+        }, { title: '卸载确认', icon: 'bi-trash3', iconColor: 'var(--danger)', btnClass: 'btn-danger-ghost', btnText: '卸载' });
+    }
+
+    function purgeProtocol(name) {
+        showConfirm('确定彻底删除协议「' + name + '」？\n\n此操作将物理删除数据库记录（不可恢复），且所有节点同步清除！\n如需保留记录以便后续重新启用，请改用「卸载」。', function () {
+            fetch('/protocols/' + encodeURIComponent(name) + '/purge', {method: 'DELETE'})
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('协议「' + name + '」已彻底删除（全网）', 'success');
+                        setTimeout(refresh, 1000);
+                    } else {
+                        const fails = (j.results || []).filter(x => !x.success).map(x => x.nodeId + ': ' + (x.error || x.response)).join(' | ');
+                        showToast(j.reason || fails || '删除失败', 'error');
+                    }
+                })
+                .catch(err => showToast('请求异常: ' + err.message, 'error'));
+        }, { title: '彻底删除确认', icon: 'bi-trash3-fill', iconColor: 'var(--danger)', btnClass: 'btn-danger', btnText: '彻底删除' });
+    }
+
+    function reloadProtocol(name) {
+        showConfirm('确定重新启用协议「' + name + '」？\n所有节点会重新加载 jar 并启动端口监听。', function () {
+            fetch('/protocols/reload/' + encodeURIComponent(name), {method: 'POST'})
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('协议「' + name + '」已重新启用（全网）', 'success');
+                        setTimeout(refresh, 1000);
+                    } else {
+                        showToast(j.reason || '重新启用失败', 'error');
+                    }
+                })
+                .catch(err => showToast('请求异常: ' + err.message, 'error'));
+        }, { title: '重新启用确认', icon: 'bi-play-circle', iconColor: 'var(--success)', btnClass: 'btn-success-ghost', btnText: '重新启用' });
+    }
+
+    function refresh() { location.reload(); }
+
+    /* ========== 上传协议 Modal ========== */
+    function openUploadModal() {
+        document.getElementById('upload-form').reset();
+        document.getElementById('upload-modal').classList.remove('hidden');
+    }
+    function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); }
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('upload-modal').addEventListener('click', e => { if (e.target === this) closeUploadModal(); });
+    });
+    function onFilePicked(e) {
+        const f = e.target.files[0];
+        if (!f) return;
+        const base = f.name.replace(/\.jar$/i, '');
+        const suggested = base.split(/[-_]/)[0];
+        const input = document.getElementById('upload-name');
+        if (!input.value) input.value = suggested;
+    }
+    function uploadProtocol(e) {
+        e.preventDefault();
+        const form = e.target;
+        const fd = new FormData(form);
+        const btn = document.getElementById('upload-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 分发中...';
+        fetch('/protocols/upload', {method: 'POST', body: fd})
+            .then(r => r.json())
+            .then(j => {
+                if (j.success) {
+                    closeUploadModal();
+                    showToast('协议已分发到 ' + j.successCount + '/' + j.total + ' 节点', 'success');
+                    logOp('上传协议 → 分发结果 ok=' + j.successCount + '/' + j.total, 'success');
+                    setTimeout(refresh, 1200);
+                } else {
+                    showToast(j.reason || '分发失败', 'error');
+                }
+            })
+            .catch(err => showToast('请求异常: ' + err.message, 'error'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-in-down"></i> 上传并分发（全网）';
+            });
+    }
+
+    /* ========== 更新协议 Modal ========== */
+    function openUpdateModal(name) {
+        document.getElementById('update-form').reset();
+        document.getElementById('update-name').value = name;
+        document.getElementById('update-name-display').textContent = name;
+        document.getElementById('update-modal').classList.remove('hidden');
+    }
+    function closeUpdateModal() { document.getElementById('update-modal').classList.add('hidden'); }
+    document.addEventListener('DOMContentLoaded', function () {
+        const m = document.getElementById('update-modal');
+        if (m) m.addEventListener('click', e => { if (e.target === this) closeUpdateModal(); });
+    });
+    function updateProtocol(e) {
+        e.preventDefault();
+        const name = document.getElementById('update-name').value;
+        const fd = new FormData(e.target);
+        const btn = document.getElementById('update-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 更新中...';
+        fetch('/protocols/' + encodeURIComponent(name) + '/update', {method: 'POST', body: fd})
+            .then(r => r.json())
+            .then(j => {
+                if (j.success) {
+                    closeUpdateModal();
+                    showToast('协议「' + name + '」已更新，ok=' + j.successCount + '/' + j.total, 'success');
+                    logOp('更新协议 ' + name + ' → 分发 ok=' + j.successCount + '/' + j.total, 'success');
+                    setTimeout(refresh, 1200);
+                } else {
+                    showToast(j.reason || '更新失败', 'error');
+                }
+            })
+            .catch(err => showToast('请求异常: ' + err.message, 'error'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> 更新（全网）';
+            });
+    }
+
+    /* ========== 渲染 ========== */
+    function sourceTag(s) {
+        const b = s === 'builtin';
+        return `<span class="tag ${b ? 'tag-builtin' : 'tag-external'}">${b ? '内置' : '外部 jar'}</span>`;
+    }
+    function activeTag(a) {
+        return a
+            ? `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`
+            : `<span class="tag tag-inactive">已停用</span>`;
+    }
+    async function loadData() {
+        const resp = await fetch('/protocols');
+        const data = await resp.json();
+        if (!data || data.success === false) return;
+        const s = data.summary || {};
+        document.getElementById('st-protocol').textContent = s.protocolCount || 0;
+        document.getElementById('st-external').textContent = s.externalJarCount || 0;
+        document.getElementById('st-port').textContent     = s.boundPortCount || 0;
+        document.getElementById('st-conn').textContent     = s.totalConnections || 0;
+        const list = data.protocols || [];
+        document.getElementById('meta-count').textContent = '共 ' + list.length + ' 个';
+
+        const empty = document.getElementById('proto-empty');
+        const tbody = document.getElementById('proto-tbody');
+        tbody.innerHTML = '';
+        if (list.length === 0) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+
+        for (const p of list) {
+            const jarPath = p.jarPath || '-';
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                `<td><div class="proto-name">${p.name || ''}</div>${p.description ? `<div class="proto-desc">${p.description}</div>` : ''}</td>` +
+                `<td><span class="code-chip">${p.version || ''}</span></td>` +
+                `<td><span class="code-chip">${p.port || '-'}</span></td>` +
+                `<td>${sourceTag(p.source)}</td>` +
+                `<td><span class="mono text-muted">${p.loadedAtText || ''}</span></td>` +
+                `<td>${activeTag(!!p.active)}</td>` +
+                `<td><span class="mono text-muted text-small" title="${jarPath}">${jarPath}</span></td>` +
+                `<td class="text-right">
+                    ${!p.active ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
+                    ${p.active && p.source !== 'builtin' ? `<button class="btn btn-sm btn-primary-ghost" data-name="${p.name}" onclick="openUpdateModal(this.dataset.name)"><i class="bi bi-arrow-repeat"></i> 更新</button>` : ''}
+                    ${p.active ? `<button class="btn btn-sm btn-danger-ghost" data-name="${p.name}" onclick="unloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议不可卸载':''}"><i class="bi bi-trash3"></i> 卸载</button>` : ''}
+                    ${!p.active ? `<button class="btn btn-sm btn-danger" data-name="${p.name}" onclick="purgeProtocol(this.dataset.name)"><i class="bi bi-trash3-fill"></i> 删除</button>` : ''}
+                </td>`;
+            tbody.appendChild(tr);
+        }
+    }
+    loadData();
+</script>
+</body>
+</html>

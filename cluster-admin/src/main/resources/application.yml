@@ -1,0 +1,68 @@
+server:
+  port: 2312
+  tomcat:
+    uri-encoding: UTF-8
+
+logging:
+  level:
+    org.thymeleaf.standard.processor.AbstractStandardFragmentInsertionTagProcessor: ERROR
+  config: classpath:logback.xml
+
+spring:
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/iot_access_hub?stringtype=unspecified
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  # 建表责任迁到管理中心：所有共享表（协议/桥接/节点 等）统一由此处 Flyway 创建
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    table: flyway_schema_history
+
+# 管理中心 MyBatis-Plus：仅查共享表（protocols/ports/bindings/cluster_node/bridge_log）
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.cas.admin.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# ================ 统一调度目标 ================
+# 管理中心不直接跑任何数据业务，所有业务请求要么：
+#   1) 代理到某台 iot-access:2310（查询/同库统计类请求，返回一致）
+#   2) 广播到所有 UP 的 ACCESS/PARSER 节点（写操作，关端口/热插拔/绑定端口/协议分发...）
+admin:
+  proxy:
+    # 默认访问节点（用于查询/统计类代理）；若未命中会自动从 cluster_node 选一台 UP 的 ACCESS
+    access-primary: http://127.0.0.1:2310
+    parser-primary: http://127.0.0.1:2311
+    connect-timeout-ms: 3000
+    read-timeout-ms: 60000
+
+# RocketMQ Dashboard（管理中心直接创建 topic，不依赖 iot-access）
+rocketmq:
+  dashboard:
+    url: http://127.0.0.1:8082
+  cluster:
+    name: DefaultCluster

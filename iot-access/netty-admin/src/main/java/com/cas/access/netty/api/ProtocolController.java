@@ -22,12 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.Resource;
+import org.springframework.web.bind.annotation.RequestBody;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -638,6 +640,164 @@ public class ProtocolController {
         } catch (IOException e) {
             log.warn("删除 jar 文件失败: {} — 协议 DB 记录已删，jar 文件可稍后手动删除", jarPath);
             return false;
+        }
+    }
+
+    /* ======================== 内部：集群分发落地接口（由 cluster-admin POST /protocols/internal/distribute 扇出调用） ======================== */
+
+    /**
+     * 管理中心广播式协议操作落地入口。
+     * body.mode 取值：upload / update / reload / bind / unbind / unload / purge
+     * <p>
+     * upload/update 模式必须带 jarBase64（由 cluster-admin 接收 multipart 后转 base64 分发）。
+     * 本接口不对外暴露，仅用于集群内部节点协作。
+     */
+    @PostMapping("/internal/distribute")
+    public Map<String, Object> distribute(@RequestBody Map<String, Object> body) {
+        String mode = (String) body.get("mode");
+        if (mode == null || mode.isBlank()) return fail("mode 不能为空");
+        String name = (String) body.get("protocolName");
+        try {
+            switch (mode) {
+                case "upload":   return doInternalUpload(body);
+                case "update":   return doInternalUpdate(body);
+                case "reload": {
+                    if (name == null) return fail("protocolName 为空");
+                    if ("all".equals(name)) return doReloadAll();
+                    return reload(name);
+                }
+                case "bind": {
+                    Object p = body.get("port");
+                    int port = p == null ? 0 : ((Number) p).intValue();
+                    if (name == null || port <= 0) return fail("protocolName/port 非法");
+                    return bindPort(name, port);
+                }
+                case "unbind": {
+                    Object p = body.get("port");
+                    int port = p == null ? 0 : ((Number) p).intValue();
+                    if (port <= 0) return fail("port 非法");
+                    return unbindPort(port);
+                }
+                case "unload": {
+                    if (name == null) return fail("protocolName 为空");
+                    return unload(name);
+                }
+                case "purge": {
+                    if (name == null) return fail("protocolName 为空");
+                    return purge(name);
+                }
+                default:
+                    return fail("未知 mode: " + mode);
+            }
+        } catch (Exception e) {
+            log.error("distribute 执行失败: mode={}, protocolName={}, err={}", mode, name, e.getMessage(), e);
+            return fail("distribute 失败: " + e.getMessage());
+        }
+    }
+
+    /** 本节点扫描 protocols 目录（scanAndLoad：内置 SPI + jar 目录批量） */
+    private Map<String, Object> doReloadAll() {
+        jarLoader.scanAndLoad();
+        log.info("已在本节点重新执行 scanAndLoad（内置 SPI + 目录 jar 重载）");
+        return ok();
+    }
+
+    private Map<String, Object> doInternalUpload(Map<String, Object> body) throws Exception {
+        Object p = body.get("port");
+        int port = p == null ? 0 : ((Number) p).intValue();
+        String name = (String) body.get("protocolName");
+        String b64  = (String) body.get("jarBase64");
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null || name.isBlank()) return fail("protocolName 为空");
+        if (port < 1024 || port > 65535) return fail("port 非法");
+        if (b64 == null || b64.isBlank()) return fail("jarBase64 为空");
+        byte[] bytes;
+        try { bytes = Base64.getDecoder().decode(b64); }
+        catch (IllegalArgumentException e) { return fail("jarBase64 非法"); }
+
+        ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(name);
+        if (exist != null && Boolean.TRUE.equals(exist.getActive())) return fail("协议[" + name + "]已存在");
+        String existingProtocol = registry.getProtocolNameByPort(port);
+        if (existingProtocol != null) return fail("端口 " + port + " 已被协议[" + existingProtocol + "]占用");
+        if (registry.getProvider(name) != null) return fail("协议[" + name + "]已存在，请走 update");
+
+        Path uploadDir = Paths.get(properties.getJarDir(), ".upload").toAbsolutePath();
+        Files.createDirectories(uploadDir);
+        Path temp = uploadDir.resolve(fileName + ".tmp");
+        Files.write(temp, bytes);
+        Path probeCopy = Files.createTempFile("protocol-probe-", ".jar");
+        Files.copy(temp, probeCopy, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            ProtocolJarLoader.ProbeResult probe = jarLoader.probe(probeCopy.toFile());
+            if (!probe.isSuccess()) { Files.deleteIfExists(temp); return fail("jar 加载失败: " + probe.getErrorMessage()); }
+            if (!name.equals(probe.getProviderName())) { Files.deleteIfExists(temp); return fail("协议名不匹配: jar内[" + probe.getProviderName() + "] vs 输入[" + name + "]"); }
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+            Path finalFile = moveJarFileWithFallback(temp, fileName);
+            jarLoader.loadSingleJar(finalFile.toFile());
+            registry.bindPortToProtocol(port, name);
+            try { NettyServerUtil.bindPort(port); }
+            catch (Exception bindEx) {
+                registry.unregister(name);
+                try { Files.deleteIfExists(finalFile); } catch (Exception ignored) {}
+                return fail("端口[" + port + "]监听失败: " + bindEx.getMessage());
+            }
+            Map<String, Object> r = ok();
+            r.put("protocolName", name);
+            r.put("version", probe.getProviderVersion());
+            r.put("jarPath", finalFile.toString());
+            r.put("port", port);
+            return r;
+        } finally {
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+        }
+    }
+
+    private Map<String, Object> doInternalUpdate(Map<String, Object> body) throws Exception {
+        String name = (String) body.get("protocolName");
+        String b64  = (String) body.get("jarBase64");
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null) return fail("protocolName 为空");
+        if (b64 == null || b64.isBlank()) return fail("jarBase64 为空");
+        ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
+        if (existing == null) return fail("协议[" + name + "]不存在");
+        byte[] bytes;
+        try { bytes = Base64.getDecoder().decode(b64); }
+        catch (IllegalArgumentException e) { return fail("jarBase64 非法"); }
+        List<Integer> boundPorts = registry.getBoundPorts(name);
+        Path uploadDir = Paths.get(properties.getJarDir(), ".upload").toAbsolutePath();
+        Files.createDirectories(uploadDir);
+        Path temp = uploadDir.resolve(fileName + ".tmp");
+        Files.write(temp, bytes);
+        Path probeCopy = Files.createTempFile("protocol-probe-", ".jar");
+        Files.copy(temp, probeCopy, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            ProtocolJarLoader.ProbeResult probe = jarLoader.probe(probeCopy.toFile());
+            if (!probe.isSuccess()) { Files.deleteIfExists(temp); return fail("jar 加载失败: " + probe.getErrorMessage()); }
+            if (!name.equals(probe.getProviderName())) { Files.deleteIfExists(temp); return fail("协议名不匹配: jar内[" + probe.getProviderName() + "] vs 目标[" + name + "]"); }
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+            registry.closeOldChannels(name);
+            registry.closeClassLoaderForUpgrade(name);
+            String oldJarPath = existing.getJarPath();
+            Path finalFile = moveJarFileWithFallback(temp, fileName);
+            if (oldJarPath != null && !oldJarPath.isEmpty()) {
+                Path old = Paths.get(oldJarPath).toAbsolutePath();
+                if (!old.equals(finalFile.toAbsolutePath())) try { Files.deleteIfExists(old); } catch (IOException ignored) {}
+            }
+            jarLoader.loadSingleJar(finalFile.toFile());
+            List<Integer> rebound = new java.util.ArrayList<>();
+            List<Integer> failed  = new java.util.ArrayList<>();
+            for (int port : boundPorts) {
+                try { NettyServerUtil.bindPort(port); rebound.add(port); }
+                catch (Exception bindEx) { failed.add(port); log.warn("更新后重绑端口[{}]失败: {}", port, bindEx.getMessage()); }            }
+            Map<String, Object> r = ok();
+            r.put("protocolName", name);
+            r.put("version", probe.getProviderVersion());
+            r.put("jarPath", finalFile.toString());
+            r.put("reboundPorts", rebound);
+            if (!failed.isEmpty()) r.put("failedPorts", failed);
+            return r;
+        } finally {
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
         }
     }
 }

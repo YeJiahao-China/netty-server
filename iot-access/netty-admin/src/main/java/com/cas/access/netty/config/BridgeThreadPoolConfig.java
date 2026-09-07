@@ -13,11 +13,15 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.retry.annotation.EnableRetry;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.rocketmq.client.apis.ClientException;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @EnableAsync
@@ -49,7 +53,7 @@ public class BridgeThreadPoolConfig {
      * 1. 替换为 JDK 21 虚拟线程执行器
      * 优势：遇到 Thread.sleep 或 I/O 阻塞时，自动释放底层系统线程，永不饥饿。
      */
-    @Bean("bridgeSendVirtualExecutor")
+    @Bean(value = "bridgeSendVirtualExecutor", destroyMethod = "shutdown")
     public ExecutorService bridgeSendVirtualExecutor() {
         ExecutorService executor = Executors.newThreadPerTaskExecutor(
                 Thread.ofVirtual()
@@ -76,10 +80,12 @@ public class BridgeThreadPoolConfig {
     public RetryTemplate bridgeRetryTemplate() {
         RetryTemplate template = new RetryTemplate();
 
-        // 优化：排除 InterruptedException，防止应用停机或线程中断时死循环重试
+        // 默认不重试任何异常，仅对明确的可恢复异常（IO/超时/RocketMQ 客户端异常）开启重试
         Map<Class<? extends Throwable>, Boolean> exceptionMap = new HashMap<>();
-        exceptionMap.put(Exception.class, true);
-        exceptionMap.put(InterruptedException.class, false);
+        exceptionMap.put(Exception.class, false);
+        exceptionMap.put(IOException.class, true);
+        exceptionMap.put(TimeoutException.class, true);
+        exceptionMap.put(ClientException.class, true);
 
         // 【核心优化】：自定义 RetryPolicy，精准拦截“Topic 不存在”等无需重试的业务异常
         // 第三个参数 true 表示 traverseCauses，允许解析被包装的异常（如 ExecutionException）

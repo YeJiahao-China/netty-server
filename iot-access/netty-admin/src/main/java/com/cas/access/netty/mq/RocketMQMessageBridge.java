@@ -94,23 +94,49 @@ public class RocketMQMessageBridge implements MessageBridge {
                      final int clientPort, final String clientIp,
                      final String data) {
         // 1、查询端口绑定
-        PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
-        bridgeSendVirtualExecutor.execute(() -> doBridge(serverPort, serverIp, clientPort, clientIp, data, binding));
+//        PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+//        bridgeSendVirtualExecutor.execute(() -> doBridge(serverPort, serverIp, clientPort, clientIp, data, binding));
+//        bridgeSendVirtualExecutor.execute(() -> {
+//            PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+//            doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
+//        });
+
+        // IO 线程只做一件事：提交到业务线程池，立即返回
+        bridgeSendVirtualExecutor.execute(() -> {
+            if (!concurrencyLimiter.tryAcquire()) {
+                // 限流拒绝：在业务线程内异步记录日志
+                PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+                log.warn("数据桥接并发数已满，触发限流: serverPort={}, client={}:{}, availablePermits={}",
+                        serverPort, clientIp, clientPort, concurrencyLimiter.availablePermits());
+                saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding);
+                return;
+            }
+            try {
+                PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+                doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
+            } finally {
+                concurrencyLimiter.release();
+            }
+        });
 
 
-        // 2.常规的数据桥接不需要限流，暂时注释掉 ###尝试获取许可（限流），等同于原线程池的队列容量控制
+        // 2. ###尝试获取许可（限流），等同于原线程池的队列容量控制
 //        if (!concurrencyLimiter.tryAcquire()) {
 //            log.warn("数据桥接并发数已满，触发限流: serverPort={}, client={}:{}, availablePermits={}",
 //                    serverPort, clientIp, clientPort, concurrencyLimiter.availablePermits());
 //
 //            // 【核心优化】：限流被拒时，异步记录失败日志到数据库。
-//            bridgeSendVirtualExecutor.execute(() -> saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding));
+//            bridgeSendVirtualExecutor.execute(() -> {
+//                PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
+//                saveRejectedLog(serverPort, serverIp, clientPort, clientIp, data, binding);
+//            });
 //            return;
 //        }
-
-        // 3. 提交到虚拟线程异步执行，Netty IO 线程立即返回
+//
+////         3. 提交到虚拟线程异步执行，Netty IO 线程立即返回
 //        bridgeSendVirtualExecutor.execute(() -> {
 //            try {
+//                PortTopicBinding binding = portTopicService.selectAvailableByPort(serverPort);
 //                doBridge(serverPort, serverIp, clientPort, clientIp, data, binding);
 //            } finally {
 //                // 4. 无论成功失败，必须释放许可！防止并发数泄漏
@@ -151,14 +177,14 @@ public class RocketMQMessageBridge implements MessageBridge {
         if (batch == null || batch.isEmpty()) {
             return;
         }
-        // 整批只获取一个许可，覆盖整个发送过程，避免逐条获取瞬间耗尽许可
-        if (!concurrencyLimiter.tryAcquire()) {
-            log.warn("批量重投递触发限流，整批跳过: size={}", batch.size());
-            return;
-        }
         // 复制快照，避免上游游标复用同一集合
         final List<BridgeLog> snapshot = new ArrayList<>(batch);
         bridgeSendVirtualExecutor.execute(() -> {
+            // 整批只获取一个许可，覆盖整个发送过程，避免逐条获取瞬间耗尽许可
+            if (!concurrencyLimiter.tryAcquire()) {
+                log.warn("批量重投递触发限流，整批跳过: size={}", batch.size());
+                return;
+            }
             try {
                 for (BridgeLog logEntity : snapshot) {
                     final Long logId = logEntity.getId();

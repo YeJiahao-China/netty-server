@@ -7,17 +7,17 @@
 
     <parent>
         <groupId>com.yjh</groupId>
-        <artifactId>iot-parser</artifactId>
+        <artifactId>netty-server-parent</artifactId>
         <version>1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>parser-launcher</artifactId>
-    <name>parser-launcher</name>
-    <description>解析模块启动器：main 类 + application.yml，打包为可执行 fat jar（骨架）</description>
+    <artifactId>cluster-admin</artifactId>
+    <name>cluster-admin</name>
+    <description>统一管理中心（独立 Spring Boot fat jar）：前端 SSR 页面、节点列表、广播、协议/桥接/日志 API 代理与分发</description>
 
     <dependencies>
-        <!-- 集群节点注册/心跳（自动装配，type=PARSER 见 cluster-node.properties） -->
+        <!-- 集群节点共享库：节点注册+心跳+查询；cluster-admin 自身也以 ACCESS/parser 之外的身份参与集群（不注册 type 就不心跳，但复用 Mapper/SQL 查节点列表） -->
         <dependency>
             <groupId>com.yjh</groupId>
             <artifactId>cluster-node</artifactId>
@@ -28,7 +28,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- MyBatis-Plus（解析后持久化入库） -->
+        <!-- SSR：管理中心继续沿用 Thymeleaf 页面，零前端构建链 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- MyBatis-Plus：查 bridge_log / port_protocol_binding / protocol_jar_registry / cluster_node 等共享表 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
@@ -38,17 +44,16 @@
             <artifactId>mybatis-plus-jsqlparser</artifactId>
         </dependency>
 
-        <!-- PostgreSQL -->
+        <!-- PostgreSQL（与 access/parser 同库共享） -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
 
-        <!-- RocketMQ gRPC Client（消费 iot-access 投递的设备数据） -->
+        <!-- 建表责任迁到管理中心 -->
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client-java</artifactId>
-            <version>5.2.0</version>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
         </dependency>
 
         <dependency>
@@ -65,7 +70,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.cas.access.parser.ParserApplication</mainClass>
+                    <mainClass>com.cas.admin.ClusterAdminApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
@@ -77,5 +82,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

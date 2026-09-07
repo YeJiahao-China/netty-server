@@ -12,11 +12,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-
-
     <artifactId>netty-admin</artifactId>
     <name>netty-admin</name>
-    <description>管理控制台：REST API、Thymeleaf 模板、静态资源、DB 实体/Mapper/Service、Flyway 迁移脚本</description>
+    <description>iot-access 侧 REST/数据能力：DB 实体/Mapper/Service、MQ 桥接、协议热插拔执行体（不再承载页面/模板/建表职责，统一迁到 cluster-admin）</description>
 
     <dependencies>
         <dependency>
@@ -24,18 +22,18 @@
             <artifactId>netty-core</artifactId>
         </dependency>
 
+        <!-- 集群节点注册/心跳（自动装配） -->
+        <dependency>
+            <groupId>com.yjh</groupId>
+            <artifactId>cluster-node</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-
         <!-- MyBatis-Plus -->
-        <!-- ✅ 修改：使用 boot3 专用 starter -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
@@ -51,12 +49,6 @@
             <artifactId>postgresql</artifactId>
         </dependency>
 
-        <!-- Flyway -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -69,18 +61,6 @@
             <artifactId>rocketmq-client-java</artifactId>
             <version>5.2.0</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>org.apache.rocketmq</groupId>-->
-<!--            <artifactId>rocketmq-client</artifactId>-->
-<!--            <version>5.5.0</version>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>org.apache.rocketmq</groupId>-->
-<!--            <artifactId>rocketmq-tools</artifactId>-->
-<!--            <version>5.5.0</version> &lt;!&ndash; 与你服务端的版本保持一致 &ndash;&gt;-->
-<!--        </dependency>-->
 
         <!-- Spring Retry：为数据桥接提供标准重试 + 指数退避策略 -->
         <dependency>

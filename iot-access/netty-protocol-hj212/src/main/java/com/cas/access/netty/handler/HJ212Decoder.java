@@ -15,20 +15,25 @@ import java.util.List;
  */
 @Slf4j
 public class HJ212Decoder extends ByteToMessageDecoder {
+
+    /** 最大允许的数据段长度，防止恶意长度字段导致 OOM */
+    private static final int MAX_DATA_LENGTH = 1024 * 1024;
+
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-
-
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+        in.markReaderIndex();
         // 检查输入数据的可读字节数是否足够
-        if (in.readableBytes() < 8) {
-            in.skipBytes(in.readableBytes());
+        if (in.readableBytes() < 10) {
+            // 数据不够等待数据
+            log.info("ByteBuf可读数据不足，将重置读索引，等待完整数据!!!");
+            in.resetReaderIndex();
             return;
         }
 
         // 读取数据包的开头（两个#）
         if (in.getByte(in.readerIndex()) != '#' || in.getByte(in.readerIndex() + 1) != '#') {
-            log.error("HJ212解码器读取到不可用的数据包header, discard this message.: {}", in.toString(Charset.defaultCharset()));
-            in.skipBytes(in.readableBytes());
+            log.info("HJ212解码器读取到不可用的数据包header,跳过1个字节等待下次读取: {}", in.toString(Charset.defaultCharset()));
+            in.skipBytes(1);
             return;
         }
 
@@ -39,12 +44,23 @@ public class HJ212Decoder extends ByteToMessageDecoder {
         byte[] lengthBytes = new byte[4];
         in.readBytes(lengthBytes);
         String lengthString = new String(lengthBytes, StandardCharsets.UTF_8);
-        int dataLength = Integer.parseInt(lengthString);
 
-        // 检查是否有足够的数据
-        if (in.readableBytes() < dataLength) {
-            log.info("ByteBuf可读数据小于数据段长度，将重置读索引，等待完整数据!!!");
-//            in.skipBytes(in.readableBytes());
+        int dataLength;
+        try {
+            dataLength = Integer.parseInt(lengthString);
+        } catch (NumberFormatException e) {
+            log.warn("HJ212 长度字段非法: '{}', 跳过该帧头", lengthString);
+            return;
+        }
+
+        if (dataLength < 0 || dataLength > MAX_DATA_LENGTH) {
+            log.warn("HJ212 数据段长度非法: {}, 跳过该帧头", dataLength);
+            return;
+        }
+
+        // 检查是否有足够的数据（数据段 + 4字节CRC）
+        if (in.readableBytes() < dataLength + 4) {
+            log.info("ByteBuf可读数据小于完整帧长度，将重置读索引，等待完整数据!!!");
             in.resetReaderIndex(); // 重置读索引，等待更多数据
             return;
         }

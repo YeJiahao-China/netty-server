@@ -22,6 +22,8 @@
     <modules>
         <module>iot-access</module>
         <module>iot-parser</module>
+        <module>cluster-node</module>
+        <module>cluster-admin</module>
     </modules>
 
     <properties>
@@ -107,6 +109,13 @@
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-client-java</artifactId>
                 <version>${rocketmq-client-java.version}</version>
+            </dependency>
+
+            <!-- ============ 内部共享模块 ============ -->
+            <dependency>
+                <groupId>com.yjh</groupId>
+                <artifactId>cluster-node</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

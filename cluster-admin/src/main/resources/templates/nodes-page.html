@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('节点管理')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: sidebar('nodes')}"></div>
+<div class="content">
+    <header class="topbar">
+        <div class="topbar-left">
+            <div>
+                <div class="page-title">节点管理</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <span id="sse-status" style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                <span class="status-dot ok"></span>已连接
+            </span>
+            <button class="btn btn-sm btn-ghost" onclick="loadAll()"><i class="bi bi-arrow-clockwise"></i> 手动刷新</button>
+        </div>
+    </header>
+
+    <!-- 概览统计卡 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-blue"><i class="bi bi-hdd-network"></i></div>
+            <div class="stat-label">ACCESS 节点</div>
+            <div class="stat-value"><span id="st-access-up" style="color:var(--success)">0</span> / <span id="st-access-total">0</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-purple"><i class="bi bi-hdd-stack"></i></div>
+            <div class="stat-label">PARSER 节点</div>
+            <div class="stat-value"><span id="st-parser-up" style="color:var(--success)">0</span> / <span id="st-parser-total">0</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-label">DOWN 节点</div>
+            <div class="stat-value" id="st-down" style="color:var(--danger)">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon-bg icon-green"><i class="bi bi-heart-pulse"></i></div>
+            <div class="stat-label">集群健康率</div>
+            <div class="stat-value"><span id="st-health-rate">0</span>%</div>
+        </div>
+    </div>
+
+    <!-- 节点列表 -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-list-ul"></i> 节点列表</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <select id="filter-type" onchange="renderTable()" class="form-control" style="width:auto; padding:4px 8px;">
+                    <option value="">全部类型</option>
+                    <option value="ACCESS">ACCESS</option>
+                    <option value="PARSER">PARSER</option>
+                </select>
+                <select id="filter-status" onchange="renderTable()" class="form-control" style="width:auto; padding:4px 8px;">
+                    <option value="">全部状态</option>
+                    <option value="UP">UP</option>
+                    <option value="DOWN">DOWN</option>
+                </select>
+                <input type="text" id="filter-search" placeholder="搜索 nodeId / host / 名称..." oninput="renderTable()" class="form-control" style="width:200px; padding:4px 8px;">
+            </div>
+        </div>
+        <table class="data-table" style="width:100%;">
+            <thead>
+            <tr>
+                <th>nodeId</th><th>类型</th><th>Host</th><th>Port</th><th>名称</th><th>状态</th><th>最近心跳</th><th>距上次心跳</th><th>注册时间</th><th style="width:80px;">操作</th>
+            </tr>
+            </thead>
+            <tbody id="nodes-body">
+            <tr><td colspan="10" class="empty">等待数据…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div th:replace="~{fragments/layout :: toasts}"></div>
+<div th:replace="~{fragments/layout :: confirm-modal}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:inline="javascript">
+let allNodes = [];
+
+/* ========== SSE 实时推送 ========== */
+
+let sse = null;
+
+function connectSSE() {
+    sse = new EventSource('/cluster/sse');
+
+    sse.addEventListener('nodes', function(e) {
+        const r = JSON.parse(e.data);
+        allNodes = r.data || [];
+        renderTable();
+    });
+
+    sse.addEventListener('overview', function(e) {
+        const r = JSON.parse(e.data);
+        if (r.success) {
+            document.getElementById('st-access-up').textContent = r.accessUp;
+            document.getElementById('st-access-total').textContent = r.accessTotal;
+            document.getElementById('st-parser-up').textContent = r.parserUp;
+            document.getElementById('st-parser-total').textContent = r.parserTotal;
+            document.getElementById('st-down').textContent = r.downCount;
+            document.getElementById('st-health-rate').textContent = r.healthRate;
+        }
+    });
+
+    sse.onopen = function() {
+        document.getElementById('sse-status').innerHTML = '<span class="status-dot ok"></span>已连接';
+    };
+
+    sse.onerror = function() {
+        document.getElementById('sse-status').innerHTML = '<span class="status-dot bad"></span>断开，重连中…';
+    };
+}
+
+/* ========== 手动刷新（备用） ========== */
+
+async function loadAll() {
+    try {
+        const [o, a, p] = await Promise.all([
+            fetch('/cluster/overview').then(r => r.json()),
+            fetch('/cluster/nodes?type=ACCESS').then(r => r.json()),
+            fetch('/cluster/nodes?type=PARSER').then(r => r.json())
+        ]);
+        if (o.success) {
+            document.getElementById('st-access-up').textContent = o.accessUp;
+            document.getElementById('st-access-total').textContent = o.accessTotal;
+            document.getElementById('st-parser-up').textContent = o.parserUp;
+            document.getElementById('st-parser-total').textContent = o.parserTotal;
+            document.getElementById('st-down').textContent = o.downCount;
+            document.getElementById('st-health-rate').textContent = o.healthRate;
+        }
+        allNodes = (a.data || []).concat(p.data || []);
+        renderTable();
+    } catch (e) {
+        showToast('error', '刷新失败: ' + e.message);
+    }
+}
+
+/* ========== 表格渲染 ========== */
+
+function renderTable() {
+    const ft = document.getElementById('filter-type').value;
+    const fs = document.getElementById('filter-status').value;
+    const kw = document.getElementById('filter-search').value.trim().toLowerCase();
+    let list = allNodes.filter(n => {
+        if (ft && n.nodeType !== ft) return false;
+        if (fs && n.status !== fs) return false;
+        if (kw) {
+            const s = ((n.nodeId || '') + (n.host || '') + (n.nodeName || '')).toLowerCase();
+            if (!s.includes(kw)) return false;
+        }
+        return true;
+    });
+    list.sort((x, y) => (x.nodeType || '').localeCompare(y.nodeType || '') || (x.host || '').localeCompare(y.host || ''));
+
+    const body = document.getElementById('nodes-body');
+    if (list.length === 0) {
+        body.innerHTML = '<tr><td colspan="10" class="empty">暂无节点</td></tr>';
+        return;
+    }
+    body.innerHTML = '';
+    for (const n of list) {
+        const tr = document.createElement('tr');
+        const up = n.status === 'UP';
+        const hbRel = formatRelative(n.lastHeartbeat);
+        tr.innerHTML =
+            `<td class="mono">${n.nodeId}</td>` +
+            `<td><span class="tag ${n.nodeType === 'ACCESS' ? 'tag-info' : 'tag-warn'}">${n.nodeType}</span></td>` +
+            `<td>${n.host}</td>` +
+            `<td>${n.port}</td>` +
+            `<td>${n.nodeName || ''}</td>` +
+            `<td><span class="status-dot ${up ? 'ok' : 'bad'}"></span>${n.status}</td>` +
+            `<td class="text-muted text-small">${n.lastHeartbeat || ''}</td>` +
+            `<td class="text-small" style="${up ? '' : 'color:var(--danger)'}">${hbRel}</td>` +
+            `<td class="text-muted text-small">${n.registeredAt || ''}</td>` +
+            `<td><button class="btn btn-sm btn-ghost" onclick="probeHealth('${n.nodeId}', this)" title="健康探测"><i class="bi bi-heart-pulse"></i></button></td>`;
+        body.appendChild(tr);
+    }
+}
+
+// 每秒更新"距上次心跳"列
+setInterval(() => { if (allNodes.length > 0) renderTable(); }, 1000);
+
+/* ========== 健康探测 ========== */
+
+async function probeHealth(nodeId, btn) {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+    try {
+        const r = await fetch(`/cluster/nodes/${encodeURIComponent(nodeId)}/health`).then(r => r.json());
+        if (r.reachable) {
+            showToast('success', `节点 ${nodeId} 可达，延迟 ${r.latencyMs}ms`);
+        } else {
+            showToast('error', `节点 ${nodeId} 不可达: ${r.error || '连接失败'}`);
+        }
+    } catch (e) {
+        showToast('error', `探测失败: ${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = original;
+    }
+}
+
+/* ========== 工具函数 ========== */
+
+function formatRelative(dt) {
+    if (!dt) return '-';
+    try {
+        const d = new Date(dt.replace(' ', 'T'));
+        const diff = (Date.now() - d.getTime()) / 1000;
+        if (diff < 60) return Math.floor(diff) + 's前';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm前';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h前';
+        return Math.floor(diff / 86400) + 'd前';
+    } catch (e) {
+        return '-';
+    }
+}
+
+/* ========== 初始化 ========== */
+loadAll();
+connectSSE();
+</script>
+<style>
+.status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+.status-dot.ok { background: var(--success); }
+.status-dot.bad { background: var(--danger); }
+.spin {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+</body>
+</html>
