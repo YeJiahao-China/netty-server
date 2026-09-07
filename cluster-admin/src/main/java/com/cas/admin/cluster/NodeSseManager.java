@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -23,13 +22,18 @@ public class NodeSseManager {
     public SseEmitter register() {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         emitters.add(emitter);
-        emitter.onCompletion(() -> remove(emitter));
+        emitter.onCompletion(() -> {
+            log.debug("SSE 连接完成");
+            remove(emitter);
+        });
         emitter.onTimeout(() -> {
             log.debug("SSE 连接超时");
+            safeComplete(emitter);
             remove(emitter);
         });
         emitter.onError(e -> {
             log.debug("SSE 连接异常: {}", e.getMessage());
+            safeComplete(emitter);
             remove(emitter);
         });
         log.info("SSE 连接建立，当前连接数: {}", emitters.size());
@@ -42,12 +46,10 @@ public class NodeSseManager {
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().name(eventName).data(data));
-            } catch (IOException | IllegalStateException e) {
-                // 客户端已断开或 async 上下文已失效，直接移除，不重复 complete 避免二次异常
-                log.debug("SSE 推送失败，移除连接: {}", e.getMessage());
-                remove(emitter);
             } catch (Exception e) {
-                log.warn("SSE 推送未知异常: {}", e.getMessage());
+                // 客户端已断开 / async 上下文已失效 / 其他内部错误：先 complete 终止 async 上下文，再从池中移除
+                // 必须先 safeComplete 再 remove，否则 dispatcherServlet 会继续尝试写入已断开的 socket，产生冗余 IOException
+                log.debug("SSE 推送失败，移除连接: {}", e.getMessage());
                 safeComplete(emitter);
                 remove(emitter);
             }

@@ -75,7 +75,6 @@ public class ProtocolAdminController {
             m.put("loadedAtText", p.getLoadedAt() != null ? p.getLoadedAt().format(DT_FMT) : null);
             m.put("jarPath", p.getJarPath());
             m.put("status", p.getStatus());
-            m.put("failureDetail", p.getFailureDetail());
             return m;
         }).collect(Collectors.toList());
 

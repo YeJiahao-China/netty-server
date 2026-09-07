@@ -1,14 +1,19 @@
 package com.cas.admin.api;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.cas.admin.cluster.CompensatingNodeBroadcastClient;
 import com.cas.admin.cluster.CompensatingNodeBroadcastClient.NodeResult;
+import com.cas.admin.common.ApiResponse;
 import com.cas.admin.common.NodeType;
+import com.cas.admin.entity.PortProtocolBinding;
 import com.cas.admin.entity.ProtocolJarRegistry;
+import com.cas.admin.mapper.PortProtocolBindingMapper;
 import com.cas.admin.mapper.ProtocolJarRegistryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.Base64;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +50,56 @@ public class ProtocolAdminV2Controller {
 
     private final CompensatingNodeBroadcastClient broadcast;
     private final ProtocolJarRegistryMapper registryMapper;
+    private final PortProtocolBindingMapper portBindingMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /* ========== 查询类：直查同库 ========== */
+
+    @GetMapping
+    public Map<String, Object> list() {
+        List<ProtocolJarRegistry> allProtocols = registryMapper.selectAll();
+        List<PortProtocolBinding> allBindings = portBindingMapper.selectAll();
+
+        // 端口绑定按 protocolName 分组
+        Map<String, Integer> protoPortMap = new LinkedHashMap<>();
+        for (PortProtocolBinding b : allBindings) {
+            if (b.getProtocolName() != null && b.getPort() != null) {
+                protoPortMap.put(b.getProtocolName(), b.getPort());
+            }
+        }
+
+        // 协议列表
+        List<Map<String, Object>> protocols = allProtocols.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("name", p.getName());
+            m.put("version", p.getVersion());
+            m.put("port", protoPortMap.getOrDefault(p.getName(), null));
+            m.put("source", p.getSource());
+            m.put("description", p.getDescription());
+            m.put("loadedAtText", p.getLoadedAt() != null ? p.getLoadedAt().format(DT_FMT) : null);
+            m.put("jarPath", p.getJarPath());
+            m.put("status", p.getStatus());
+            return m;
+        }).collect(Collectors.toList());
+
+        // 概览
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("protocolCount", allProtocols.size());
+        summary.put("externalJarCount", allProtocols.stream()
+                .map(ProtocolJarRegistry::getSource)
+                .filter("external"::equals)
+                .count());
+        summary.put("boundPortCount", allBindings.size());
+        summary.put("totalConnections", 0); // cluster-admin 无法获取实时连接数，由前端从 iot-access 取
+
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("success", true);
+        resp.put("protocols", protocols);
+        resp.put("summary", summary);
+        return resp;
+    }
 
     /* ========== 上传 / 更新 / 绑定（需要补偿回滚） ========== */
 
@@ -59,8 +113,8 @@ public class ProtocolAdminV2Controller {
         try {
             byte[] bytes = file.getBytes();
             // 1. 存 jar 到 DB 仓库表，status=INIT
-            saveJarToRepo(protocolName, bytes, file.getOriginalFilename());
-            // 2. 广播 sync-upload（不带 jarBase64，节点从 DB 拉）
+            saveJarToRepo(protocolName, bytes);
+            // 2. 广播 sync-upload（节点从 DB 拉）
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("mode", "sync-upload");
             body.put("protocolName", protocolName);
@@ -81,7 +135,7 @@ public class ProtocolAdminV2Controller {
         try {
             byte[] bytes = file.getBytes();
             // 1. 更新 DB 仓库表 jar 字节，status=INIT
-            saveJarToRepo(name, bytes, file.getOriginalFilename());
+            saveJarToRepo(name, bytes);
             // 2. 广播 sync-update（节点从 DB 拉新 jar 热替换）
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("mode", "sync-update");
@@ -141,17 +195,46 @@ public class ProtocolAdminV2Controller {
 
     @DeleteMapping("/{name}/purge")
     public Map<String, Object> purge(@PathVariable("name") String name) {
-        // 清除 protocol_jar_registry 中的 jar_bytes + status
-        try {
-            registryMapper.updateJarBytes(name, null, LocalDateTime.now());
-            registryMapper.updateStatus(name, "INIT", null, LocalDateTime.now());
-        } catch (Exception e) {
-            log.warn("清除 protocol_jar_registry jar_bytes 失败: name={}, err={}", name, e.getMessage());
+        ProtocolJarRegistry existing = registryMapper.selectByName(name);
+        if (existing == null) {
+            return fail("协议[" + name + "]不存在");
         }
+        // INIT 状态：jar 从未分发到节点，直接物理删除 DB 记录，无需广播
+        if ("INIT".equals(existing.getStatus())) {
+            int deleted = registryMapper.delete(new LambdaQueryWrapper<ProtocolJarRegistry>()
+                    .eq(ProtocolJarRegistry::getName, name));
+            log.info("INIT 状态协议直接删除 DB 记录: name={}, deleted={}", name, deleted);
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("success", true);
+            r.put("total", 0);
+            r.put("successCount", 0);
+            r.put("failureCount", 0);
+            r.put("reason", "INIT 状态协议从未分发，仅删除 DB 记录");
+            return r;
+        }
+        // 其他状态（UNLOADED/FAILED）：广播通知节点清理（尽力而为），无论广播结果如何都删除 DB 记录
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("mode", "purge");
         body.put("protocolName", name);
-        return doDistribute(body, false);
+        Map<String, Object> distResult = doDistribute(body, false);
+
+        // 无论节点广播是否成功，purge 语义是彻底删除 DB 记录
+        int deleted = registryMapper.delete(new LambdaQueryWrapper<ProtocolJarRegistry>()
+                .eq(ProtocolJarRegistry::getName, name));
+        log.info("purge 删除 DB 记录: name={}, deleted={}, broadcastSuccess={}",
+                name, deleted, distResult.get("success"));
+
+        // 返回广播结果作为参考，但 purge 本身视为成功
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("success", true);
+        r.put("total", distResult.get("total"));
+        r.put("successCount", distResult.get("successCount"));
+        r.put("failureCount", distResult.get("failureCount"));
+        r.put("results", distResult.get("results"));
+        if (!Boolean.TRUE.equals(distResult.get("success"))) {
+            r.put("warning", "节点清理未全部成功，但 DB 记录已删除");
+        }
+        return r;
     }
 
     /* ========== 公共分发 + 补偿回滚 ========== */
@@ -161,7 +244,8 @@ public class ProtocolAdminV2Controller {
                 NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
 
         long ok = results.stream().filter(NodeResult::isSuccess).count();
-        boolean hasFailure = ok < results.size();
+        // 无可用节点（results 为空）视为失败，避免误判为"全部成功"
+        boolean hasFailure = results.isEmpty() || ok < results.size();
         List<NodeResult> successNodes = results.stream()
                 .filter(NodeResult::isSuccess)
                 .collect(Collectors.toList());
@@ -188,7 +272,9 @@ public class ProtocolAdminV2Controller {
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("success", !hasFailure);
         if (hasFailure) {
-            r.put("reason", "部分节点执行失败");
+            r.put("reason", results.isEmpty()
+                    ? "无可用 ACCESS 节点，操作无法执行"
+                    : "部分节点执行失败");
         }
         r.put("total", results.size());
         r.put("successCount", ok);
@@ -231,7 +317,7 @@ public class ProtocolAdminV2Controller {
     /* ========== protocol_jar 仓库表操作 ========== */
 
     /** 上传/更新时把 jar 字节写入 protocol_jar_registry 表（status 重置为 INIT） */
-    private void saveJarToRepo(String protocolName, byte[] jarBytes, String fileName) {
+    private void saveJarToRepo(String protocolName, byte[] jarBytes) {
         try {
             LocalDateTime now = LocalDateTime.now();
             if (registryMapper.existsByName(protocolName)) {
@@ -257,19 +343,20 @@ public class ProtocolAdminV2Controller {
     /**
      * sync 模式分发：广播 sync-upload/sync-update → 所有节点从 DB 拉 jar → 等待结果
      * 全部成功 → status=REGISTERED
-     * 有失败   → 对已成功节点回滚 → status=FAILED + failure_detail
+     * 有失败   → 对已成功节点回滚 → status=FAILED
      */
     private Map<String, Object> doSyncDistribute(Map<String, Object> body, String protocolName) {
         String mode = (String) body.get("mode");
         List<NodeResult> results = broadcast.broadcast(NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
 
         long ok = results.stream().filter(NodeResult::isSuccess).count();
-        boolean hasFailure = ok < results.size();
+        // 无可用节点（results 为空）视为失败，避免误判为"全部成功"
+        boolean hasFailure = results.isEmpty() || ok < results.size();
         LocalDateTime now = LocalDateTime.now();
 
         if (!hasFailure) {
             // 全部成功
-            registryMapper.updateStatus(protocolName, "REGISTERED", null, now);
+            registryMapper.updateStatus(protocolName, "REGISTERED", now);
             log.info("协议[{}]注册成功: {}/{} 节点全部成功", protocolName, ok, results.size());
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("success", true);
@@ -282,9 +369,7 @@ public class ProtocolAdminV2Controller {
         }
 
         // 有失败：保守回滚已成功节点
-        List<NodeResult> successNodes = results.stream()
-                .filter(NodeResult::isSuccess)
-                .collect(Collectors.toList());
+        List<NodeResult> successNodes = results.stream().filter(NodeResult::isSuccess).toList();
 
         Map<String, Object> compensation = null;
         if (!successNodes.isEmpty()) {
@@ -308,45 +393,21 @@ public class ProtocolAdminV2Controller {
             compensation.put("results", compResults.stream().map(NodeResult::getResult).toList());
         }
 
-        // 构建 failure_detail (JSON)
-        String failureDetail = buildFailureDetail(results);
-        registryMapper.updateStatus(protocolName, "FAILED", failureDetail, now);
-        log.warn("协议[{}]注册失败: 成功 {}/{}, 失败详情: {}", protocolName, ok, results.size(), failureDetail);
+        registryMapper.updateStatus(protocolName, "FAILED", now);
+        log.warn("协议[{}]注册失败: 成功 {}/{}", protocolName, ok, results.size());
 
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("success", false);
-        r.put("reason", "部分节点执行失败，已回滚已成功节点");
+        r.put("reason", results.isEmpty() ? "无可用 ACCESS 节点，协议无法分发" : "部分节点执行失败，已回滚已成功节点");
         r.put("total", results.size());
         r.put("successCount", ok);
         r.put("failureCount", results.size() - ok);
         r.put("results", results.stream().map(NodeResult::getResult).toList());
         r.put("status", "FAILED");
-        r.put("failureDetail", failureDetail);
         if (compensation != null) {
             r.put("compensation", compensation);
         }
         return r;
     }
 
-    /** 构建失败节点明细 JSON */
-    private String buildFailureDetail(List<NodeResult> results) {
-        try {
-            List<Map<String, Object>> failures = results.stream()
-                    .filter(nr -> !nr.isSuccess())
-                    .map(nr -> {
-                        Map<String, Object> f = new LinkedHashMap<>();
-                        f.put("nodeId", nr.getNodeId());
-                        f.put("host", nr.getNode().getHost());
-                        f.put("port", nr.getNode().getPort());
-                        Object resp = nr.getResult().get("response");
-                        Object err = nr.getResult().get("error");
-                        f.put("error", err != null ? err : (resp != null ? resp : "unknown"));
-                        return f;
-                    })
-                    .collect(Collectors.toList());
-            return objectMapper.writeValueAsString(failures);
-        } catch (Exception e) {
-            return "[{\"error\":\"构建失败明细异常: " + e.getMessage() + "\"}]";
-        }
-    }
 }

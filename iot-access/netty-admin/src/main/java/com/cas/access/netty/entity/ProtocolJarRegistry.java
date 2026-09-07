@@ -55,9 +55,6 @@ public class ProtocolJarRegistry {
     /** 注册状态: INIT / REGISTERED / FAILED */
     private String status;
 
-    /** 注册失败明细 (JSON) */
-    private String failureDetail;
-
     /** 加载时间 */
     private LocalDateTime loadedAt;
 

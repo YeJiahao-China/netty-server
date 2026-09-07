@@ -184,6 +184,8 @@
         if (j.success) {
             showToast(summary, 'success');
             logOp(summary, 'success');
+            // 操作成功后延迟刷新页面
+            setTimeout(refresh, 1500);
             return;
         }
         // 失败：展示主失败信息
@@ -199,6 +201,10 @@
                 showToast(compSummary, 'success');
                 logOp(compSummary, 'success');
             }
+        }
+        // purge 即使广播失败也删除了 DB 记录，延迟刷新
+        if (j.warning) {
+            setTimeout(refresh, 2000);
         }
     }
 
@@ -232,7 +238,6 @@
                 handleV2Response(j, '上传协议');
                 if (j.success) {
                     closeUploadModal();
-                    setTimeout(refresh, 1200);
                 }
             })
             .catch(err => showToast('请求异常: ' + err.message, 'error'))
@@ -267,7 +272,6 @@
                 handleV2Response(j, '更新协议「' + name + '」');
                 if (j.success) {
                     closeUpdateModal();
-                    setTimeout(refresh, 1200);
                 }
             })
             .catch(err => showToast('请求异常: ' + err.message, 'error'))
@@ -282,7 +286,7 @@
         const b = s === 'builtin';
         return `<span class="tag ${b ? 'tag-builtin' : 'tag-external'}">${b ? '内置' : '外部 jar'}</span>`;
     }
-    function statusTag(s, detail) {
+    function statusTag(s) {
         if (s === 'REGISTERED') {
             return `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`;
         }
@@ -293,12 +297,12 @@
             return `<span class="tag tag-inactive"><i class="bi bi-pause-circle-fill" style="font-size:10px;"></i> 已卸载</span>`;
         }
         if (s === 'FAILED') {
-            return `<span class="tag tag-warn" title="${detail || '注册失败'}"><i class="bi bi-x-circle-fill" style="font-size:10px;"></i> 分发失败</span>`;
+            return `<span class="tag tag-warn" title="协议分发失败"><i class="bi bi-x-circle-fill" style="font-size:10px;"></i> 分发失败</span>`;
         }
         return `<span class="tag tag-inactive">${s || '未知'}</span>`;
     }
     async function loadData() {
-        const resp = await fetch('/protocols');
+        const resp = await fetch('/protocols/v2');
         const data = await resp.json();
         if (!data || data.success === false) return;
         const s = data.summary || {};
@@ -324,10 +328,10 @@
                 `<td><span class="code-chip">${p.port || '-'}</span></td>` +
                 `<td>${sourceTag(p.source)}</td>` +
                 `<td><span class="mono text-muted">${p.loadedAtText || ''}</span></td>` +
-                `<td>${statusTag(p.status, p.failureDetail)}</td>` +
+                `<td>${statusTag(p.status)}</td>` +
                 `<td><span class="mono text-muted text-small" title="${jarPath}">${jarPath}</span></td>` +
                 `<td class="text-right">
-                    ${p.status !== 'REGISTERED' ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
+                    ${p.status === 'UNLOADED' ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
                     ${p.status === 'REGISTERED' && p.source !== 'builtin' ? `<button class="btn btn-sm btn-primary-ghost" data-name="${p.name}" onclick="openUpdateModal(this.dataset.name)"><i class="bi bi-arrow-repeat"></i> 更新</button>` : ''}
                     ${p.status === 'REGISTERED' ? `<button class="btn btn-sm btn-danger-ghost" data-name="${p.name}" onclick="unloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议不可卸载':''}"><i class="bi bi-trash3"></i> 卸载</button>` : ''}
                     ${p.status !== 'REGISTERED' ? `<button class="btn btn-sm btn-danger" data-name="${p.name}" onclick="purgeProtocol(this.dataset.name)"><i class="bi bi-trash3-fill"></i> 删除</button>` : ''}

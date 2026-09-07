@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * 协议 jar 注册表实体（cluster-admin 视角）。
- * <p>用于管理 protocol_jar_registry 表中的 jar_bytes / status / failure_detail 字段。</p>
+ * <p>用于管理 protocol_jar_registry 表中的 jar_bytes / status 字段。</p>
  */
 @Data
 @TableName("protocol_jar_registry")
@@ -35,9 +35,6 @@ public class ProtocolJarRegistry {
 
     /** 注册状态: INIT / REGISTERED / FAILED */
     private String status;
-
-    /** 注册失败明细 (JSON) */
-    private String failureDetail;
 
     private LocalDateTime loadedAt;
 
