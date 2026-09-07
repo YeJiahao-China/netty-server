@@ -1,7 +1,7 @@
 //package com.cas.access.netty.api;
 //
 //import com.cas.access.netty.entity.PortProtocolBinding;
-//import com.cas.access.netty.entity.ProtocolJarRegistry;
+//import com.cas.cluster.node.entity.ProtocolJarRegistry;
 //import com.cas.access.netty.protocol.ProtocolJarLoader;
 //import com.cas.access.netty.protocol.ProtocolProperties;
 //import com.cas.access.netty.protocol.ProtocolRegistry;

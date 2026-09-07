@@ -1,6 +1,6 @@
 package com.cas.access.netty.service;
 
-import com.cas.access.netty.entity.ProtocolJarRegistry;
+import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.access.netty.protocol.LoadedProtocol;
 import com.cas.access.netty.protocol.ProtocolJarLoader;
 import com.cas.access.netty.protocol.ProtocolProperties;

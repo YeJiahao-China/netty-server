@@ -1,6 +1,6 @@
 package com.cas.access.netty.service;
 
-import com.cas.access.netty.entity.ProtocolJarRegistry;
+import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.access.netty.mapper.ProtocolJarRegistryMapper;
 import com.cas.access.netty.mapper.ProtocolJarSyncMapper;
 import jakarta.annotation.Resource;

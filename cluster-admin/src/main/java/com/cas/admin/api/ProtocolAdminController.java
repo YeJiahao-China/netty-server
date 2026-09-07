@@ -4,7 +4,7 @@ import com.cas.admin.cluster.NodeBroadcastClient;
 import com.cas.admin.cluster.NodeType;
 import com.cas.admin.common.ApiResponse;
 import com.cas.admin.entity.PortProtocolBinding;
-import com.cas.admin.entity.ProtocolJarRegistry;
+import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.admin.mapper.PortProtocolBindingMapper;
 import com.cas.admin.mapper.ProtocolJarRegistryMapper;
 import com.cas.admin.proxy.AccessProxyClient;

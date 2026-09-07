@@ -6,7 +6,7 @@ import com.cas.admin.cluster.CompensatingNodeBroadcastClient.NodeResult;
 import com.cas.admin.common.ApiResponse;
 import com.cas.admin.common.NodeType;
 import com.cas.admin.entity.PortProtocolBinding;
-import com.cas.admin.entity.ProtocolJarRegistry;
+import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.admin.mapper.PortProtocolBindingMapper;
 import com.cas.admin.mapper.ProtocolJarRegistryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;

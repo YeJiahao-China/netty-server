@@ -3,7 +3,7 @@ package com.cas.access.netty.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.cas.access.netty.entity.PortProtocolBinding;
-import com.cas.access.netty.entity.ProtocolJarRegistry;
+import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.access.netty.mapper.PortBindingMapper;
 import com.cas.access.netty.mapper.ProtocolJarRegistryMapper;
 import com.cas.access.netty.protocol.LoadedProtocol;
