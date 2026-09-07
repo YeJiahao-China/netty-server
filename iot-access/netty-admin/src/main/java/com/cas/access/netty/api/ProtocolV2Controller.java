@@ -163,16 +163,16 @@ public class ProtocolV2Controller {
     private Map<String, Object> doSyncUpload(Map<String, Object> body) throws Exception {
         Object p = body.get("port");
         int port = p == null ? 0 : ((Number) p).intValue();
-        String name = (String) body.get("protocolName");
-        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
-        if (name == null || name.isBlank()) return fail("protocolName 为空");
-        if (port < 1024 || port > 65535) return fail("port 非法");
+        String protocolName = (String) body.get("protocolName");
+        String fileName = (String) body.getOrDefault("fileName", protocolName + ".jar");
+        if (protocolName == null || protocolName.isBlank()) return fail("协议名称为空");
+        if (port < 1024 || port > 65535) return fail("端口非法");
 
-        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(name);
-        if (row == null) return fail("DB 仓库中未找到协议[" + name + "]");
+        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(protocolName);
+        if (row == null) return fail("DB 仓库中未找到协议[" + protocolName + "]");
         byte[] bytes = extractBytes(row);
         if (bytes == null) return fail("DB 仓库中 jar_bytes 为空");
-        return compensationService.upload(name, port, bytes, fileName);
+        return compensationService.upload(protocolName, port, bytes, fileName);
     }
 
     /** sync-update: 从 DB 拉 jar_bytes → 调 compensationService.update */

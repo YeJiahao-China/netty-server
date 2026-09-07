@@ -68,7 +68,7 @@ public class ProtocolAdminV2Controller {
             body.put("fileName", file.getOriginalFilename());
             return doSyncDistribute(body, protocolName);
         } catch (Exception e) {
-            log.error("V2 upload 失败", e);
+            log.error("上传协议失败", e);
             return fail("上传失败: " + e.getMessage());
         }
     }
@@ -245,9 +245,10 @@ public class ProtocolAdminV2Controller {
                 reg.setUpdatedAt(now);
                 registryMapper.insert(reg);
             }
-            log.info("protocol_jar_registry 仓库已保存 jar: name={}, size={}KB, status=INIT", protocolName, jarBytes.length / 1024);
+            log.info("仓库保存协议jar成功: name={}, size={}KB, status=INIT", protocolName, jarBytes.length / 1024);
         } catch (Exception e) {
-            log.error("protocol_jar_registry 仓库保存失败: name={}, err={}", protocolName, e.getMessage());
+            log.error("仓库保存协议jar失败: name={}", protocolName, e);
+            throw new RuntimeException(e);
         }
     }
 

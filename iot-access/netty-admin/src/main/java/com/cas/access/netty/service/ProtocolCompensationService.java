@@ -66,7 +66,7 @@ public class ProtocolCompensationService {
     public Map<String, Object> upload(String protocolName, int port, byte[] jarBytes, String fileName) throws Exception {
         if (jarBytes == null || jarBytes.length == 0) return fail("jar 内容为空");
         if (fileName == null || !fileName.toLowerCase().endsWith(".jar")) return fail("仅支持 .jar 文件");
-        if (protocolName == null || protocolName.isBlank()) return fail("protocolName 不能为空");
+        if (protocolName == null || protocolName.isBlank()) return fail("协议名称不能为空");
         if (port < 1024 || port > 65535) return fail("端口范围必须在 1024-65535");
 
         ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(protocolName);
