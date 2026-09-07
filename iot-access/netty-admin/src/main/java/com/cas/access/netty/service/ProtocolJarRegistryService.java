@@ -44,7 +44,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
 
     /**
      * 同步协议注册到数据库。
-     * 同名协议：更新元数据 + 重置 active=TRUE；否则插入新记录。
+     * 同名协议：更新元数据 + 重置 status=REGISTERED；否则插入新记录。
      */
     public void syncRegister(LoadedProtocol lp) {
         try {
@@ -63,7 +63,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 entity.setSource(isBuiltin ? "builtin" : "external");
                 entity.setJarPath(isBuiltin ? null : lp.getSource());
                 entity.setProviderClass(providerClass);
-                entity.setActive(Boolean.TRUE);
+                entity.setStatus("REGISTERED");
                 entity.setLoadedAt(loadedAt);
                 mapper.insert(entity);
 //                log.info("DB INSERT 协议记录: name={}, version={}, source={}", lp.getName(), lp.getVersion(), entity.getSource());
@@ -76,7 +76,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 update.setSource(isBuiltin ? "builtin" : "external");
                 update.setJarPath(isBuiltin ? null : lp.getSource());
                 update.setProviderClass(providerClass);
-                update.setActive(Boolean.TRUE);
+                update.setStatus("REGISTERED");
                 update.setLoadedAt(loadedAt);
                 mapper.updateFull(update);
 //                log.info("DB UPDATE 协议记录: id={}, name={}, version={}", existing.getId(), lp.getName(), lp.getVersion());
@@ -87,7 +87,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     }
 
     /**
-     * 同步协议卸载：标记 active=FALSE（保留记录，便于后续 reload 重新启用）。
+     * 同步协议卸载：标记 status=UNLOADED（保留记录，便于后续 reload 重新启用）。
      * 同时把对应端口绑定置为 enabled=false。
      */
     public void syncUnload(String name) {
@@ -99,13 +99,13 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             }
             ProtocolJarRegistry update = new ProtocolJarRegistry();
             update.setName(name);
-            update.setActive(Boolean.FALSE);
+            update.setStatus("UNLOADED");
             update.setUpdatedAt(LocalDateTime.now());
-            mapper.updateActiveByName(update);
+            mapper.updateStatusByName(update);
 
             portBindingMapper.updateEnableByProtocol(name, Boolean.FALSE, LocalDateTime.now());
 
-            log.debug("DB 标记协议卸载（active=false）: name={}", name);
+            log.debug("DB 标记协议卸载（status=UNLOADED）: name={}", name);
         } catch (Exception e) {
             log.warn("DB 同步协议卸载失败（不影响运行时）: name={}, err={}", name, e.getMessage());
         }
@@ -124,7 +124,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             mapper.update(null,
                     new LambdaUpdateWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getName, name)
-                            .set(ProtocolJarRegistry::getActive, Boolean.TRUE)
+                            .set(ProtocolJarRegistry::getStatus, "REGISTERED")
                             .set(ProtocolJarRegistry::getUpdatedAt, LocalDateTime.now()));
 
             portBindingMapper.update(null,
@@ -156,8 +156,8 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
         List<ProtocolJarRegistry> result = mapper.selectAll();
 //        log.info("listAllInDb 查询结果: count={}", result.size());
 //        for (ProtocolJarRegistry p : result) {
-//            log.info("  协议: name={}, active={}, source={}",
-//                    p.getName(), p.getActive(), p.getSource());
+//            log.info("  协议: name={}, status={}, source={}",
+//                    p.getName(), p.getStatus(), p.getSource());
 //        }
         return result;
     }
@@ -200,7 +200,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             List<ProtocolJarRegistry> list = mapper.selectList(
                     new LambdaQueryWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getSource, "external")
-                            .eq(ProtocolJarRegistry::getActive, Boolean.TRUE));
+                            .eq(ProtocolJarRegistry::getStatus, "REGISTERED"));
             for (ProtocolJarRegistry p : list) {
                 if (p.getJarPath() != null && !p.getJarPath().isEmpty()) {
                     result.put(p.getName(), p.getJarPath());
@@ -234,7 +234,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             mapper.update(null,
                     new LambdaUpdateWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getName, name)
-                            .set(ProtocolJarRegistry::getActive, Boolean.TRUE)
+                            .set(ProtocolJarRegistry::getStatus, "REGISTERED")
                             .set(ProtocolJarRegistry::getUpdatedAt, LocalDateTime.now()));
             log.info("DB 激活协议: name={}", name);
         } catch (Exception e) {
@@ -249,7 +249,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     /**
      * 物理删除协议记录（含端口绑定）。
      *
-     * <p>调用方必须保证协议已卸载（active=false 且内存中无注册）。
+     * <p>调用方必须保证协议已卸载（status=UNLOADED 且内存中无注册）。
      * 本方法仅做 DB 物理删除，不触碰文件系统。
      *
      * @return true=删除成功；false=协议不存在

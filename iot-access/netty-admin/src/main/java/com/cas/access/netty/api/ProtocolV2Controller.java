@@ -1,6 +1,7 @@
 package com.cas.access.netty.api;
 
 import com.cas.access.netty.cluster.ProtocolSyncReporter;
+import com.cas.access.netty.mapper.ProtocolJarSyncMapper;
 import com.cas.access.netty.service.ProtocolCompensationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +33,18 @@ public class ProtocolV2Controller {
     @Resource
     private ProtocolSyncReporter syncReporter;
 
+    @Resource
+    private ProtocolJarSyncMapper protocolJarSyncMapper;
+
     /**
      * 管理中心广播式协议操作落地入口（V2）。
      *
      * <p>body.mode 取值：
      * <ul>
-     *   <li>upload：上传 jar 并绑定端口</li>
-     *   <li>update：更新 jar（自动备份旧 jar）</li>
+     *   <li>sync-upload：从 DB 拉 jar_bytes → 落盘 → probe → 注册 → 绑定端口</li>
+     *   <li>sync-update：从 DB 拉新 jar → probe → 热替换 → 重绑端口</li>
+     *   <li>upload：上传 jar（带 jarBase64）并绑定端口</li>
+     *   <li>update：更新 jar（带 jarBase64，自动备份旧 jar）</li>
      *   <li>rollback-update：从备份恢复旧 jar</li>
      *   <li>cleanup-upload：unload + 删 jar + 删 DB 记录</li>
      *   <li>bind / unbind / unload / purge / reload</li>
@@ -52,6 +58,12 @@ public class ProtocolV2Controller {
         Map<String, Object> result;
         try {
             switch (mode) {
+                case "sync-upload":
+                    result = doSyncUpload(body);
+                    break;
+                case "sync-update":
+                    result = doSyncUpdate(body);
+                    break;
                 case "upload":
                     result = doInternalUpload(body);
                     break;
@@ -145,6 +157,48 @@ public class ProtocolV2Controller {
         try { bytes = Base64.getDecoder().decode(b64); }
         catch (IllegalArgumentException e) { return fail("jarBase64 非法"); }
         return compensationService.update(name, bytes, fileName);
+    }
+
+    /** sync-upload: 从 DB 拉 jar_bytes → 调 compensationService.upload */
+    private Map<String, Object> doSyncUpload(Map<String, Object> body) throws Exception {
+        Object p = body.get("port");
+        int port = p == null ? 0 : ((Number) p).intValue();
+        String name = (String) body.get("protocolName");
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null || name.isBlank()) return fail("protocolName 为空");
+        if (port < 1024 || port > 65535) return fail("port 非法");
+
+        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(name);
+        if (row == null) return fail("DB 仓库中未找到协议[" + name + "]");
+        byte[] bytes = extractBytes(row);
+        if (bytes == null) return fail("DB 仓库中 jar_bytes 为空");
+        return compensationService.upload(name, port, bytes, fileName);
+    }
+
+    /** sync-update: 从 DB 拉 jar_bytes → 调 compensationService.update */
+    private Map<String, Object> doSyncUpdate(Map<String, Object> body) throws Exception {
+        String name = (String) body.get("protocolName");
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null || name.isBlank()) return fail("protocolName 为空");
+
+        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(name);
+        if (row == null) return fail("DB 仓库中未找到协议[" + name + "]");
+        byte[] bytes = extractBytes(row);
+        if (bytes == null) return fail("DB 仓库中 jar_bytes 为空");
+        return compensationService.update(name, bytes, fileName);
+    }
+
+    /** 从 DB 查询结果 Map 中提取 jar_bytes */
+    private byte[] extractBytes(Map<String, Object> row) {
+        Object obj = row.get("jar_bytes");
+        if (obj == null) obj = row.get("jarBytes");
+        if (obj == null) return null;
+        if (obj instanceof byte[]) return (byte[]) obj;
+        if (obj instanceof String s) {
+            try { return Base64.getDecoder().decode(s); }
+            catch (Exception e) { return null; }
+        }
+        return null;
     }
 
     private Map<String, Object> fail(String reason) {

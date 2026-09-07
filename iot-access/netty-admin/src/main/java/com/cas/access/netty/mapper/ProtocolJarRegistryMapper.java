@@ -26,19 +26,19 @@ public interface ProtocolJarRegistryMapper extends BaseMapper<ProtocolJarRegistr
 
     @Update("UPDATE protocol_jar_registry " +
             "SET version=#{version}, description=#{description}, source=#{source}, " +
-            "jar_path=#{jarPath}, provider_class=#{providerClass}, active=#{active}, " +
+            "jar_path=#{jarPath}, provider_class=#{providerClass}, status=#{status}, " +
             "loaded_at=#{loadedAt}, updated_at=#{updatedAt} " +
             "WHERE id=#{id}")
     int updateFull(ProtocolJarRegistry entity);
 
     @Update("UPDATE protocol_jar_registry " +
-            "SET active=#{active}, updated_at=#{updatedAt} " +
+            "SET status=#{status}, updated_at=#{updatedAt} " +
             "WHERE name=#{name}")
-    int updateActiveByName(ProtocolJarRegistry entity);
+    int updateStatusByName(ProtocolJarRegistry entity);
 
     @Update("UPDATE protocol_jar_registry " +
             "SET jar_path=null, provider_class=null, updated_at=#{updatedAt} " +
             "WHERE name=#{name}")
-    int clearJarPathAndProvider(@Param("name") String name,@Param("updatedAt") LocalDateTime updatedAt);
+    int clearJarPathAndProvider(@Param("name") String name, @Param("updatedAt") LocalDateTime updatedAt);
 
 }

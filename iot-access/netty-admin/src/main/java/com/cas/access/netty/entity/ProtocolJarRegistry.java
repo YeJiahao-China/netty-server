@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * <ul>
  *   <li>{@link #source}：{@code builtin}=内置协议 / {@code external}=外部 jar</li>
  *   <li>{@link #jarPath}：仅外部协议有值</li>
- *   <li>{@link #active}：是否活跃（在内存中已加载），卸载时置为 false，记录保留</li>
+ *   <li>{@link #status}：注册状态（INIT/REGISTERED/FAILED/UNLOADED），卸载时置为 UNLOADED，记录保留</li>
  * </ul>
  *
  * @author yjh_c
@@ -49,8 +49,14 @@ public class ProtocolJarRegistry {
     /** Provider 实现类全限定名 */
     private String providerClass;
 
-    /** 是否活跃 */
-    private Boolean active;
+    /** 协议 jar 二进制内容（供新节点从 DB 同步） */
+    private byte[] jarBytes;
+
+    /** 注册状态: INIT / REGISTERED / FAILED */
+    private String status;
+
+    /** 注册失败明细 (JSON) */
+    private String failureDetail;
 
     /** 加载时间 */
     private LocalDateTime loadedAt;

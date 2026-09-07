@@ -70,7 +70,7 @@ public class ProtocolCompensationService {
         if (port < 1024 || port > 65535) return fail("端口范围必须在 1024-65535");
 
         ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(protocolName);
-        if (exist != null && Boolean.TRUE.equals(exist.getActive())) return fail("协议[" + protocolName + "]已存在");
+        if (exist != null && "REGISTERED".equals(exist.getStatus())) return fail("协议[" + protocolName + "]已存在");
         String existingProtocol = registry.getProtocolNameByPort(port);
         if (existingProtocol != null) return fail("端口 " + port + " 已被协议[" + existingProtocol + "]占用");
         if (registry.getProvider(protocolName) != null) return fail("协议[" + protocolName + "]已存在，请走 update");
@@ -255,7 +255,7 @@ public class ProtocolCompensationService {
             return ok();
         }
 
-        // 1. 卸载：停止监听、解绑端口、关闭 ClassLoader、DB active=false
+        // 1. 卸载：停止监听、解绑端口、关闭 ClassLoader、DB status=UNLOADED
         if (registry.getProvider(name) != null) {
             registry.unregister(name);
         }
@@ -303,7 +303,7 @@ public class ProtocolCompensationService {
     public Map<String, Object> purge(String name) {
         ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
         if (existing == null) return fail("协议[" + name + "]不存在");
-        if (Boolean.TRUE.equals(existing.getActive())) return fail("协议[" + name + "]处于活跃状态，请先卸载");
+        if ("REGISTERED".equals(existing.getStatus())) return fail("协议[" + name + "]处于活跃状态，请先卸载");
         if (registry.getProvider(name) != null) return fail("协议[" + name + "]仍在运行时注册表中");
 
         protocolJarRegistryService.purgeByName(name);

@@ -282,10 +282,16 @@
         const b = s === 'builtin';
         return `<span class="tag ${b ? 'tag-builtin' : 'tag-external'}">${b ? '内置' : '外部 jar'}</span>`;
     }
-    function activeTag(a) {
-        return a
+    function activeTag(status) {
+        return status === 'REGISTERED'
             ? `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`
             : `<span class="tag tag-inactive">已停用</span>`;
+    }
+    function regStatusTag(s, detail) {
+        if (!s || s === 'REGISTERED') return '';
+        if (s === 'INIT') return `<span class="tag tag-builtin">初始化</span>`;
+        if (s === 'FAILED') return `<span class="tag tag-inactive" title="${detail || '注册失败'}">注册失败</span>`;
+        return `<span class="tag tag-builtin">${s}</span>`;
     }
     async function loadData() {
         const resp = await fetch('/protocols');
@@ -314,13 +320,13 @@
                 `<td><span class="code-chip">${p.port || '-'}</span></td>` +
                 `<td>${sourceTag(p.source)}</td>` +
                 `<td><span class="mono text-muted">${p.loadedAtText || ''}</span></td>` +
-                `<td>${activeTag(!!p.active)}</td>` +
+                `<td>${activeTag(p.status)} ${regStatusTag(p.status, p.failureDetail)}</td>` +
                 `<td><span class="mono text-muted text-small" title="${jarPath}">${jarPath}</span></td>` +
                 `<td class="text-right">
-                    ${!p.active ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
-                    ${p.active && p.source !== 'builtin' ? `<button class="btn btn-sm btn-primary-ghost" data-name="${p.name}" onclick="openUpdateModal(this.dataset.name)"><i class="bi bi-arrow-repeat"></i> 更新</button>` : ''}
-                    ${p.active ? `<button class="btn btn-sm btn-danger-ghost" data-name="${p.name}" onclick="unloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议不可卸载':''}"><i class="bi bi-trash3"></i> 卸载</button>` : ''}
-                    ${!p.active ? `<button class="btn btn-sm btn-danger" data-name="${p.name}" onclick="purgeProtocol(this.dataset.name)"><i class="bi bi-trash3-fill"></i> 删除</button>` : ''}
+                    ${p.status !== 'REGISTERED' ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
+                    ${p.status === 'REGISTERED' && p.source !== 'builtin' ? `<button class="btn btn-sm btn-primary-ghost" data-name="${p.name}" onclick="openUpdateModal(this.dataset.name)"><i class="bi bi-arrow-repeat"></i> 更新</button>` : ''}
+                    ${p.status === 'REGISTERED' ? `<button class="btn btn-sm btn-danger-ghost" data-name="${p.name}" onclick="unloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议不可卸载':''}"><i class="bi bi-trash3"></i> 卸载</button>` : ''}
+                    ${p.status !== 'REGISTERED' ? `<button class="btn btn-sm btn-danger" data-name="${p.name}" onclick="purgeProtocol(this.dataset.name)"><i class="bi bi-trash3-fill"></i> 删除</button>` : ''}
                 </td>`;
             tbody.appendChild(tr);
         }

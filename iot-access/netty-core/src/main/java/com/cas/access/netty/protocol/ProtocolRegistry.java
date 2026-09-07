@@ -168,7 +168,7 @@ public class ProtocolRegistry {
      *
      * @param name       协议名
      * @param hotReplace true=热替换（register 覆盖同名协议），不调 syncUnload（syncRegister 会更新 DB）；
-     *                   false=彻底卸载（unregister 调用），调 syncUnload 标记 DB active=false
+     *                   false=彻底卸载（unregister 调用），调 syncUnload 标记 DB status=UNLOADED
      */
     private boolean unregisterInternal(String name, boolean hotReplace) {
         LoadedProtocol lp = protocols.remove(name);

@@ -62,6 +62,9 @@ public class ProtocolController {
     @Resource
     private PortBindingService portBindingService;
 
+    @Resource
+    private com.cas.access.netty.mapper.ProtocolJarSyncMapper protocolJarSyncMapper;
+
     /**
      * 上传协议 jar 一键热加载。
      *
@@ -84,7 +87,7 @@ public class ProtocolController {
             @RequestParam("protocolName") String protocolName,
             @RequestParam("port") int port) {
         ProtocolJarRegistry protocolJarRegistry = protocolJarRegistryService.selectByName(protocolName);
-        if (protocolJarRegistry != null && Boolean.TRUE.equals(protocolJarRegistry.getActive())) {
+        if (protocolJarRegistry != null && "REGISTERED".equals(protocolJarRegistry.getStatus())) {
             return fail("协议[" + protocolJarRegistry.getName() + "]已存在");
         }
         // 1. 基础校验
@@ -167,7 +170,7 @@ public class ProtocolController {
                 NettyServerUtil.bindPort(port);
             } catch (Exception bindEx) {
                 log.error("启动端口[{}]监听失败，回滚协议[{}]注册: {}", port, protocolName, bindEx.getMessage());
-                // unregister 包含：解绑端口 + destroy Provider + close CL + DB active=false
+                // unregister 包含：解绑端口 + destroy Provider + close CL + DB status=UNLOADED
                 registry.unregister(protocolName);
                 try {
                     Files.deleteIfExists(finalFile);
@@ -352,14 +355,14 @@ public class ProtocolController {
     /**
      * 重新启用协议（从 DB 记录恢复 jar 加载 + 端口绑定 + 监听）。
      *
-     * <p>适用场景：协议被 {@link #unload(String)} 卸载后（active=false，port_binding
+     * <p>适用场景：协议被 {@link #unload(String)} 卸载后（status=UNLOADED，port_binding
      * enabled=false），通过本接口恢复运行。
      *
      * <p>流程：
      * <ol>
      *   <li>校验 DB 中存在该协议记录</li>
      *   <li>校验 jarPath 有效且 jar 文件存在</li>
-     *   <li>加载 jar（register 会自动 syncRegister 恢复 active=true）</li>
+     *   <li>加载 jar（register 会自动 syncRegister 恢复 status=REGISTERED）</li>
      *   <li>查出该协议的所有端口绑定（含 enabled=false 的），逐个恢复：
      *       bindPortToProtocol（内存 + DB enabled=true）+ NettyServerUtil.bindPort</li>
      * </ol>
@@ -386,7 +389,7 @@ public class ProtocolController {
         List<Integer> ports = portBindingService.selectAllPortsByProtocol(name);
 
         try {
-            // 4. 加载 jar（register → syncRegister 自动恢复 active=true）
+            // 4. 加载 jar（register → syncRegister 自动恢复 status=REGISTERED）
             jarLoader.loadSingleJar(jarFile);
 
             // 5. 逐个恢复端口绑定 + 启动监听
@@ -411,7 +414,7 @@ public class ProtocolController {
     }
 
     /**
-     * 卸载协议（停止运行时 + 标记 active=false，DB 记录保留）。
+     * 卸载协议（停止运行时 + 标记 status=UNLOADED，DB 记录保留）。
      * <p>
      * 框架会自动处理：
      * - 关闭该协议绑定的所有端口监听
@@ -421,7 +424,7 @@ public class ProtocolController {
      * <p>
      * 因此调用方无需先解绑端口。
      * <p>
-     * 卸载后协议记录仍保留在 DB（active=false），可通过 reload 接口重新启用，
+     * 卸载后协议记录仍保留在 DB（status=UNLOADED），可通过 reload 接口重新启用，
      * 或通过 purge 接口彻底物理删除。
      */
     @DeleteMapping("/{name}")
@@ -440,7 +443,7 @@ public class ProtocolController {
     /**
      * 彻底删除协议（物理删除 DB 记录 + jar 文件，不可恢复）。
      *
-     * <p>前置条件：协议必须已卸载（active=false）。活跃协议请先调用
+     * <p>前置条件：协议必须已卸载（status=UNLOADED）。活跃协议请先调用
      * {@link #unload(String)} 卸载后再删除。
      *
      * <p>本接口清理：
@@ -461,8 +464,8 @@ public class ProtocolController {
             return fail("协议[" + name + "]不存在");
         }
 
-        // 2. 校验不活跃（DB active=false）
-        if (Boolean.TRUE.equals(existing.getActive())) {
+        // 2. 校验不活跃（DB status=UNLOADED）
+        if (!"UNLOADED".equals(existing.getStatus())) {
             return fail("协议[" + name + "]处于活跃状态，请先卸载再删除");
         }
 
@@ -539,7 +542,7 @@ public class ProtocolController {
             m.put("source", p.getSource());
             m.put("description", p.getDescription());
             m.put("loadedAt", p.getLoadedAt());
-            m.put("active", p.getActive());
+            m.put("status", p.getStatus());
             m.put("jarPath", p.getJarPath());
             return m;
         }).collect(Collectors.toList()));
@@ -716,7 +719,7 @@ public class ProtocolController {
         catch (IllegalArgumentException e) { return fail("jarBase64 非法"); }
 
         ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(name);
-        if (exist != null && Boolean.TRUE.equals(exist.getActive())) return fail("协议[" + name + "]已存在");
+        if (exist != null && "REGISTERED".equals(exist.getStatus())) return fail("协议[" + name + "]已存在");
         String existingProtocol = registry.getProtocolNameByPort(port);
         if (existingProtocol != null) return fail("端口 " + port + " 已被协议[" + existingProtocol + "]占用");
         if (registry.getProvider(name) != null) return fail("协议[" + name + "]已存在，请走 update");
@@ -799,5 +802,200 @@ public class ProtocolController {
         } finally {
             try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
         }
+    }
+
+    /* ======================== V2 内部分发落地接口（sync 模式：节点从 DB 拉 jar） ======================== */
+
+    /**
+     * V2 管理中心广播落地入口。
+     * body.mode 取值：sync-upload / sync-update / sync-rollback / cleanup-upload / rollback-update
+     *                  + 原有 upload / update / reload / bind / unbind / unload / purge
+     * <p>
+     * sync-upload/sync-update 不再带 jarBase64，节点从 protocol_jar 表拉 jar_bytes。
+     */
+    @PostMapping("/v2/internal/distribute")
+    public Map<String, Object> distributeV2(@RequestBody Map<String, Object> body) {
+        String mode = (String) body.get("mode");
+        if (mode == null || mode.isBlank()) return fail("mode 不能为空");
+        String name = (String) body.get("protocolName");
+        try {
+            switch (mode) {
+                case "sync-upload":   return doSyncUpload(body);
+                case "sync-update":   return doSyncUpdate(body);
+                case "sync-rollback": return doSyncRollback(body);
+                // 保留原有 mode 路由（V2 兼容）
+                case "upload":   return doInternalUpload(body);
+                case "update":   return doInternalUpdate(body);
+                case "reload": {
+                    if (name == null) return fail("protocolName 为空");
+                    if ("all".equals(name)) return doReloadAll();
+                    return reload(name);
+                }
+                case "bind": {
+                    Object p = body.get("port");
+                    int port = p == null ? 0 : ((Number) p).intValue();
+                    if (name == null || port <= 0) return fail("protocolName/port 非法");
+                    return bindPort(name, port);
+                }
+                case "unbind": {
+                    Object p = body.get("port");
+                    int port = p == null ? 0 : ((Number) p).intValue();
+                    if (port <= 0) return fail("port 非法");
+                    return unbindPort(port);
+                }
+                case "unload": {
+                    if (name == null) return fail("protocolName 为空");
+                    return unload(name);
+                }
+                case "purge": {
+                    if (name == null) return fail("protocolName 为空");
+                    return purge(name);
+                }
+                default:
+                    return fail("未知 mode: " + mode);
+            }
+        } catch (Exception e) {
+            log.error("distributeV2 执行失败: mode={}, protocolName={}, err={}", mode, name, e.getMessage(), e);
+            return fail("distributeV2 失败: " + e.getMessage());
+        }
+    }
+
+    /** sync-upload: 从 DB 拉 jar_bytes → 落盘 → probe → 注册 → 绑定端口 */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> doSyncUpload(Map<String, Object> body) throws Exception {
+        String name = (String) body.get("protocolName");
+        Object p = body.get("port");
+        int port = p == null ? 0 : ((Number) p).intValue();
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null || name.isBlank()) return fail("protocolName 为空");
+        if (port < 1024 || port > 65535) return fail("port 非法");
+
+        // 从 DB 拉 jar
+        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(name);
+        if (row == null) return fail("protocol_jar 仓库中未找到协议[" + name + "]");
+        byte[] bytes = extractBytes(row);
+        if (bytes == null) return fail("protocol_jar 中 jar_bytes 为空");
+
+        // 复用已有 upload 逻辑（用临时文件走 probe + loadSingleJar + bind）
+        Path uploadDir = Paths.get(properties.getJarDir(), ".upload").toAbsolutePath();
+        Files.createDirectories(uploadDir);
+        Path temp = uploadDir.resolve(fileName + ".tmp");
+        Files.write(temp, bytes);
+        Path probeCopy = Files.createTempFile("protocol-probe-", ".jar");
+        Files.copy(temp, probeCopy, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            ProtocolJarLoader.ProbeResult probe = jarLoader.probe(probeCopy.toFile());
+            if (!probe.isSuccess()) { Files.deleteIfExists(temp); return fail("jar 加载失败: " + probe.getErrorMessage()); }
+            if (!name.equals(probe.getProviderName())) { Files.deleteIfExists(temp); return fail("协议名不匹配: jar内[" + probe.getProviderName() + "] vs 输入[" + name + "]"); }
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+
+            // 检查端口冲突
+            ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(name);
+            if (exist != null && "REGISTERED".equals(exist.getStatus())) return fail("协议[" + name + "]已存在");
+            String existingProtocol = registry.getProtocolNameByPort(port);
+            if (existingProtocol != null) return fail("端口 " + port + " 已被协议[" + existingProtocol + "]占用");
+
+            Path finalFile = moveJarFileWithFallback(temp, fileName);
+            jarLoader.loadSingleJar(finalFile.toFile());
+            registry.bindPortToProtocol(port, name);
+            try { NettyServerUtil.bindPort(port); }
+            catch (Exception bindEx) {
+                registry.unregister(name);
+                try { Files.deleteIfExists(finalFile); } catch (Exception ignored) {}
+                return fail("端口[" + port + "]监听失败: " + bindEx.getMessage());
+            }
+            Map<String, Object> r = ok();
+            r.put("protocolName", name);
+            r.put("version", probe.getProviderVersion());
+            r.put("jarPath", finalFile.toString());
+            r.put("port", port);
+            return r;
+        } finally {
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+        }
+    }
+
+    /** sync-update: 从 DB 拉新 jar → probe → 关闭旧 ClassLoader → 替换 jar → 重新加载 → 重绑端口 */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> doSyncUpdate(Map<String, Object> body) throws Exception {
+        String name = (String) body.get("protocolName");
+        String fileName = (String) body.getOrDefault("fileName", name + ".jar");
+        if (name == null) return fail("protocolName 为空");
+
+        Map<String, Object> row = protocolJarSyncMapper.selectJarByName(name);
+        if (row == null) return fail("protocol_jar 仓库中未找到协议[" + name + "]");
+        byte[] bytes = extractBytes(row);
+        if (bytes == null) return fail("protocol_jar 中 jar_bytes 为空");
+
+        ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
+        if (existing == null) return fail("协议[" + name + "]不存在，请先 upload");
+
+        List<Integer> boundPorts = registry.getBoundPorts(name);
+        Path uploadDir = Paths.get(properties.getJarDir(), ".upload").toAbsolutePath();
+        Files.createDirectories(uploadDir);
+        Path temp = uploadDir.resolve(fileName + ".tmp");
+        Files.write(temp, bytes);
+        Path probeCopy = Files.createTempFile("protocol-probe-", ".jar");
+        Files.copy(temp, probeCopy, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            ProtocolJarLoader.ProbeResult probe = jarLoader.probe(probeCopy.toFile());
+            if (!probe.isSuccess()) { Files.deleteIfExists(temp); return fail("jar 加载失败: " + probe.getErrorMessage()); }
+            if (!name.equals(probe.getProviderName())) { Files.deleteIfExists(temp); return fail("协议名不匹配: jar内[" + probe.getProviderName() + "] vs 目标[" + name + "]"); }
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+
+            registry.closeOldChannels(name);
+            registry.closeClassLoaderForUpgrade(name);
+            String oldJarPath = existing.getJarPath();
+            Path finalFile = moveJarFileWithFallback(temp, fileName);
+            if (oldJarPath != null && !oldJarPath.isEmpty()) {
+                Path old = Paths.get(oldJarPath).toAbsolutePath();
+                if (!old.equals(finalFile.toAbsolutePath())) try { Files.deleteIfExists(old); } catch (IOException ignored) {}
+            }
+            jarLoader.loadSingleJar(finalFile.toFile());
+            List<Integer> rebound = new java.util.ArrayList<>();
+            List<Integer> failed = new java.util.ArrayList<>();
+            for (int port : boundPorts) {
+                try { NettyServerUtil.bindPort(port); rebound.add(port); }
+                catch (Exception bindEx) { failed.add(port); log.warn("更新后重绑端口[{}]失败: {}", port, bindEx.getMessage()); }
+            }
+            Map<String, Object> r = ok();
+            r.put("protocolName", name);
+            r.put("version", probe.getProviderVersion());
+            r.put("jarPath", finalFile.toString());
+            r.put("reboundPorts", rebound);
+            if (!failed.isEmpty()) r.put("failedPorts", failed);
+            return r;
+        } finally {
+            try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+        }
+    }
+
+    /** sync-rollback: 保守回滚 — 对已成功节点执行 unload + 删 jar */
+    private Map<String, Object> doSyncRollback(Map<String, Object> body) {
+        String name = (String) body.get("protocolName");
+        if (name == null) return fail("protocolName 为空");
+        log.warn("收到保守回滚指令: protocol={}, 执行 unload + 删 jar", name);
+        try {
+            // 先 unload
+            Map<String, Object> unloadResult = unload(name);
+            // 再删 jar 文件
+            ProtocolJarRegistry reg = protocolJarRegistryService.selectByName(name);
+            if (reg != null && reg.getJarPath() != null) {
+                try { Files.deleteIfExists(Paths.get(reg.getJarPath())); } catch (Exception ignored) {}
+            }
+            return unloadResult;
+        } catch (Exception e) {
+            return fail("回滚失败: " + e.getMessage());
+        }
+    }
+
+    /** 从 DB 查询结果 Map 中提取 jar_bytes */
+    private byte[] extractBytes(Map<String, Object> row) {
+        Object obj = row.get("jar_bytes");
+        if (obj == null) obj = row.get("jarBytes");
+        if (obj == null) return null;
+        if (obj instanceof byte[]) return (byte[]) obj;
+        if (obj instanceof String s) { try { return Base64.getDecoder().decode(s); } catch (Exception e) { return null; } }
+        return null;
     }
 }
