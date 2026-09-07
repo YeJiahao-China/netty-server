@@ -282,16 +282,20 @@
         const b = s === 'builtin';
         return `<span class="tag ${b ? 'tag-builtin' : 'tag-external'}">${b ? '内置' : '外部 jar'}</span>`;
     }
-    function activeTag(status) {
-        return status === 'REGISTERED'
-            ? `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`
-            : `<span class="tag tag-inactive">已停用</span>`;
-    }
-    function regStatusTag(s, detail) {
-        if (!s || s === 'REGISTERED') return '';
-        if (s === 'INIT') return `<span class="tag tag-builtin">初始化</span>`;
-        if (s === 'FAILED') return `<span class="tag tag-inactive" title="${detail || '注册失败'}">注册失败</span>`;
-        return `<span class="tag tag-builtin">${s}</span>`;
+    function statusTag(s, detail) {
+        if (s === 'REGISTERED') {
+            return `<span class="tag tag-active"><i class="bi bi-check-circle-fill" style="font-size:10px;"></i> 活跃</span>`;
+        }
+        if (s === 'INIT') {
+            return `<span class="tag tag-info"><i class="bi bi-hourglass-split" style="font-size:10px;"></i> 待分发</span>`;
+        }
+        if (s === 'UNLOADED') {
+            return `<span class="tag tag-inactive"><i class="bi bi-pause-circle-fill" style="font-size:10px;"></i> 已卸载</span>`;
+        }
+        if (s === 'FAILED') {
+            return `<span class="tag tag-warn" title="${detail || '注册失败'}"><i class="bi bi-x-circle-fill" style="font-size:10px;"></i> 分发失败</span>`;
+        }
+        return `<span class="tag tag-inactive">${s || '未知'}</span>`;
     }
     async function loadData() {
         const resp = await fetch('/protocols');
@@ -320,7 +324,7 @@
                 `<td><span class="code-chip">${p.port || '-'}</span></td>` +
                 `<td>${sourceTag(p.source)}</td>` +
                 `<td><span class="mono text-muted">${p.loadedAtText || ''}</span></td>` +
-                `<td>${activeTag(p.status)} ${regStatusTag(p.status, p.failureDetail)}</td>` +
+                `<td>${statusTag(p.status, p.failureDetail)}</td>` +
                 `<td><span class="mono text-muted text-small" title="${jarPath}">${jarPath}</span></td>` +
                 `<td class="text-right">
                     ${p.status !== 'REGISTERED' ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
