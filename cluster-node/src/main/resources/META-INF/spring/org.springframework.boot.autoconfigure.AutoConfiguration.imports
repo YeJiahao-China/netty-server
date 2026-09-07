@@ -1,1 +1,2 @@
 com.cas.cluster.node.config.ClusterNodeAutoConfiguration
+com.cas.cluster.node.config.ClusterNodeSyncAutoConfiguration

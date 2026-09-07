@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -13,15 +14,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class NodeSseManager {
 
+    /** 30 分钟超时（0L 在部分容器/代理场景下会导致 async 状态异常） */
+    private static final long SSE_TIMEOUT_MS = 30 * 60 * 1000L;
+
     private final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     /** 创建新连接，加入连接池 */
     public SseEmitter register() {
-        SseEmitter emitter = new SseEmitter(0L); // 永不超时
+        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         emitters.add(emitter);
         emitter.onCompletion(() -> remove(emitter));
-        emitter.onTimeout(() -> remove(emitter));
-        emitter.onError(e -> remove(emitter));
+        emitter.onTimeout(() -> {
+            log.debug("SSE 连接超时");
+            remove(emitter);
+        });
+        emitter.onError(e -> {
+            log.debug("SSE 连接异常: {}", e.getMessage());
+            remove(emitter);
+        });
         log.info("SSE 连接建立，当前连接数: {}", emitters.size());
         return emitter;
     }
@@ -32,8 +42,12 @@ public class NodeSseManager {
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().name(eventName).data(data));
+            } catch (IOException | IllegalStateException e) {
+                // 客户端已断开或 async 上下文已失效，直接移除，不重复 complete 避免二次异常
+                log.debug("SSE 推送失败，移除连接: {}", e.getMessage());
+                remove(emitter);
             } catch (Exception e) {
-                // 客户端已断开（刷新/关页面），先 complete 再移除，避免 Spring async 容器重复报错
+                log.warn("SSE 推送未知异常: {}", e.getMessage());
                 safeComplete(emitter);
                 remove(emitter);
             }

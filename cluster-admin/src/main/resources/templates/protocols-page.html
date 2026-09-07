@@ -143,49 +143,64 @@
 
 <script>
     function reloadProtocols() {
-        callApi('POST', '/protocols/reload/all', '已指令所有节点重新扫描 protocols 目录');
+        callV2Api('POST', '/protocols/v2/reload/all', '已指令所有节点重新扫描 protocols 目录');
     }
 
     function unloadProtocol(name) {
         showConfirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开（全网节点）。', function () {
-            callApi('DELETE', '/protocols/' + encodeURIComponent(name), '指令已发送到所有节点');
+            callV2Api('DELETE', '/protocols/v2/' + encodeURIComponent(name), '卸载指令已发送');
         }, { title: '卸载确认', icon: 'bi-trash3', iconColor: 'var(--danger)', btnClass: 'btn-danger-ghost', btnText: '卸载' });
     }
 
     function purgeProtocol(name) {
         showConfirm('确定彻底删除协议「' + name + '」？\n\n此操作将物理删除数据库记录（不可恢复），且所有节点同步清除！\n如需保留记录以便后续重新启用，请改用「卸载」。', function () {
-            fetch('/protocols/' + encodeURIComponent(name) + '/purge', {method: 'DELETE'})
-                .then(r => r.json())
-                .then(j => {
-                    if (j.success) {
-                        showToast('协议「' + name + '」已彻底删除（全网）', 'success');
-                        setTimeout(refresh, 1000);
-                    } else {
-                        const fails = (j.results || []).filter(x => !x.success).map(x => x.nodeId + ': ' + (x.error || x.response)).join(' | ');
-                        showToast(j.reason || fails || '删除失败', 'error');
-                    }
-                })
-                .catch(err => showToast('请求异常: ' + err.message, 'error'));
+            callV2Api('DELETE', '/protocols/v2/' + encodeURIComponent(name) + '/purge', '删除指令已发送');
         }, { title: '彻底删除确认', icon: 'bi-trash3-fill', iconColor: 'var(--danger)', btnClass: 'btn-danger', btnText: '彻底删除' });
     }
 
     function reloadProtocol(name) {
         showConfirm('确定重新启用协议「' + name + '」？\n所有节点会重新加载 jar 并启动端口监听。', function () {
-            fetch('/protocols/reload/' + encodeURIComponent(name), {method: 'POST'})
-                .then(r => r.json())
-                .then(j => {
-                    if (j.success) {
-                        showToast('协议「' + name + '」已重新启用（全网）', 'success');
-                        setTimeout(refresh, 1000);
-                    } else {
-                        showToast(j.reason || '重新启用失败', 'error');
-                    }
-                })
-                .catch(err => showToast('请求异常: ' + err.message, 'error'));
+            callV2Api('POST', '/protocols/v2/reload/' + encodeURIComponent(name), '重新启用指令已发送');
         }, { title: '重新启用确认', icon: 'bi-play-circle', iconColor: 'var(--success)', btnClass: 'btn-success-ghost', btnText: '重新启用' });
     }
 
     function refresh() { location.reload(); }
+
+    /* ========== V2 接口响应统一处理 ========== */
+    async function callV2Api(method, url, successMsg) {
+        try {
+            const resp = await fetch(url, { method: method });
+            const j = await resp.json();
+            handleV2Response(j, successMsg);
+            return j;
+        } catch (e) {
+            showToast('请求异常: ' + e.message, 'error');
+        }
+    }
+
+    function handleV2Response(j, opName) {
+        if (!j) return;
+        const summary = (opName || '操作') + '：' + (j.successCount || 0) + '/' + (j.total || 0) + ' 节点成功';
+        if (j.success) {
+            showToast(summary, 'success');
+            logOp(summary, 'success');
+            return;
+        }
+        // 失败：展示主失败信息
+        showToast(j.reason || summary, 'error');
+        // 如果有补偿回滚，再提示一次
+        if (j.compensation) {
+            const c = j.compensation;
+            const compSummary = '已触发回滚[' + c.rollbackMode + ']：' + c.successCount + '/' + c.total + ' 节点成功';
+            if (c.failureCount > 0) {
+                showToast(compSummary + '，部分节点回滚失败请查看同步状态页', 'error');
+                logOp(compSummary, 'error');
+            } else {
+                showToast(compSummary, 'success');
+                logOp(compSummary, 'success');
+            }
+        }
+    }
 
     /* ========== 上传协议 Modal ========== */
     function openUploadModal() {
@@ -211,16 +226,13 @@
         const btn = document.getElementById('upload-submit');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 分发中...';
-        fetch('/protocols/upload', {method: 'POST', body: fd})
+        fetch('/protocols/v2/upload', {method: 'POST', body: fd})
             .then(r => r.json())
             .then(j => {
+                handleV2Response(j, '上传协议');
                 if (j.success) {
                     closeUploadModal();
-                    showToast('协议已分发到 ' + j.successCount + '/' + j.total + ' 节点', 'success');
-                    logOp('上传协议 → 分发结果 ok=' + j.successCount + '/' + j.total, 'success');
                     setTimeout(refresh, 1200);
-                } else {
-                    showToast(j.reason || '分发失败', 'error');
                 }
             })
             .catch(err => showToast('请求异常: ' + err.message, 'error'))
@@ -249,16 +261,13 @@
         const btn = document.getElementById('update-submit');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> 更新中...';
-        fetch('/protocols/' + encodeURIComponent(name) + '/update', {method: 'POST', body: fd})
+        fetch('/protocols/v2/' + encodeURIComponent(name) + '/update', {method: 'POST', body: fd})
             .then(r => r.json())
             .then(j => {
+                handleV2Response(j, '更新协议「' + name + '」');
                 if (j.success) {
                     closeUpdateModal();
-                    showToast('协议「' + name + '」已更新，ok=' + j.successCount + '/' + j.total, 'success');
-                    logOp('更新协议 ' + name + ' → 分发 ok=' + j.successCount + '/' + j.total, 'success');
                     setTimeout(refresh, 1200);
-                } else {
-                    showToast(j.reason || '更新失败', 'error');
                 }
             })
             .catch(err => showToast('请求异常: ' + err.message, 'error'))

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/layout :: head('节点协议同步状态')"></head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <div>
+            <div class="page-title">节点协议同步状态</div>
+            <div class="page-subtitle">展示每个接入节点上各协议的实际同步状态</div>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="btn btn-ghost btn-sm" onclick="refresh()">
+            <i class="bi bi-refresh"></i> 刷新
+        </button>
+    </div>
+</header>
+
+<aside th:replace="fragments/layout :: sidebar('node-protocol-sync')"></aside>
+
+<main class="content">
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="bi bi-hdd-network"></i> 同步状态矩阵
+            </div>
+            <div class="panel-meta">
+                <span class="badge badge-green">SYNCED 正常</span>
+                <span class="badge badge-red">OUT_OF_SYNC 异常</span>
+                <span class="badge badge-yellow">PENDING 待同步</span>
+                <span class="badge badge-gray">UNKNOWN 未知</span>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div id="sync-empty" class="empty" th:classappend="${states.isEmpty()} ? '' : 'hidden'">
+                <i class="bi bi-inbox"></i> 暂无同步状态数据
+            </div>
+            <table id="sync-table" th:classappend="${states.isEmpty()} ? 'hidden' : ''">
+                <thead>
+                <tr>
+                    <th>节点</th>
+                    <th>协议</th>
+                    <th>状态</th>
+                    <th>明细</th>
+                    <th>最近同步时间</th>
+                </tr>
+                </thead>
+                <tbody id="sync-tbody">
+                <tr th:each="s : ${states}" th:classappend="${s.syncState == 'OUT_OF_SYNC'} ? 'row-danger' : (${s.syncState == 'PENDING'} ? 'row-warning' : '')">
+                    <td th:text="${nodeNameMap.get(s.nodeId) ?: s.nodeId}">node</td>
+                    <td th:text="${s.protocolName}">protocol</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${s.syncState == 'SYNCED'} ? 'badge-green' : (${s.syncState == 'OUT_OF_SYNC'} ? 'badge-red' : (${s.syncState == 'PENDING'} ? 'badge-yellow' : 'badge-gray'))"
+                              th:text="${s.syncState}">SYNCED</span>
+                    </td>
+                    <td th:text="${s.detail}" style="max-width:400px; word-break:break-all;">detail</td>
+                    <td th:text="${s.lastSyncTime != null ? s.lastSyncTime.toString().replace('T', ' ') : '-'}">time</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="fragments/layout :: scripts"></th:block>
+<script>
+function refresh() {
+    location.reload();
+}
+</script>
+</body>
+</html>

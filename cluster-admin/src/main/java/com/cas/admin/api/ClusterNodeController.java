@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,7 +47,17 @@ public class ClusterNodeController {
      * SSE 连接端点：前端建立 EventSource 后，后端检测到节点状态变化时自动推送。
      */
     @GetMapping(value = "/sse", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter sse() {
+    public Object sse(HttpServletRequest request, HttpServletResponse response) {
+        // 防御 ERROR dispatch 或 async 不支持导致的 "Cannot start async"
+        if (request.getDispatcherType() != DispatcherType.REQUEST || !request.isAsyncSupported()) {
+            log.warn("SSE 请求状态异常，拒绝建立连接: dispatcherType={}, asyncSupported={}",
+                    request.getDispatcherType(), request.isAsyncSupported());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("success", false);
+            r.put("reason", "SSE 请求状态异常: " + request.getDispatcherType());
+            return r;
+        }
         return sseManager.register();
     }
 
