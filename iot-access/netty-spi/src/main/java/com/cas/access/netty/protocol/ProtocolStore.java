@@ -18,9 +18,18 @@ public interface ProtocolStore {
     /**
      * 获取所有未删除且活跃的外部协议记录。
      *
-     * @return 协议名称 -> jar 路径映射
+     * @return 协议名称 -> 本地 jar 路径映射（路径由 jarDir 配置 + 协议名推导）
      */
     Map<String, String> getActiveExternalProtocols();
+
+    /**
+     * 获取指定协议的 jar 二进制内容（来自 DB jar_bytes 列）。
+     * <p>用于本地 jar 文件缺失时从 DB 恢复。
+     *
+     * @param protocolName 协议名称
+     * @return jar 二进制内容；无记录或无 jar_bytes 时返回 null
+     */
+    byte[] getExternalJarBytes(String protocolName);
 
     /**
      * 获取指定协议绑定的所有启用端口。

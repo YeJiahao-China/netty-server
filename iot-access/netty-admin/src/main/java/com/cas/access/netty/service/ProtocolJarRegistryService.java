@@ -8,6 +8,7 @@ import com.cas.access.netty.mapper.PortBindingMapper;
 import com.cas.access.netty.mapper.ProtocolJarRegistryMapper;
 import com.cas.access.netty.protocol.LoadedProtocol;
 import com.cas.access.netty.protocol.ProtocolDbSync;
+import com.cas.access.netty.protocol.ProtocolProperties;
 import com.cas.access.netty.protocol.ProtocolStore;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,14 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     @Resource
     private PortBindingMapper portBindingMapper;
 
+    @Resource
+    private ProtocolProperties protocolProperties;
+
+    /** 构造本节点协议 jar 的本地绝对路径：{@code <jarDir>/<name>.jar} */
+    private String resolveLocalJarPath(String protocolName) {
+        return protocolProperties.getJarDir() + File.separator + protocolName + ".jar";
+    }
+
     /**
      * 同步协议注册到数据库。
      * 同名协议：更新元数据 + 重置 status=REGISTERED；否则插入新记录。
@@ -61,12 +70,10 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 entity.setVersion(lp.getVersion());
                 entity.setDescription(lp.getDescription());
                 entity.setSource(isBuiltin ? "builtin" : "external");
-                entity.setJarPath(isBuiltin ? null : lp.getSource());
                 entity.setProviderClass(providerClass);
                 entity.setStatus("REGISTERED");
                 entity.setLoadedAt(loadedAt);
                 mapper.insert(entity);
-//                log.info("DB INSERT 协议记录: name={}, version={}, source={}", lp.getName(), lp.getVersion(), entity.getSource());
             } else {
                 // 已存在：更新元数据并标记活跃
                 ProtocolJarRegistry update = new ProtocolJarRegistry();
@@ -74,12 +81,10 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 update.setVersion(lp.getVersion());
                 update.setDescription(lp.getDescription());
                 update.setSource(isBuiltin ? "builtin" : "external");
-                update.setJarPath(isBuiltin ? null : lp.getSource());
                 update.setProviderClass(providerClass);
                 update.setStatus("REGISTERED");
                 update.setLoadedAt(loadedAt);
                 mapper.updateFull(update);
-//                log.info("DB UPDATE 协议记录: id={}, name={}, version={}", existing.getId(), lp.getName(), lp.getVersion());
             }
         } catch (Exception e) {
             log.warn("DB 同步协议注册失败（不影响运行时）: name={}, err={}", lp.getName(), e.getMessage());
@@ -112,8 +117,8 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     }
 
     @Override
-    public void clearJarPathAndProvider(String protocolName) {
-        mapper.clearJarPathAndProvider(protocolName, LocalDateTime.now());
+    public void clearProvider(String protocolName) {
+        mapper.clearProvider(protocolName, LocalDateTime.now());
     }
 
     /**
@@ -164,18 +169,13 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
 
     public void deleteJar(String name) {
         ProtocolJarRegistry existing = mapper.selectByName(name);
-
         if (existing == null) {
             log.warn("未找到协议记录: name={}", name);
             return;
         }
 
-        String jarPath = existing.getJarPath();
-        if (jarPath == null || jarPath.isEmpty()) {
-            log.warn("协议无 jar 路径，跳过删除: name={}", name);
-            return;
-        }
-
+        // 本地 jar 路径由配置 + 协议名推导，不再从 DB 读取
+        String jarPath = resolveLocalJarPath(name);
         File jarFile = new File(jarPath);
         if (!jarFile.exists()) {
             log.warn("jar 文件不存在: {}", jarPath);
@@ -202,9 +202,8 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                             .eq(ProtocolJarRegistry::getSource, "external")
                             .eq(ProtocolJarRegistry::getStatus, "REGISTERED"));
             for (ProtocolJarRegistry p : list) {
-                if (p.getJarPath() != null && !p.getJarPath().isEmpty()) {
-                    result.put(p.getName(), p.getJarPath());
-                }
+                // jar 路径不再存表，由本节点配置 jarDir + 协议名推导
+                result.put(p.getName(), resolveLocalJarPath(p.getName()));
             }
             log.info("从 DB 加载活跃外部协议: {} 条", result.size());
         } catch (Exception e) {
@@ -214,18 +213,33 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
     }
 
     @Override
+    public byte[] getExternalJarBytes(String protocolName) {
+        try {
+            ProtocolJarRegistry p = mapper.selectByName(protocolName);
+            if (p == null || p.getJarBytes() == null) {
+                return null;
+            }
+            return p.getJarBytes();
+        } catch (Exception e) {
+            log.warn("DB 查询协议 jar_bytes 失败: name={}, err={}", protocolName, e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
     public List<Integer> getEnabledPortsByProtocol(String protocolName) {
         try {
             return portBindingMapper.selectList(
                             new LambdaQueryWrapper<PortProtocolBinding>()
                                     .eq(PortProtocolBinding::getProtocolName, protocolName)
-                                    .eq(PortProtocolBinding::getEnabled, Boolean.TRUE))
+                                    .eq(PortProtocolBinding::getEnabled, Boolean.TRUE)
+                    )
                     .stream()
                     .map(PortProtocolBinding::getPort)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("DB 查询协议端口绑定失败: protocol={}, err={}", protocolName, e.getMessage());
-            return new ArrayList<Integer>();
+            return new ArrayList<>();
         }
     }
 

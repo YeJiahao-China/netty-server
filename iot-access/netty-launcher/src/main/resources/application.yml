@@ -49,7 +49,7 @@ netty:
   server:
     protocol:
       # 协议 jar 扫描目录（建议放在项目外部，避免 IDE 监控/索引锁定 jar 文件）
-      jar-dir: C:/netty-protocols
+      jar-dir: /netty-protocols
       # 启动时是否自动扫描一次外部协议 jar
       auto-load-on-startup: true
 

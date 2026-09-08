@@ -110,6 +110,41 @@ public class CompensatingNodeBroadcastClient {
             return Boolean.TRUE.equals(result.get("success"));
         }
 
+        /**
+         * 判断业务是否成功：HTTP 成功 + response 业务体 success=true。
+         * response 是 iot-access 返回的 JSON 字符串，其中 success 字段才是真正的业务结果。
+         */
+        public boolean isBusinessSuccess() {
+            if (!isSuccess()) return false;
+            Object response = result.get("response");
+            if (response == null) return false;
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> bizResult = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readValue(response.toString(), Map.class);
+                return Boolean.TRUE.equals(bizResult.get("success"));
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        /**
+         * 解析业务结果（response JSON 字符串 → Map）。
+         * HTTP 失败或 JSON 解析失败时返回空 Map。
+         */
+        public Map<String, Object> getBusinessResult() {
+            Object response = result.get("response");
+            if (response == null) return Map.of();
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> bizResult = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readValue(response.toString(), Map.class);
+                return bizResult;
+            } catch (Exception e) {
+                return Map.of();
+            }
+        }
+
         public int getStatus() {
             Object status = result.get("status");
             return status instanceof Number n ? n.intValue() : 0;

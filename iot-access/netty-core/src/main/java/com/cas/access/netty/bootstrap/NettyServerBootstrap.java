@@ -1,7 +1,8 @@
-package com.cas.access.netty.server;
+package com.cas.access.netty.bootstrap;
 
-import com.cas.access.netty.protocol.ProtocolBootstrap;
 import com.cas.access.netty.protocol.ProtocolRegistry;
+import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.server.NettyChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -16,14 +17,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-//import javax.annotation.PreDestroy;
-//import jakarta.annotation.Resource;
 import java.util.Map;
 
 /**
  * TCP 服务启动类。
  *
- * <p>执行顺序晚于 {@link ProtocolBootstrap}（{@link Order}(2)），
+ * <p>执行顺序晚于 {@link }（{@link Order}(2)），
  * 这样启动时 ProtocolRegistry 的端口绑定已从 DB 装载就绪，
  * 直接根据 {@link ProtocolRegistry#getAllBindings()} 的端口列表绑定监听。
  *

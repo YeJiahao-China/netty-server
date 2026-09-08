@@ -1,5 +1,6 @@
 package com.cas.access.netty.protocol;
 
+import com.cas.access.netty.bootstrap.ProtocolBootstrap;
 import com.cas.access.netty.server.GlobalCache;
 import com.cas.access.netty.util.NettyServerUtil;
 import io.netty.channel.Channel;

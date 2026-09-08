@@ -28,28 +28,43 @@
         <div>
             <div class="rest-item">
                 <span class="rest-method post">POST</span>
-                <span class="rest-url">/protocols/reload</span>
+                <span class="rest-url">/protocols/v2/reload</span>
                 <div class="rest-desc">重新扫描 protocols/ 目录下的所有 *.jar，热加载新协议。旧连接不受影响，新连接走新版本 Provider。</div>
             </div>
             <div class="rest-item">
                 <span class="rest-method get">GET</span>
-                <span class="rest-url">/protocols</span>
+                <span class="rest-url">/protocols/v2</span>
                 <div class="rest-desc">列出所有已注册协议 + 端口绑定 + 每端口活跃连接数 + 顶部统计概览。</div>
             </div>
             <div class="rest-item">
                 <span class="rest-method delete">DELETE</span>
-                <span class="rest-url">/protocols/{name}</span>
+                <span class="rest-url">/protocols/v2/{name}</span>
                 <div class="rest-desc">卸载协议。框架会自动关闭该协议绑定的所有端口监听、强制断开所有活跃连接、调 Provider.destroy()、释放 URLClassLoader 与 jar 文件句柄。</div>
             </div>
             <div class="rest-item">
                 <span class="rest-method post">POST</span>
-                <span class="rest-url">/protocols/{name}/bind/{port}</span>
+                <span class="rest-url">/protocols/v2/{name}/bind/{port}</span>
                 <div class="rest-desc">绑定协议到端口，触发 Netty 端口监听。若端口已在监听，会先关闭再重新绑定确保 Pipeline 走新协议。</div>
             </div>
             <div class="rest-item">
                 <span class="rest-method delete">DELETE</span>
-                <span class="rest-url">/protocols/bind/{port}</span>
+                <span class="rest-url">/protocols/v2/bind/{port}</span>
                 <div class="rest-desc">解绑端口。关闭端口监听 + 踢掉所有客户端连接 + 移除端口→协议映射。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method post">POST</span>
+                <span class="rest-url">/protocols/v2/upload</span>
+                <div class="rest-desc">上传协议 jar（multipart），分发到所有 iot-access 节点并加载，失败时自动补偿回滚。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method post">POST</span>
+                <span class="rest-url">/protocols/v2/{name}/update</span>
+                <div class="rest-desc">更新已有协议 jar（multipart），覆盖旧版本并重新绑定端口。失败时从备份回滚旧 jar。</div>
+            </div>
+            <div class="rest-item">
+                <span class="rest-method delete">DELETE</span>
+                <span class="rest-url">/protocols/v2/{name}/purge</span>
+                <div class="rest-desc">彻底删除协议（DB 记录 + jar 文件）。需先卸载（status=UNLOADED）才能删除。</div>
             </div>
         </div>
     </div>
@@ -105,19 +120,19 @@
             <pre style="background: var(--bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto;
                         font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
                         font-size: 12px; color: var(--text-soft); margin: 0; line-height: 1.7;"># 热加载协议 jar
-curl -X POST http://localhost:2310/protocols/reload
+curl -X POST http://localhost:2310/protocols/v2/reload
 
 # 查看当前状态
-curl http://localhost:2310/protocols
+curl http://localhost:2310/protocols/v2
 
 # 绑定 modbus-tcp 协议到 502 端口
-curl -X POST http://localhost:2310/protocols/modbus-tcp/bind/502
+curl -X POST http://localhost:2310/protocols/v2/modbus-tcp/bind/502
 
 # 解绑端口（关闭监听并踢连接）
-curl -X DELETE http://localhost:2310/protocols/bind/502
+curl -X DELETE http://localhost:2310/protocols/v2/bind/502
 
 # 卸载协议（自动清理所有相关端口与连接）
-curl -X DELETE http://localhost:2310/protocols/modbus-tcp</pre>
+curl -X DELETE http://localhost:2310/protocols/v2/modbus-tcp</pre>
         </div>
     </div>
 

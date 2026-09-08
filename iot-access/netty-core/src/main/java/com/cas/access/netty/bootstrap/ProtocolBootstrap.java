@@ -1,5 +1,16 @@
-package com.cas.access.netty.protocol;
+package com.cas.access.netty.bootstrap;
 
+import com.cas.access.netty.protocol.*;
+import com.cas.access.netty.server.GlobalCache;
+import com.cas.access.netty.server.NettyChannelInitializer;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,13 +86,12 @@ public class ProtocolBootstrap implements CommandLineRunner {
                     .active(true)
                     .build();
             registry.register(lp);
-//            log.info("内置协议注册: {}-{} ({})", p.name(), p.version(), p.description());
         }
 
         // 2. 加载外部协议 jar（优先从数据库读取）
         if (properties.isAutoLoadOnStartup()) {
             if (protocolStore != null) {
-                loadExternalProtocolsFromDb();
+                    loadExternalProtocolsFromDb();
             } else {
                 List<ProtocolJarLoader.LoadResult> results = jarLoader.scanAndLoad();
                 int totalProviders = results.stream()
@@ -122,14 +132,40 @@ public class ProtocolBootstrap implements CommandLineRunner {
         for (Map.Entry<String, String> entry : protocols.entrySet()) {
             String protocolName = entry.getKey();
             String jarPath = entry.getValue();
-
             java.io.File jarFile = new java.io.File(jarPath);
-            if (!jarFile.exists()) {
-                log.warn("协议 jar 文件不存在，跳过加载: name={}, path={}", protocolName, jarPath);
-                // 修改数据库字段为无效和已删除
-                protocolDbSync.syncUnload(protocolName);
-                protocolDbSync.clearJarPathAndProvider(protocolName);
+
+            // 前置校验：协议必须至少有一个端口绑定，否则视为孤儿记录，标记无效并删除
+            List<Integer> ports = protocolStore.getEnabledPortsByProtocol(protocolName);
+            if (ports == null || ports.isEmpty()) {
+                log.warn("协议[{}]无任何端口绑定，标记无效", protocolName);
+                markInvalidAndDeleted(protocolName);
                 continue;
+            }
+
+            // 本地 jar 不存在时，尝试从 DB jar_bytes 恢复到本地
+            if (!jarFile.exists()) {
+                log.warn("协议 jar 文件不存在，尝试从 DB 恢复: name={}, path={}", protocolName, jarPath);
+                byte[] jarBytes = protocolStore.getExternalJarBytes(protocolName);
+                if (jarBytes == null || jarBytes.length == 0) {
+                    log.error("DB 无 jar_bytes，无法恢复，标记协议无效: name={}", protocolName);
+                    markInvalidAndDeleted(protocolName);
+                    continue;
+                }
+                try {
+                    java.io.File jarDirFile = new java.io.File(properties.getJarDir());
+                    if (!jarDirFile.exists() && !jarDirFile.mkdirs()) {
+                        log.error("创建 jar 目录失败: {}", properties.getJarDir());
+                        markInvalidAndDeleted(protocolName);
+                        continue;
+                    }
+                    java.nio.file.Files.write(jarFile.toPath(), jarBytes);
+                    log.info("从 DB 恢复协议 jar 成功: name={}, path={}, size={}KB",
+                            protocolName, jarPath, jarBytes.length / 1024);
+                } catch (Exception e) {
+                    log.error("从 DB 恢复协议 jar 失败，标记协议无效: name={}, err={}", protocolName, e.getMessage());
+                    markInvalidAndDeleted(protocolName);
+                    continue;
+                }
             }
 
             try {
@@ -137,7 +173,6 @@ public class ProtocolBootstrap implements CommandLineRunner {
                 if (!result.getProviderInfos().isEmpty()) {
                     log.info("从 DB 加载外部协议成功: name={}, jar={}", protocolName, jarPath);
 
-                    List<Integer> ports = protocolStore.getEnabledPortsByProtocol(protocolName);
                     for (Integer port : ports) {
                         registry.bindPortToProtocolInternal(port, protocolName);
                         log.info("外置协议端口绑定（来自 DB）: {} → 协议 {}", port, protocolName);
@@ -150,4 +185,19 @@ public class ProtocolBootstrap implements CommandLineRunner {
             }
         }
     }
+
+    /**
+     * 标记协议为已卸载并清空 Provider 信息（jar 失效时调用）。
+     * DB 不可用时（protocolDbSync 为 null）静默跳过。
+     */
+    private void markInvalidAndDeleted(String protocolName) {
+        if (protocolDbSync == null) return;
+        try {
+            protocolDbSync.syncUnload(protocolName);
+            protocolDbSync.clearProvider(protocolName);
+        } catch (Exception e) {
+            log.warn("标记协议无效失败: name={}, err={}", protocolName, e.getMessage());
+        }
+    }
+
 }

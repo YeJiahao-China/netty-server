@@ -153,17 +153,17 @@
     const AUTO_REFRESH_INTERVAL = 5000;
 
     function reloadProtocols() {
-        callApi('POST', '/protocols/reload/all', '已指令所有节点重新扫描 protocols 目录');
+        callApi('POST', '/protocols/v2/reload/all', '已指令所有节点重新扫描 protocols 目录');
     }
 
     function unloadProtocol(name) {
         if (!confirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开。')) return;
-        callApi('DELETE', '/protocols/' + encodeURIComponent(name), '指令已发送到所有节点');
+        callApi('DELETE', '/protocols/v2/' + encodeURIComponent(name), '指令已发送到所有节点');
     }
 
     function unbindPort(port) {
         if (!confirm('确定解绑端口 ' + port + '？\n该端口下所有客户端连接将被强制断开。')) return;
-        callApi('DELETE', '/protocols/bind/' + port, '指令已发送到所有节点');
+        callApi('DELETE', '/protocols/v2/bind/' + port, '指令已发送到所有节点');
     }
 
     function bindPort(event) {
@@ -171,7 +171,7 @@
         const protocol = document.getElementById('bind-protocol').value;
         const port = document.getElementById('bind-port').value;
         if (!protocol || !port) { showToast('请选择协议并填写端口', 'error'); return; }
-        callApi('POST', '/protocols/' + encodeURIComponent(protocol) + '/bind/' + port,
+        callApi('POST', '/protocols/v2/' + encodeURIComponent(protocol) + '/bind/' + port,
                 '指令已发送到所有节点');
     }
 

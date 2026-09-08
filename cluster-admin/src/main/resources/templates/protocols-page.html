@@ -65,7 +65,7 @@
                 <thead>
                 <tr>
                     <th>协议</th><th>版本</th><th>监听端口</th><th>来源</th><th>加载时间</th>
-                    <th>状态</th><th>Jar 路径</th><th class="text-right">操作</th>
+                    <th>状态</th><th class="text-right">操作</th>
                 </tr>
                 </thead>
                 <tbody id="proto-tbody"></tbody>
@@ -320,7 +320,6 @@
         empty.classList.add('hidden');
 
         for (const p of list) {
-            const jarPath = p.jarPath || '-';
             const tr = document.createElement('tr');
             tr.innerHTML =
                 `<td><div class="proto-name">${p.name || ''}</div>${p.description ? `<div class="proto-desc">${p.description}</div>` : ''}</td>` +
@@ -329,7 +328,6 @@
                 `<td>${sourceTag(p.source)}</td>` +
                 `<td><span class="mono text-muted">${p.loadedAtText || ''}</span></td>` +
                 `<td>${statusTag(p.status)}</td>` +
-                `<td><span class="mono text-muted text-small" title="${jarPath}">${jarPath}</span></td>` +
                 `<td class="text-right">
                     ${p.status === 'UNLOADED' ? `<button class="btn btn-sm btn-success-ghost" data-name="${p.name}" onclick="reloadProtocol(this.dataset.name)" ${p.source==='builtin'?'disabled':''} title="${p.source==='builtin'?'内置协议无需重新启用':''}"><i class="bi bi-play-circle"></i> 重新启用</button>` : ''}
                     ${p.status === 'REGISTERED' && p.source !== 'builtin' ? `<button class="btn btn-sm btn-primary-ghost" data-name="${p.name}" onclick="openUpdateModal(this.dataset.name)"><i class="bi bi-arrow-repeat"></i> 更新</button>` : ''}

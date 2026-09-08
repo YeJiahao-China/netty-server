@@ -1,13 +1,11 @@
 package com.cas.access.netty.service;
 
+import com.cas.access.netty.protocol.*;
 import com.cas.cluster.node.entity.ProtocolJarRegistry;
-import com.cas.access.netty.protocol.LoadedProtocol;
-import com.cas.access.netty.protocol.ProtocolJarLoader;
-import com.cas.access.netty.protocol.ProtocolProperties;
-import com.cas.access.netty.protocol.ProtocolRegistry;
 import com.cas.access.netty.util.NettyServerUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -55,6 +53,24 @@ public class ProtocolCompensationService {
     private PortBindingService portBindingService;
 
     /**
+     * 协议配置持久化回调。
+     * 启动时从数据库读取活跃的外部协议及其端口绑定。
+     * required=false：DB 不可用时退化到目录扫描模式。
+     */
+    @Resource
+    private ProtocolStore protocolStore;
+
+    @Resource
+    private ProtocolDbSync protocolDbSync;
+
+    /**
+     * 构造本节点协议 jar 的本地绝对路径：{@code <jarDir>/<name>.jar}
+     */
+    private Path resolveLocalJarPath(String protocolName) {
+        return Paths.get(properties.getJarDir(), protocolName + ".jar").toAbsolutePath();
+    }
+
+    /**
      * 上传协议 jar 并绑定端口。
      *
      * @param protocolName 协议名
@@ -98,7 +114,10 @@ public class ProtocolCompensationService {
             } catch (Exception bindEx) {
                 log.error("启动端口[{}]监听失败，回滚协议[{}]注册: {}", port, protocolName, bindEx.getMessage());
                 registry.unregister(protocolName);
-                try { Files.deleteIfExists(finalFile); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(finalFile);
+                } catch (Exception ignored) {
+                }
                 return fail("端口 " + port + " 启动监听失败: " + bindEx.getMessage());
             }
 
@@ -110,10 +129,16 @@ public class ProtocolCompensationService {
             return r;
         } finally {
             if (probeCopy != null) {
-                try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(probeCopy);
+                } catch (Exception ignored) {
+                }
             }
             if (temp != null) {
-                try { Files.deleteIfExists(temp); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -148,20 +173,20 @@ public class ProtocolCompensationService {
                 return fail("协议名不匹配: jar内[" + probe.getProviderName() + "] vs 目标[" + name + "]");
             }
 
-            // 备份旧 jar
-            String oldJarPath = existing.getJarPath();
-            if (oldJarPath != null && !oldJarPath.isEmpty()) {
-                backupJar(oldJarPath, name);
+            // 备份旧 jar（本地路径由配置推导，不再从 DB 读取）
+            Path oldJarPath = resolveLocalJarPath(name);
+            if (Files.exists(oldJarPath)) {
+                backupJar(oldJarPath.toString(), name);
             }
 
             registry.closeOldChannels(name);
             registry.closeClassLoaderForUpgrade(name);
 
             Path finalFile = moveJarFileWithFallback(temp, fileName);
-            if (oldJarPath != null && !oldJarPath.isEmpty()) {
-                Path old = Paths.get(oldJarPath).toAbsolutePath();
-                if (!old.equals(finalFile.toAbsolutePath())) {
-                    try { Files.deleteIfExists(old); } catch (IOException ignored) {}
+            if (Files.exists(oldJarPath) && !oldJarPath.equals(finalFile.toAbsolutePath())) {
+                try {
+                    Files.deleteIfExists(oldJarPath);
+                } catch (IOException ignored) {
                 }
             }
 
@@ -187,10 +212,16 @@ public class ProtocolCompensationService {
             return r;
         } finally {
             if (probeCopy != null) {
-                try { Files.deleteIfExists(probeCopy); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(probeCopy);
+                } catch (Exception ignored) {
+                }
             }
             if (temp != null) {
-                try { Files.deleteIfExists(temp); } catch (Exception ignored) {}
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
@@ -210,11 +241,8 @@ public class ProtocolCompensationService {
             return fail("协议[" + name + "]无可用备份，无法回滚");
         }
 
-        String currentJarPath = existing.getJarPath();
-        if (currentJarPath == null || currentJarPath.isEmpty()) {
-            return fail("协议[" + name + "]当前 jar 路径为空，无法回滚");
-        }
-        Path target = Paths.get(currentJarPath).toAbsolutePath();
+        // 本地 jar 路径由配置推导，不再从 DB 读取
+        Path target = resolveLocalJarPath(name);
 
         List<Integer> boundPorts = registry.getBoundPorts(name);
         registry.closeOldChannels(name);
@@ -260,11 +288,8 @@ public class ProtocolCompensationService {
             registry.unregister(name);
         }
 
-        // 2. 删除 jar 文件
-        String jarPath = existing.getJarPath();
-        if (jarPath != null && !jarPath.isEmpty()) {
-            deleteJarFile(Paths.get(jarPath).toAbsolutePath());
-        }
+        // 2. 删除 jar 文件（本地路径由配置推导，不再从 DB 读取）
+        deleteJarFile(resolveLocalJarPath(name));
 
         // 3. 物理删除 DB 记录
         protocolJarRegistryService.purgeByName(name);
@@ -307,35 +332,64 @@ public class ProtocolCompensationService {
         if (registry.getProvider(name) != null) return fail("协议[" + name + "]仍在运行时注册表中");
 
         protocolJarRegistryService.purgeByName(name);
-        String jarPath = existing.getJarPath();
-        boolean jarDeleted = false;
-        if (jarPath != null && !jarPath.isEmpty()) {
-            jarDeleted = deleteJarFile(Paths.get(jarPath).toAbsolutePath());
-        }
+        // 本地 jar 路径由配置推导，不再从 DB 读取
+        boolean jarDeleted = deleteJarFile(resolveLocalJarPath(name));
         Map<String, Object> r = ok();
         r.put("purgedProtocol", name);
         r.put("jarDeleted", jarDeleted);
         return r;
     }
 
-    public Map<String, Object> reload(String name) {
-        ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
-        if (existing == null) return fail("协议[" + name + "]不存在");
-        String jarPath = existing.getJarPath();
-        if (jarPath == null || jarPath.isEmpty()) return fail("协议[" + name + "]无 jar 路径");
-        File jarFile = new File(jarPath);
-        if (!jarFile.exists()) return fail("协议[" + name + "]的 jar 文件不存在: " + jarPath);
-
-        List<Integer> ports = portBindingService.selectAllPortsByProtocol(name);
+    public Map<String, Object> reload(String protocolName) {
+        ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(protocolName);
+        if (existing == null || existing.getJarBytes() == null || existing.getJarBytes().length == 0){
+            return fail("重启协议[" + protocolName + "]失败，协议不存在或jar资源已从DB中删除");
+        }
+        List<Integer> ports = portBindingService.selectAllPortsByProtocol(protocolName);
+        if (ports.isEmpty()) {
+            return fail("重启协议[" + protocolName + "]失败，DB中不存在绑定的端口");
+        }
+        // 本地 jar 路径由配置推导，不再从 DB 读取
+        Path jarPath = resolveLocalJarPath(protocolName);
+        File jarFile = jarPath.toFile();
+        if (!jarFile.exists()) {
+            log.warn("协议 jar 文件不存在，尝试从 DB 恢复: name={}, path={}", protocolName, jarPath);
+            byte[] jarBytes = protocolStore.getExternalJarBytes(protocolName);
+            try {
+                java.io.File jarDirFile = new java.io.File(properties.getJarDir());
+                if (!jarDirFile.exists() && !jarDirFile.mkdirs()) {
+                    log.error("重启协议失败，创建 jar 目录失败: {}", properties.getJarDir());
+                    return fail("重启协议["+protocolName+"]失败，持久化jar到目标路径异常");
+                }
+                java.nio.file.Files.write(jarFile.toPath(), jarBytes);
+                log.info("从 DB 恢复协议 jar 成功: name={}, path={}, size={}KB",
+                        protocolName, jarPath, jarBytes.length / 1024);
+            } catch (Exception e) {
+                log.error("从 DB 恢复协议 jar 异常，协议: {}", protocolName, e);
+                return fail("重启协议["+protocolName+"]失败，持久化jar到目标路径异常");
+            }
+        }
         jarLoader.loadSingleJar(jarFile);
         List<Integer> boundPorts = new ArrayList<>();
+        List<Integer> failedPorts = new ArrayList<>();
         for (int port : ports) {
-            registry.bindPortToProtocol(port, name);
-            NettyServerUtil.bindPort(port);
-            boundPorts.add(port);
+            registry.bindPortToProtocol(port, protocolName);
+            if (NettyServerUtil.bindPort(port)) {
+                boundPorts.add(port);
+            } else {
+                failedPorts.add(port);
+                log.warn("重启协议[{}]失败, 端口[{}]无法监听", protocolName, port);
+            }
+        }
+        if (!failedPorts.isEmpty()) {
+            log.error("重启协议[{}]失败, 存在端口无法监听, 执行回滚", protocolName);
+            registry.unregister(protocolName);
+            Map<String, Object> r = fail("重启协议[" + protocolName + "]失败，存在端口监听失败");
+            r.put("failedPorts", failedPorts);
+            return r;
         }
         Map<String, Object> r = ok();
-        r.put("protocolName", name);
+        r.put("protocolName", protocolName);
         r.put("reboundPorts", boundPorts);
         return r;
     }

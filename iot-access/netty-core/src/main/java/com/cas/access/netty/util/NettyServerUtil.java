@@ -1,6 +1,6 @@
 package com.cas.access.netty.util;
 
-import com.cas.access.netty.server.NettyServerBootstrap;
+import com.cas.access.netty.bootstrap.NettyServerBootstrap;
 import com.cas.access.netty.server.GlobalCache;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author JHYe
@@ -44,15 +45,18 @@ public class NettyServerUtil {
     /**
      * 新增服务监听端口
      */
-    public static void bindPort(int port) {
+    public static boolean bindPort(int port) {
         try {
+            AtomicBoolean result = new AtomicBoolean(false);
             ChannelFuture startFuture = NettyServerBootstrap.serverBootstrap.bind("0.0.0.0", port).addListener(future -> {
                 if (future.isSuccess()) {
-                    log.info("NettyServer - 添加端口{} 成功", port);
+                    log.info("IotAccessServer添加端口[{}]成功", port);
+                    result.set(true);
                 } else {
-                    log.error("NettyServer - 添加端口{} 失败:{}", port, future.cause().getMessage());
+                    log.error("IotAccessServer添加端口[{}]失败:{}", port, future.cause().getMessage());
                 }
             }).sync();
+
 //                    .addListener(future -> {
 //                if (future.isSuccess()) {
 //                    log.info("NettyServer - Add Port{}{}", port, "Success");
@@ -60,10 +64,13 @@ public class NettyServerUtil {
 //                    log.error("NettyServer - Add Port{}{}", port, "Fail");
 //                }
 //            });
-            GlobalCache.bindServerChannel(port, startFuture.channel());
-            GlobalCache.registerPort(port);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            if (result.get()) {
+                GlobalCache.bindServerChannel(port, startFuture.channel());
+                GlobalCache.registerPort(port);
+            }
+            return result.get();
+        } catch (Exception e) {
+            return false;
         }
     }
 

@@ -41,7 +41,6 @@ public class PortBindingService implements PortBindingStore {
                             .orderByAsc(PortProtocolBinding::getPort));
             for (PortProtocolBinding b : list) {
                 result.put(b.getPort(), b.getProtocolName());
-//                log.info("从 DB 加载端口{}绑定协议{}", b.getPort(),b.getProtocolName());
             }
         } catch (Exception e) {
             log.warn("DB 加载端口绑定失败（退化为空映射）: {}", e.getMessage());

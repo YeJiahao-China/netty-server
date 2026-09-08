@@ -20,7 +20,7 @@ import java.util.Map;
  * <p>由 cluster-admin 的 {@code ProtocolAdminV2Controller} 广播调用，
  * 支持 upload/update 的备份与回滚补偿。
  *
- * <p>本类作为新增 Controller 存在，不修改现有 {@link ProtocolController} 代码。
+ * <p>本类作为新增 Controller 存在，不修改现有 {@link } 代码。
  */
 @Slf4j
 @RestController

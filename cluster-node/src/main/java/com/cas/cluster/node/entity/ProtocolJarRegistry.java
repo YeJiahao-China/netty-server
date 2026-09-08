@@ -17,10 +17,12 @@ import java.time.LocalDateTime;
  * <p>字段约定：
  * <ul>
  *   <li>{@link #source}：{@code builtin}=内置协议 / {@code external}=外部 jar</li>
- *   <li>{@link #jarPath}：仅外部协议有值</li>
  *   <li>{@link #status}：INIT / REGISTERED / FAILED / UNLOADED，卸载时置为 UNLOADED，记录保留</li>
  *   <li>{@link #jarBytes}：外部协议 jar 二进制内容，供新节点从 DB 同步</li>
  * </ul>
+ *
+ * <p>注：本地 jar 文件路径不再存表，由各节点根据 {@code netty.server.protocol.jar-dir}
+ * 配置 + 协议名推导为 {@code <jarDir>/<name>.jar}，避免跨节点部署（Linux/Windows）路径不一致。
  *
  * <p>列名与字段名的下划线/驼峰映射由 mybatis-plus 的 map-underscore-to-camel-case 处理。
  * {@code createdAt}/{@code updatedAt} 的自动填充由各模块的 {@code MetaObjectHandler} 处理（如存在）。
@@ -43,9 +45,6 @@ public class ProtocolJarRegistry {
 
     /** 来源：builtin / external */
     private String source;
-
-    /** jar 文件绝对路径；内置为 null */
-    private String jarPath;
 
     /** Provider 实现类全限定名 */
     private String providerClass;

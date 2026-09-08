@@ -31,14 +31,14 @@ import java.util.stream.Collectors;
 /**
  * 协议热插拔 V2 API（补偿回滚版）。
  *
- * <p>与现有 {@link ProtocolAdminController} 行为一致，但新增“部分节点失败时自动补偿回滚”能力：
+ * <p>与现有 {@link } 行为一致，但新增“部分节点失败时自动补偿回滚”能力：
  * <ul>
  *   <li>{@code upload} 失败：对已成功的节点执行 unload + 删 jar + 删 DB 记录。</li>
  *   <li>{@code update} 失败：对已成功的节点从备份恢复旧版本 jar。</li>
  *   <li>{@code bind} 失败：对已成功的节点执行 unbind。</li>
  * </ul>
  *
- * <p>本类作为新增 Controller 存在，不修改现有 {@link ProtocolAdminController} 代码。</p>
+ * <p>本类作为新增 Controller 存在，不修改现有 {@link } 代码。</p>
  */
 @Slf4j
 @RestController
@@ -79,7 +79,6 @@ public class ProtocolAdminV2Controller {
             m.put("source", p.getSource());
             m.put("description", p.getDescription());
             m.put("loadedAtText", p.getLoadedAt() != null ? p.getLoadedAt().format(DT_FMT) : null);
-            m.put("jarPath", p.getJarPath());
             m.put("status", p.getStatus());
             return m;
         }).collect(Collectors.toList());
@@ -243,11 +242,11 @@ public class ProtocolAdminV2Controller {
         List<NodeResult> results = broadcast.broadcast(
                 NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
 
-        long ok = results.stream().filter(NodeResult::isSuccess).count();
+        long ok = results.stream().filter(NodeResult::isBusinessSuccess).count();
         // 无可用节点（results 为空）视为失败，避免误判为"全部成功"
         boolean hasFailure = results.isEmpty() || ok < results.size();
         List<NodeResult> successNodes = results.stream()
-                .filter(NodeResult::isSuccess)
+                .filter(NodeResult::isBusinessSuccess)
                 .collect(Collectors.toList());
 
         Map<String, Object> compensation = null;
@@ -259,7 +258,7 @@ public class ProtocolAdminV2Controller {
                 List<NodeResult> compResults = broadcast.broadcastExplicit(
                         successNodes.stream().map(NodeResult::getNode).collect(Collectors.toList()),
                         "POST", INTERNAL_DISTRIBUTE_PATH, rollbackBody);
-                long compOk = compResults.stream().filter(NodeResult::isSuccess).count();
+                long compOk = compResults.stream().filter(NodeResult::isBusinessSuccess).count();
                 compensation = new LinkedHashMap<>();
                 compensation.put("rollbackMode", rollbackBody.get("mode"));
                 compensation.put("total", compResults.size());
@@ -328,6 +327,7 @@ public class ProtocolAdminV2Controller {
                 reg.setSource("external");
                 reg.setJarBytes(jarBytes);
                 reg.setStatus("INIT");
+                reg.setCreatedAt(now);
                 reg.setUpdatedAt(now);
                 registryMapper.insert(reg);
             }
@@ -349,7 +349,7 @@ public class ProtocolAdminV2Controller {
         String mode = (String) body.get("mode");
         List<NodeResult> results = broadcast.broadcast(NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
 
-        long ok = results.stream().filter(NodeResult::isSuccess).count();
+        long ok = results.stream().filter(NodeResult::isBusinessSuccess).count();
         // 无可用节点（results 为空）视为失败，避免误判为"全部成功"
         boolean hasFailure = results.isEmpty() || ok < results.size();
         LocalDateTime now = LocalDateTime.now();
@@ -369,7 +369,7 @@ public class ProtocolAdminV2Controller {
         }
 
         // 有失败：保守回滚已成功节点
-        List<NodeResult> successNodes = results.stream().filter(NodeResult::isSuccess).toList();
+        List<NodeResult> successNodes = results.stream().filter(NodeResult::isBusinessSuccess).toList();
 
         Map<String, Object> compensation = null;
         if (!successNodes.isEmpty()) {
@@ -384,7 +384,7 @@ public class ProtocolAdminV2Controller {
             List<NodeResult> compResults = broadcast.broadcastExplicit(
                     successNodes.stream().map(NodeResult::getNode).collect(Collectors.toList()),
                     "POST", INTERNAL_DISTRIBUTE_PATH, rollbackBody);
-            long compOk = compResults.stream().filter(NodeResult::isSuccess).count();
+            long compOk = compResults.stream().filter(NodeResult::isBusinessSuccess).count();
             compensation = new LinkedHashMap<>();
             compensation.put("rollbackMode", rollbackMode);
             compensation.put("total", compResults.size());

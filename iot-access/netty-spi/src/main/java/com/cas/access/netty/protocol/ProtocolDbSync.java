@@ -26,5 +26,9 @@ public interface ProtocolDbSync {
      */
     void syncUnload(String name);
 
-    void clearJarPathAndProvider(String protocolName);
+    /**
+     * 清空 Provider 类信息（jar 文件失效时调用）。
+     * <p>jar 文件路径不再存表，故只清空 provider_class。
+     */
+    void clearProvider(String protocolName);
 }
