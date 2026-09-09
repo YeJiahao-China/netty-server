@@ -5,7 +5,6 @@ import com.cas.cluster.node.entity.ProtocolJarRegistry;
 import com.cas.access.netty.util.NettyServerUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -31,7 +30,7 @@ import java.util.stream.Stream;
  *   <li>{@link #cleanupUpload}：unload + 删 jar + 删 DB 记录。</li>
  * </ul>
  *
- * <p>本类作为新增 Service 存在，不修改现有 {@link ProtocolController} 代码。
+ * <p>本类作为新增 Service 存在，不修改现有 {@link } 代码。
  */
 @Slf4j
 @Service
@@ -134,11 +133,9 @@ public class ProtocolCompensationService {
                 } catch (Exception ignored) {
                 }
             }
-            if (temp != null) {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (Exception ignored) {
-                }
+            try {
+                Files.deleteIfExists(temp);
+            } catch (Exception ignored) {
             }
         }
     }
@@ -217,11 +214,9 @@ public class ProtocolCompensationService {
                 } catch (Exception ignored) {
                 }
             }
-            if (temp != null) {
-                try {
-                    Files.deleteIfExists(temp);
-                } catch (Exception ignored) {
-                }
+            try {
+                Files.deleteIfExists(temp);
+            } catch (Exception ignored) {
             }
         }
     }
@@ -374,7 +369,8 @@ public class ProtocolCompensationService {
         List<Integer> failedPorts = new ArrayList<>();
         for (int port : ports) {
             registry.bindPortToProtocol(port, protocolName);
-            if (NettyServerUtil.bindPort(port)) {
+            boolean b = NettyServerUtil.bindPort(port);
+            if (b) {
                 boundPorts.add(port);
             } else {
                 failedPorts.add(port);

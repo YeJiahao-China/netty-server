@@ -137,7 +137,7 @@ public class ProtocolBootstrap implements CommandLineRunner {
             // 前置校验：协议必须至少有一个端口绑定，否则视为孤儿记录，标记无效并删除
             List<Integer> ports = protocolStore.getEnabledPortsByProtocol(protocolName);
             if (ports == null || ports.isEmpty()) {
-                log.warn("协议[{}]无任何端口绑定，标记无效", protocolName);
+                log.warn("协议[{}]无任何启用的端口绑定，标记无效", protocolName);
                 markInvalidAndDeleted(protocolName);
                 continue;
             }

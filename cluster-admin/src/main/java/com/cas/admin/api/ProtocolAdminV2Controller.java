@@ -108,7 +108,7 @@ public class ProtocolAdminV2Controller {
             @RequestParam("port") int port,
             @RequestParam("protocolName") String protocolName) {
         if (file == null || file.isEmpty()) return fail("请上传协议 jar 文件");
-        if (protocolName == null || protocolName.isBlank()) return fail("protocolName 不能为空");
+        if (protocolName == null || protocolName.isBlank()) return fail("协议名称不能为空");
         try {
             byte[] bytes = file.getBytes();
             // 1. 存 jar 到 DB 仓库表，status=INIT

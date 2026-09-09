@@ -43,36 +43,67 @@ public class NettyServerUtil {
     }
 
     /**
-     * 新增服务监听端口
+     * 同步阻塞式监听端口 返回结果
+     * @param port 端口
+     * @return 结果
      */
     public static boolean bindPort(int port) {
         try {
-            AtomicBoolean result = new AtomicBoolean(false);
-            ChannelFuture startFuture = NettyServerBootstrap.serverBootstrap.bind("0.0.0.0", port).addListener(future -> {
-                if (future.isSuccess()) {
-                    log.info("IotAccessServer添加端口[{}]成功", port);
-                    result.set(true);
-                } else {
-                    log.error("IotAccessServer添加端口[{}]失败:{}", port, future.cause().getMessage());
-                }
-            }).sync();
+            // 1. bind() 发起异步绑定，sync() 阻塞当前线程直到绑定操作彻底完成
+            ChannelFuture startFuture = NettyServerBootstrap.serverBootstrap.bind("0.0.0.0", port).sync();
 
-//                    .addListener(future -> {
-//                if (future.isSuccess()) {
-//                    log.info("NettyServer - Add Port{}{}", port, "Success");
-//                } else {
-//                    log.error("NettyServer - Add Port{}{}", port, "Fail");
-//                }
-//            });
-            if (result.get()) {
+            // 2. 此时 Future 已经 100% 完成，直接判断其状态，不存在竞态条件
+            if (startFuture.isSuccess()) {
+                log.info("IotAccessServer添加端口[{}]成功", port);
                 GlobalCache.bindServerChannel(port, startFuture.channel());
                 GlobalCache.registerPort(port);
+                return true;
+            } else {
+                log.error("IotAccessServer添加端口[{}]失败", port, startFuture.cause());
+                return false;
             }
-            return result.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 恢复中断状态
+            log.error("IotAccessServer添加端口[{}]线程被中断", port, e);
+            return false;
         } catch (Exception e) {
+            log.error("IotAccessServer添加端口[{}]发生异常", port, e);
             return false;
         }
     }
+
+
+//    /**
+//     * 新增服务监听端口
+//     */
+//    public static boolean bindPort(int port) {
+//        try {
+//            AtomicBoolean result = new AtomicBoolean(false);
+//            ChannelFuture startFuture = NettyServerBootstrap.serverBootstrap.bind("0.0.0.0", port).addListener(future -> {
+//                if (future.isSuccess()) {
+//                    log.info("IotAccessServer添加端口[{}]成功", port);
+//                    result.set(true);
+//                } else {
+//                    log.error("IotAccessServer添加端口[{}]失败:{}", port, future.cause().getMessage());
+//                }
+//            }).sync();
+//
+////                    .addListener(future -> {
+////                if (future.isSuccess()) {
+////                    log.info("NettyServer - Add Port{}{}", port, "Success");
+////                } else {
+////                    log.error("NettyServer - Add Port{}{}", port, "Fail");
+////                }
+////            });
+//            if (result.get()) {
+//                GlobalCache.bindServerChannel(port, startFuture.channel());
+//                GlobalCache.registerPort(port);
+//            }
+//            return result.get();
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
 
     /**
      * 关闭端口监听（异步，不等待连接关闭）。
