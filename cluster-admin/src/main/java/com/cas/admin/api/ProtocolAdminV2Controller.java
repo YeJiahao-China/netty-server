@@ -1,9 +1,10 @@
 package com.cas.admin.api;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.cas.admin.cluster.CompensatingNodeBroadcastClient;
 import com.cas.admin.cluster.CompensatingNodeBroadcastClient.NodeResult;
-import com.cas.admin.common.ApiResponse;
+import com.cas.admin.cluster.ProtocolOperationGuard;
 import com.cas.admin.common.NodeType;
 import com.cas.admin.entity.PortProtocolBinding;
 import com.cas.cluster.node.entity.ProtocolJarRegistry;
@@ -51,6 +52,8 @@ public class ProtocolAdminV2Controller {
     private final CompensatingNodeBroadcastClient broadcast;
     private final ProtocolJarRegistryMapper registryMapper;
     private final PortProtocolBindingMapper portBindingMapper;
+    private final ProtocolOperationGuard operationGuard;
+    private final com.cas.admin.cluster.ProtocolUnloadRetryService unloadRetryService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -109,6 +112,11 @@ public class ProtocolAdminV2Controller {
             @RequestParam("protocolName") String protocolName) {
         if (file == null || file.isEmpty()) return fail("请上传协议 jar 文件");
         if (protocolName == null || protocolName.isBlank()) return fail("协议名称不能为空");
+        if (port < 1024 || port > 65535) return fail("端口非法");
+        // 同一协议的管理操作互斥：临界区含广播+收口（最长 60s），并发执行会造成 DB 状态后写者胜的漂移
+        if (!operationGuard.tryLock(protocolName)) {
+            return fail("协议[" + protocolName + "]有操作正在进行中，请稍后重试");
+        }
         try {
             byte[] bytes = file.getBytes();
             // 1. 存 jar 到 DB 仓库表，status=INIT
@@ -123,6 +131,8 @@ public class ProtocolAdminV2Controller {
         } catch (Exception e) {
             log.error("上传协议失败", e);
             return fail("上传失败: " + e.getMessage());
+        } finally {
+            operationGuard.unlock(protocolName);
         }
     }
 
@@ -131,6 +141,9 @@ public class ProtocolAdminV2Controller {
             @PathVariable("name") String name,
             @RequestParam("file") MultipartFile file) {
         if (file == null || file.isEmpty()) return fail("请上传协议 jar 文件");
+        if (!operationGuard.tryLock(name)) {
+            return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
+        }
         try {
             byte[] bytes = file.getBytes();
             // 1. 更新 DB 仓库表 jar 字节，status=INIT
@@ -144,6 +157,8 @@ public class ProtocolAdminV2Controller {
         } catch (Exception e) {
             log.error("V2 update 失败", e);
             return fail("更新失败: " + e.getMessage());
+        } finally {
+            operationGuard.unlock(name);
         }
     }
 
@@ -151,49 +166,216 @@ public class ProtocolAdminV2Controller {
     public Map<String, Object> bind(
             @PathVariable("name") String name,
             @PathVariable("port") int port) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "bind");
-        body.put("protocolName", name);
-        body.put("port", port);
-        return doDistribute(body, true);
+        if (!operationGuard.tryLock(name)) {
+            return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
+        }
+        try {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("mode", "bind");
+            body.put("protocolName", name);
+            body.put("port", port);
+            return doDistribute(body, true);
+        } finally {
+            operationGuard.unlock(name);
+        }
     }
 
     /* ========== 纯指令类（不自动回滚，仅返回失败明细） ========== */
 
-    @PostMapping({"/reload", "/reload/all"})
-    public Map<String, Object> reloadAll() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "reload");
-        body.put("protocolName", "all");
-        return doDistribute(body, false);
+    @DeleteMapping("/bind/{port}")
+    public Map<String, Object> unbind(@PathVariable("port") int port) {
+        // unbind 请求仅携带端口：反查绑定的协议名后按协议维度加锁，保证与 unload/update 等操作互斥
+        PortProtocolBinding binding = portBindingMapper.selectOne(
+                new LambdaQueryWrapper<PortProtocolBinding>()
+                        .eq(PortProtocolBinding::getPort, port));
+        String lockKey = binding != null ? binding.getProtocolName() : "port:" + port;
+        if (!operationGuard.tryLock(lockKey)) {
+            return fail("协议[" + lockKey + "]有操作正在进行中，请稍后重试");
+        }
+        try {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("mode", "unbind");
+            body.put("port", port);
+            return doDistribute(body, false);
+        } finally {
+            operationGuard.unlock(lockKey);
+        }
     }
 
     @PostMapping("/reload/{name}")
     public Map<String, Object> reload(@PathVariable("name") String name) {
+        if (!operationGuard.tryLock(name)) {
+            return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
+        }
+        try {
+            return doReload(name);
+        } finally {
+            operationGuard.unlock(name);
+        }
+    }
+
+    private Map<String, Object> doReload(String name) {
+        ProtocolJarRegistry existing = registryMapper.selectByName(name);
+        if (existing == null) {
+            return fail("协议[" + name + "]不存在");
+        }
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("mode", "reload");
         body.put("protocolName", name);
-        return doDistribute(body, false);
+
+        // 1. 广播 reload 到所有 ACCESS 节点
+        //    iot-access 内部流程：从 DB 拉 jar → 加载 → register(syncRegister 写 DB=REGISTERED) → bindPort
+        //    失败时节点自行回滚（unregister + syncUnload 写 DB=UNLOADED）
+        List<NodeResult> results = broadcast.broadcast(
+                NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
+
+        long ok = results.stream().filter(NodeResult::isBusinessSuccess).count();
+        List<NodeResult> failedNodes = results.stream()
+                .filter(r -> !r.isBusinessSuccess())
+                .toList();
+
+        // 2. admin 统一收口 DB status（多节点共享同一行 DB 记录，节点自行写入会互相覆盖）
+        //    reload 是"启用"操作：不回滚已成功节点（nginx 会自动避开端口没开的失败节点）
+        LocalDateTime now = LocalDateTime.now();
+        // 至少一个节点成功 → 协议在系统层面可用（nginx 会自动避开失败节点）→ REGISTERED
+        // 全部失败 → FAILED（协议完全不可用）
+        boolean anySuccess = ok > 0;
+        if (anySuccess) {
+            // 有节点成功 → DB=REGISTERED（协议在系统层面可用）
+            registryMapper.updateStatus(name, "REGISTERED", now);
+            portBindingMapper.update(null,
+                    new LambdaUpdateWrapper<PortProtocolBinding>()
+                            .eq(PortProtocolBinding::getProtocolName, name)
+                            .set(PortProtocolBinding::getEnabled, true)
+                            .set(PortProtocolBinding::getUpdatedAt, now));
+            log.info("协议[{}]重新启用: 成功 {}/{} 节点{}", name, ok, results.size(),
+                    failedNodes.isEmpty() ? "" : "（失败节点: " +
+                            failedNodes.stream().map(NodeResult::getNodeId).toList() + "）");
+        } else {
+            // 全部失败 → DB=FAILED（协议完全不可用）
+            registryMapper.updateStatus(name, "FAILED", now);
+            log.warn("协议[{}]重新启用: 全部 {} 节点失败", name, results.size());
+        }
+
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("success", anySuccess);
+        r.put("total", results.size());
+        r.put("successCount", ok);
+        r.put("failureCount", results.size() - ok);
+        r.put("results", results.stream().map(NodeResult::getResult).toList());
+        putNodeDetail(r, results);
+        if (anySuccess) {
+            r.put("status", "REGISTERED");
+            if (!failedNodes.isEmpty()) {
+                r.put("warning", "部分节点启用失败，已成功节点保持运行（nginx 会自动避开失败节点）");
+            }
+        } else {
+            r.put("status", "FAILED");
+            r.put("reason", results.isEmpty()
+                    ? "无可用 ACCESS 节点"
+                    : "所有节点启用失败");
+        }
+        return r;
     }
 
-    @DeleteMapping("/bind/{port}")
-    public Map<String, Object> unbind(@PathVariable("port") int port) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "unbind");
-        body.put("port", port);
-        return doDistribute(body, false);
-    }
 
+    /**
+     * 协议卸载
+     * @param name 协议名称
+     * @return 请求结果
+     */
     @DeleteMapping("/{name}")
     public Map<String, Object> unload(@PathVariable("name") String name) {
+        if (!operationGuard.tryLock(name)) {
+            return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
+        }
+        try {
+            return doUnload(name);
+        } finally {
+            operationGuard.unlock(name);
+        }
+    }
+
+    private Map<String, Object> doUnload(String name) {
+        ProtocolJarRegistry existing = registryMapper.selectByName(name);
+        if (existing == null) {
+            return fail("协议[" + name + "]不存在");
+        }
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("mode", "unload");
         body.put("protocolName", name);
-        return doDistribute(body, false);
+
+        // 1. 广播卸载到所有 ACCESS 节点（运行时清理：关端口监听、踢连接、destroy Provider、close ClassLoader）
+        List<NodeResult> results = broadcast.broadcast(
+                NodeType.ACCESS.name(), "POST", INTERNAL_DISTRIBUTE_PATH, body);
+
+        long ok = results.stream().filter(NodeResult::isBusinessSuccess).count();
+        List<NodeResult> failedNodes = results.stream().filter(r -> !r.isBusinessSuccess()).toList();
+
+        // 2. unload 是“目标状态”操作（期望最终态=UNLOADED）：admin 直接操作共享 DB 兜底，
+        //    不依赖节点是否全部成功。成功节点已自行 syncUnload，这里幂等；
+        //    全部失败/部分失败时由 admin 强制把 DB 协议置 UNLOADED、端口绑定置禁用。
+        LocalDateTime now = LocalDateTime.now();
+        registryMapper.updateStatus(name, "UNLOADED", now);
+        portBindingMapper.update(null,
+                new LambdaUpdateWrapper<PortProtocolBinding>()
+                        .eq(PortProtocolBinding::getProtocolName, name)
+                        .set(PortProtocolBinding::getEnabled, false)
+                        .set(PortProtocolBinding::getUpdatedAt, now));
+        if (results.isEmpty()) {
+            log.warn("协议[{}]卸载: 无可用 ACCESS 节点，仅完成 DB 兜底（UNLOADED + 端口禁用），" +
+                    "没有任何节点执行运行时卸载，存量连接仍在服务", name);
+        } else {
+            log.info("协议[{}]卸载: admin 已直接置 DB status=UNLOADED + 端口禁用（节点成功 {}/{}）",
+                    name, ok, results.size());
+        }
+
+        // 3. 失败节点交给公用虚拟线程池异步立即重试一次：
+        //    不阻塞本次响应；重试前会竞争协议操作锁，管理员发起新操作时自动让位；
+        //    重试仍失败则仅记录 ERROR 日志 + 同步状态页标记，停止自动动作
+        //    （正确性由 DB 目标态兜底，节点重启后必然收敛）
+
+        Map<String, Object> r = new LinkedHashMap<>();
+        // DB 目标状态（UNLOADED）已达成，操作视为成功
+        r.put("success", true);
+        r.put("status", "UNLOADED");
+        r.put("total", results.size());
+        r.put("successCount", ok);
+        r.put("failureCount", results.size() - ok);
+        r.put("results", results.stream().map(NodeResult::getResult).toList());
+        // 节点级成败清单
+        putNodeDetail(r, results);
+        if (results.isEmpty()) {
+            // 无任何可用节点（全部 DOWN/失联）：DB 目标态已写入，节点重启后不会加载该协议，
+            // 但没有任何节点执行运行时卸载（存量连接仍在服务、数据仍在入库）——
+            // 必须显式告知调用方，避免管理员误以为运行时已清理而直接删除 nginx 转发配置
+            r.put("warning", "无可用 ACCESS 节点：DB 已标记 UNLOADED + 端口禁用，" +
+                    "但没有任何节点执行运行时卸载（存量连接仍在服务），节点恢复上线/重启后才会收敛");
+            r.put("noReachableNode", true);
+        } else if (!failedNodes.isEmpty()) {
+            unloadRetryService.submitAsyncRetry(name, body, failedNodes);
+            r.put("warning", "部分节点运行时卸载未完成（"
+                    + failedNodes.stream().map(NodeResult::getNodeId).toList()
+                    + "），已提交后台立即重试（异步 1 次）；DB 已标记 UNLOADED + 端口禁用");
+        }
+        return r;
     }
 
     @DeleteMapping("/{name}/purge")
     public Map<String, Object> purge(@PathVariable("name") String name) {
+        if (!operationGuard.tryLock(name)) {
+            return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
+        }
+        try {
+            return doPurge(name);
+        } finally {
+            operationGuard.unlock(name);
+        }
+    }
+
+    private Map<String, Object> doPurge(String name) {
         ProtocolJarRegistry existing = registryMapper.selectByName(name);
         if (existing == null) {
             return fail("协议[" + name + "]不存在");
@@ -230,6 +412,10 @@ public class ProtocolAdminV2Controller {
         r.put("successCount", distResult.get("successCount"));
         r.put("failureCount", distResult.get("failureCount"));
         r.put("results", distResult.get("results"));
+        r.put("successNodes", distResult.get("successNodes"));
+        if (distResult.get("failedNodes") != null) {
+            r.put("failedNodes", distResult.get("failedNodes"));
+        }
         if (!Boolean.TRUE.equals(distResult.get("success"))) {
             r.put("warning", "节点清理未全部成功，但 DB 记录已删除");
         }
@@ -247,7 +433,7 @@ public class ProtocolAdminV2Controller {
         boolean hasFailure = results.isEmpty() || ok < results.size();
         List<NodeResult> successNodes = results.stream()
                 .filter(NodeResult::isBusinessSuccess)
-                .collect(Collectors.toList());
+                .toList();
 
         Map<String, Object> compensation = null;
         if (compensable && hasFailure && !successNodes.isEmpty()) {
@@ -279,6 +465,7 @@ public class ProtocolAdminV2Controller {
         r.put("successCount", ok);
         r.put("failureCount", results.size() - ok);
         r.put("results", results.stream().map(NodeResult::getResult).toList());
+        putNodeDetail(r, results);
         if (compensation != null) {
             r.put("compensation", compensation);
         }
@@ -311,6 +498,47 @@ public class ProtocolAdminV2Controller {
         m.put("success", false);
         m.put("reason", reason);
         return m;
+    }
+
+    /**
+     * 提取节点失败原因：优先 HTTP 层异常（超时/连接拒绝），
+     * 其次节点业务响应中的 reason，最后退化为 HTTP 状态码。
+     */
+    private String extractFailReason(NodeResult nr) {
+        Object err = nr.getResult().get("error");
+        if (err != null) {
+            return err.toString();
+        }
+        Object reason = nr.getBusinessResult().get("reason");
+        if (reason != null) {
+            return reason.toString();
+        }
+        int status = nr.getStatus();
+        return status > 0 ? ("HTTP " + status) : "未知错误";
+    }
+
+    /**
+     * 将节点级成败清单写入响应（successNodes / failedNodes 含失败原因）。
+     * 所有分发类操作统一输出，供前端在「已加载协议」面板头部逐行展示，
+     * 避免前端解析嵌套的 results[].response JSON。
+     */
+    private void putNodeDetail(Map<String, Object> r, List<NodeResult> results) {
+        r.put("successNodes", results.stream()
+                .filter(NodeResult::isBusinessSuccess)
+                .map(NodeResult::getNodeId)
+                .toList());
+        List<Map<String, Object>> failedNodeDetails = results.stream()
+                .filter(nr -> !nr.isBusinessSuccess())
+                .map(nr -> {
+                    Map<String, Object> f = new LinkedHashMap<>();
+                    f.put("nodeId", nr.getNodeId());
+                    f.put("reason", extractFailReason(nr));
+                    return f;
+                })
+                .toList();
+        if (!failedNodeDetails.isEmpty()) {
+            r.put("failedNodes", failedNodeDetails);
+        }
     }
 
     /* ========== protocol_jar 仓库表操作 ========== */
@@ -364,6 +592,7 @@ public class ProtocolAdminV2Controller {
             r.put("successCount", ok);
             r.put("failureCount", 0);
             r.put("results", results.stream().map(NodeResult::getResult).toList());
+            putNodeDetail(r, results);
             r.put("status", "REGISTERED");
             return r;
         }
@@ -403,6 +632,7 @@ public class ProtocolAdminV2Controller {
         r.put("successCount", ok);
         r.put("failureCount", results.size() - ok);
         r.put("results", results.stream().map(NodeResult::getResult).toList());
+        putNodeDetail(r, results);
         r.put("status", "FAILED");
         if (compensation != null) {
             r.put("compensation", compensation);

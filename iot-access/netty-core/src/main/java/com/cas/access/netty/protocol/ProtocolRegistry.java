@@ -50,6 +50,14 @@ public class ProtocolRegistry {
     private final Map<Integer, String> portBindings = new ConcurrentHashMap<>();
 
     /**
+     * 卸载时等待单个端口客户端连接关闭的超时（秒）。
+     * 绝大多数正常连接 5 秒内可完成关闭；该值必须保证
+     * 「单端口超时 × 1（多端口并行）+ destroy/ClassLoader 关闭耗时」
+     * 小于 cluster-admin 广播请求的读超时，否则节点会被误判为失败。
+     */
+    private static final int CLOSE_LISTEN_TIMEOUT_SECONDS = 5;
+
+    /**
      * 数据库镜像回调。
      * 由 netty-admin 实现（ProtocolJarRegistryService implements ProtocolDbSync）。
      * 通过 SPI 接口反转依赖，避免 core 反向依赖 admin。
@@ -112,19 +120,40 @@ public class ProtocolRegistry {
 
         if (!boundPorts.isEmpty()) {
             log.info("协议[{}]绑定的端口 {} 将被关闭", name, boundPorts);
-            for (int port : boundPorts) {
-                // 💥 传入超时时间，5秒足够绝大多数正常连接完成关闭
-                if (!NettyServerUtil.closeListen(port, 30)) {
-                    closeSuccess = false;
-                    log.warn("端口[{}]连接未完全关闭，但仍继续卸载协议[{}]", port, name);
-                }
-            }
+            // 步骤 1：先清端口映射——此后竞态窗口内新接入的连接在 initChannel
+            // 查不到协议，会被 NettyChannelInitializer 主动拒绝。
+            // 必须在关监听之前执行：若先关监听后清映射，close() 前一瞬已 accept、
+            // channelActive 尚未执行的连接会成功装配 pipeline 并通过
+            // computeIfAbsent 重建端口连接集合逃过踢除（漏网连接），
+            // 其 pipeline 持有已卸载 Provider 的类引用 → ClassLoader 无法回收
             boundPorts.forEach(portBindings::remove);
+
+            // 步骤 2：并行关闭监听 + 踢存量连接，每端口限时 5 秒（绝大多数正常连接
+            // 5 秒内可完成关闭），总耗时可预期且远小于 cluster-admin 的广播读超时，
+            // 避免被误判为节点失败；
+            // try-catch 兜底：任何异常都不能中断后续卸载步骤，否则会残留
+            // portBindings / protocols 条目 / 未关闭的 ClassLoader（Windows 下 jar 文件被锁死）
+            try {
+                if (!NettyServerUtil.closeListenAll(boundPorts, CLOSE_LISTEN_TIMEOUT_SECONDS)) {
+                    closeSuccess = false;
+                    log.warn("端口 {} 存在连接未完全关闭，但仍继续卸载协议[{}]", boundPorts, name);
+                }
+            } catch (Exception e) {
+                closeSuccess = false;
+                log.error("关闭端口 {} 监听异常，仍继续卸载协议[{}]", boundPorts, name, e);
+            }
+
+            // 步骤 3：扫尾兜底——清理竞态窗口期漏网的连接（幂等，正常情况下无残留）。
+            // 此时监听已关、映射已清，不会再有新连接进入，残余集合中的连接全部关闭即可
+            int swept = NettyServerUtil.sweepPortConnections(boundPorts);
+            if (swept > 0) {
+                log.warn("协议[{}]卸载：扫尾清理了 {} 个漏网连接（accept 装配竞态窗口）", name, swept);
+            }
         }
         // 即使部分连接超时，也继续执行卸载（超时连接会在后续 GC 中被处理）
         // 但记录告警以便排查
         if (!closeSuccess) {
-            log.warn("协议[{}]卸载时存在连接关闭超时，建议观察Metaspace是否泄漏", name);
+            log.warn("协议[{}]卸载时存在连接关闭超时/异常，建议观察Metaspace是否泄漏", name);
         }
 
         return unregisterInternal(name, false);

@@ -4,7 +4,7 @@
    ========================================================================= */
 
 /* ============ Toast ============ */
-function showToast(message, type) {
+function showToast(message, type, durationMs, onClick) {
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -13,17 +13,27 @@ function showToast(message, type) {
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    toast.className = 'toast ' + (type === 'error' ? 'error' : 'success');
-    const icon = type === 'error' ? 'bi-x-circle-fill' : 'bi-check-circle-fill';
+    toast.className = 'toast ' + (type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'success');
+    const icon = type === 'error' ? 'bi-x-circle-fill'
+               : type === 'warning' ? 'bi-exclamation-triangle-fill'
+               : 'bi-check-circle-fill';
     toast.innerHTML = '<i class="bi ' + icon + '"></i><span></span>';
     toast.querySelector('span').textContent = message;
     container.appendChild(toast);
+    // 点击关闭 toast；传入 onClick 时（如卸载后点击立即刷新列表）关闭后执行回调
+    toast.addEventListener('click', () => {
+        toast.remove();
+        if (onClick) onClick();
+    });
+    // 警示类信息通常较长（如卸载"无节点可达/部分节点未完成"的详情），延长展示时间；
+    // durationMs 可显式指定（如节点级成败明细等信息量大的提示）
+    const duration = durationMs || (type === 'warning' ? 6000 : 2800);
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(20px)';
         toast.style.transition = 'all .2s';
         setTimeout(() => toast.remove(), 200);
-    }, 2800);
+    }, duration);
 }
 
 /* ============ 操作日志 ============ */
@@ -116,6 +126,12 @@ async function callApi(method, url, successMsg, opts) {
         const msg = successMsg || (data.message || '操作成功');
         showToast(msg, 'success');
         logOp(method + ' ' + url + ' → ' + msg, 'success');
+        if (data.warning) {
+            // 目标态类操作（unload/purge 等）可能"成功但带警示"（无节点可达、部分节点运行时未完成），
+            // 警示内容必须呈现给管理员（例：无节点执行运行时卸载时不应立即删除 nginx 转发配置）
+            showToast(data.warning, 'warning');
+            logOp(method + ' ' + url + ' → 警示: ' + data.warning, 'warn');
+        }
         if (opts.onSuccess) opts.onSuccess(data);
         else if (opts.reload !== false) setTimeout(() => location.reload(), 800);
         return data;

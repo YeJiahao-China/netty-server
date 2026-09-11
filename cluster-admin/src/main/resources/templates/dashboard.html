@@ -15,9 +15,6 @@
             <span class="pulse-dot"></span>
             <span id="live-indicator">实时</span>
         </span>
-        <button class="btn btn-primary btn-sm" onclick="reloadProtocols()">
-            <i class="bi bi-arrow-clockwise"></i> 重新扫描
-        </button>
         <button class="btn btn-sm" onclick="toggleAutoRefresh()" id="btn-auto-refresh">
             <i class="bi bi-pause-circle"></i> 暂停刷新
         </button>
@@ -151,10 +148,6 @@
 <script>
     let autoRefreshTimer = null;
     const AUTO_REFRESH_INTERVAL = 5000;
-
-    function reloadProtocols() {
-        callApi('POST', '/protocols/v2/reload/all', '已指令所有节点重新扫描 protocols 目录');
-    }
 
     function unloadProtocol(name) {
         if (!confirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开。')) return;

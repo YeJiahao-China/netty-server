@@ -82,7 +82,9 @@ public class ProtocolV2Controller {
                 }
                 case "reload": {
                     if (name == null) return fail("protocolName 为空");
-                    result = "all".equals(name) ? compensationService.reloadAll() : compensationService.reload(name);
+                    // 协议重启仅允许单协议维度：全量扫描式重载会无差别加载目录下所有 jar，
+                    // 已卸载协议（jar 保留用于单协议恢复）会被意外复活，故不提供
+                    result = compensationService.reload(name);
                     break;
                 }
                 case "bind": {

@@ -309,10 +309,24 @@ public class ProtocolCompensationService {
         return ok();
     }
 
+    /**
+     * 协议卸载
+     * @param name 协议名称
+     * @return 结果
+     */
     public Map<String, Object> unload(String name) {
         List<Integer> boundPorts = registry.getBoundPorts(name);
+        boolean wasRegistered = registry.getProvider(name) != null;
         boolean ok = registry.unregister(name);
         Map<String, Object> resp = new LinkedHashMap<>();
+        // 卸载幂等：协议本就未加载（已卸载/从未加载）视为目标状态已达成，
+        // 仍主动 syncUnload 确保 DB 标记为 UNLOADED + 端口禁用，避免 admin 误判为失败
+        if (!wasRegistered) {
+            protocolJarRegistryService.syncUnload(name);
+            resp.put("success", true);
+            resp.put("alreadyUnloaded", true);
+            return resp;
+        }
         resp.put("success", ok);
         if (ok && !boundPorts.isEmpty()) {
             resp.put("closedPorts", boundPorts);
@@ -388,11 +402,6 @@ public class ProtocolCompensationService {
         r.put("protocolName", protocolName);
         r.put("reboundPorts", boundPorts);
         return r;
-    }
-
-    public Map<String, Object> reloadAll() {
-        jarLoader.scanAndLoad();
-        return ok();
     }
 
     /* ========== jar 文件与备份工具 ========== */

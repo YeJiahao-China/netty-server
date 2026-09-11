@@ -13,9 +13,6 @@
         <button class="btn btn-primary btn-sm" onclick="openUploadModal()">
             <i class="bi bi-cloud-upload"></i> 上传协议
         </button>
-        <button class="btn btn-ghost btn-sm" onclick="reloadProtocols()">
-            <i class="bi bi-arrow-clockwise"></i> 重新扫描
-        </button>
         <button class="btn btn-ghost btn-sm" onclick="refresh()">
             <i class="bi bi-refresh"></i> 刷新
         </button>
@@ -142,10 +139,6 @@
 <th:block th:replace="fragments/layout :: scripts"></th:block>
 
 <script>
-    function reloadProtocols() {
-        callV2Api('POST', '/protocols/v2/reload/all', '已指令所有节点重新扫描 protocols 目录');
-    }
-
     function unloadProtocol(name) {
         showConfirm('确定卸载协议「' + name + '」？\n该协议绑定的所有端口将被关闭、所有活跃连接将被强制断开（全网节点）。', function () {
             callV2Api('DELETE', '/protocols/v2/' + encodeURIComponent(name), '卸载指令已发送');
@@ -181,31 +174,45 @@
     function handleV2Response(j, opName) {
         if (!j) return;
         const summary = (opName || '操作') + '：' + (j.successCount || 0) + '/' + (j.total || 0) + ' 节点成功';
-        if (j.success) {
-            showToast(summary, 'success');
-            logOp(summary, 'success');
-            // 操作成功后延迟刷新页面
-            setTimeout(refresh, 1500);
-            return;
-        }
-        // 失败：展示主失败信息
-        showToast(j.reason || summary, 'error');
-        // 如果有补偿回滚，再提示一次
-        if (j.compensation) {
-            const c = j.compensation;
-            const compSummary = '已触发回滚[' + c.rollbackMode + ']：' + c.successCount + '/' + c.total + ' 节点成功';
-            if (c.failureCount > 0) {
-                showToast(compSummary + '，部分节点回滚失败请查看同步状态页', 'error');
-                logOp(compSummary, 'error');
-            } else {
-                showToast(compSummary, 'success');
-                logOp(compSummary, 'success');
+        const hasFail = Array.isArray(j.failedNodes) && j.failedNodes.length;
+        // 节点级清单（逐行 [ip : port] 成功/失败），完整信息（原因/回滚/警示）写入操作日志
+        const fmtNode = id => {
+            const i = (id || '').lastIndexOf(':');
+            return i > 0 ? '[' + id.substring(0, i) + ' : ' + id.substring(i + 1) + ']'
+                         : '[' + id + ']';
+        };
+        const nodeBrief = Array.isArray(j.successNodes)
+                ? j.successNodes.map(id => fmtNode(id) + ' 成功')
+                    .concat((j.failedNodes || []).map(f => fmtNode(f.nodeId) + ' 失败'))
+                    .join('\n')
+                : '';
+        const parts = [summary];
+        if (Array.isArray(j.successNodes)) {
+            parts.push('成功: ' + (j.successNodes.length ? j.successNodes.join('、') : '无'));
+            if (hasFail) {
+                parts.push('失败: ' + j.failedNodes.map(f => f.nodeId + '（' + (f.reason || '未知原因') + '）').join('、'));
             }
         }
-        // purge 即使广播失败也删除了 DB 记录，延迟刷新
-        if (j.warning) {
-            setTimeout(refresh, 2000);
+        if (j.compensation) {
+            parts.push('已回滚[' + j.compensation.rollbackMode + ']: '
+                    + (j.compensation.successCount || 0) + '/' + (j.compensation.total || 0) + ' 节点成功');
         }
+        if (j.warning) parts.push(j.warning);
+
+        if (j.success) {
+            // 有节点清单：单条 toast 逐行展示（失败红色），10 秒自然消失
+            showToast(nodeBrief || summary, hasFail ? 'error' : (j.warning ? 'warning' : 'success'),
+                    nodeBrief ? 10000 : undefined);
+            logOp(parts.join(' ｜ '), (hasFail || j.warning) ? 'warn' : 'success');
+            // 立即局部刷新列表数据（loadData 只更新表格/统计，不会杀掉 toast）
+            loadData();
+            return;
+        }
+        // 失败：展示主失败信息（含操作互斥冲突"协议[X]有操作正在进行中，请稍后重试"）
+        showToast(j.reason || summary, 'error');
+        logOp(parts.join(' ｜ '), 'error');
+        // 立即局部刷新（失败也可能有状态变化，如 FAILED/回滚后的列表状态）
+        loadData();
     }
 
     /* ========== 上传协议 Modal ========== */

@@ -27,11 +27,6 @@
         </div>
         <div>
             <div class="rest-item">
-                <span class="rest-method post">POST</span>
-                <span class="rest-url">/protocols/v2/reload</span>
-                <div class="rest-desc">重新扫描 protocols/ 目录下的所有 *.jar，热加载新协议。旧连接不受影响，新连接走新版本 Provider。</div>
-            </div>
-            <div class="rest-item">
                 <span class="rest-method get">GET</span>
                 <span class="rest-url">/protocols/v2</span>
                 <div class="rest-desc">列出所有已注册协议 + 端口绑定 + 每端口活跃连接数 + 顶部统计概览。</div>
@@ -119,20 +114,20 @@
         <div class="panel-body-inner">
             <pre style="background: var(--bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto;
                         font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-                        font-size: 12px; color: var(--text-soft); margin: 0; line-height: 1.7;"># 热加载协议 jar
-curl -X POST http://localhost:2310/protocols/v2/reload
+                        font-size: 12px; color: var(--text-soft); margin: 0; line-height: 1.7;"># 重新启用单个协议（从 DB 拉 jar 并恢复端口监听）
+curl -X POST http://localhost:2312/protocols/v2/reload/{name}
 
 # 查看当前状态
-curl http://localhost:2310/protocols/v2
+curl http://localhost:2312/protocols/v2
 
 # 绑定 modbus-tcp 协议到 502 端口
-curl -X POST http://localhost:2310/protocols/v2/modbus-tcp/bind/502
+curl -X POST http://localhost:2312/protocols/v2/modbus-tcp/bind/502
 
 # 解绑端口（关闭监听并踢连接）
-curl -X DELETE http://localhost:2310/protocols/v2/bind/502
+curl -X DELETE http://localhost:2312/protocols/v2/bind/502
 
 # 卸载协议（自动清理所有相关端口与连接）
-curl -X DELETE http://localhost:2310/protocols/v2/modbus-tcp</pre>
+curl -X DELETE http://localhost:2312/protocols/v2/modbus-tcp</pre>
         </div>
     </div>
 
