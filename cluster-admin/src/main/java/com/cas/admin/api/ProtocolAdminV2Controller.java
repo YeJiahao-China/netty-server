@@ -305,11 +305,20 @@ public class ProtocolAdminV2Controller {
         if (!operationGuard.tryLock(name)) {
             return fail("协议[" + name + "]有操作正在进行中，请稍后重试");
         }
+        Map<String, Object> resp;
         try {
-            return doUnload(name);
+            resp = doUnload(name);
         } finally {
             operationGuard.unlock(name);
         }
+        // 锁完全释放后再提交后台重试：重试任务启动时锁必然空闲，
+        // tryLock 立即失败即为真实语义（确有管理操作进行中），无需任何等待
+        if (resp.containsKey("failedNodes")) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> failedNodeDetails = (List<Map<String, Object>>) resp.get("failedNodes");
+            unloadRetryService.submitAsyncRetry(name, failedNodeDetails);
+        }
+        return resp;
     }
 
     private Map<String, Object> doUnload(String name) {
@@ -347,10 +356,9 @@ public class ProtocolAdminV2Controller {
                     name, ok, results.size());
         }
 
-        // 3. 失败节点交给公用虚拟线程池异步立即重试一次：
-        //    不阻塞本次响应；重试前会竞争协议操作锁，管理员发起新操作时自动让位；
-        //    重试仍失败则仅记录 ERROR 日志 + 同步状态页标记，停止自动动作
-        //    （正确性由 DB 目标态兜底，节点重启后必然收敛）
+        // 3. 失败节点由调用方（unload 端点）在锁释放后提交后台立即重试一次：
+        //    不阻塞本次响应；重试竞争锁失败或意图失效（协议被重新启用）即让位放弃；
+        //    重试仍失败则仅记录 ERROR 日志 + 同步状态页标记，后续交由对账服务周期收敛
 
         Map<String, Object> r = new LinkedHashMap<>();
         // DB 目标状态（UNLOADED）已达成，操作视为成功
@@ -370,7 +378,6 @@ public class ProtocolAdminV2Controller {
                     "但没有任何节点执行运行时卸载（存量连接仍在服务），节点恢复上线/重启后才会收敛");
             r.put("noReachableNode", true);
         } else if (!failedNodes.isEmpty()) {
-            unloadRetryService.submitAsyncRetry(name, body, failedNodes);
             r.put("warning", "部分节点运行时卸载未完成（"
                     + failedNodes.stream().map(NodeResult::getNodeId).toList()
                     + "），已提交后台立即重试（异步 1 次）；DB 已标记 UNLOADED + 端口禁用");

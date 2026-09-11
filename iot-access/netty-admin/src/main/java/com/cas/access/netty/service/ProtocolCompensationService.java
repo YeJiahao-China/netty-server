@@ -338,7 +338,11 @@ public class ProtocolCompensationService {
 
     public Map<String, Object> purge(String name) {
         ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
-        if (existing == null) return fail("协议[" + name + "]不存在");
+        if (existing == null) {
+            // 对账孤儿场景：DB 记录已被 purge 但本节点残留（运行时协议或本地 jar）→ 直接清理；
+            // 无任何残留时幂等成功（对账补发 purge 到已清理干净的节点属正常）
+            return purgeOrphanResidue(name);
+        }
         if (STATUS_REGISTERED.equals(existing.getStatus())) return fail("协议[" + name + "]处于活跃状态，请先卸载");
         if (registry.getProvider(name) != null) return fail("协议[" + name + "]仍在运行时注册表中");
 
@@ -347,6 +351,33 @@ public class ProtocolCompensationService {
         boolean jarDeleted = deleteJarFile(resolveLocalJarPath(name));
         Map<String, Object> r = ok();
         r.put("purgedProtocol", name);
+        r.put("jarDeleted", jarDeleted);
+        return r;
+    }
+
+    /**
+     * 孤儿清理：DB 记录已不存在时，清理本节点残留的运行时协议与本地 jar。
+     *
+     * <p>场景：admin 执行 purge 时本节点失败/失联，DB 记录已删但本节点协议仍在运行、
+     * jar 仍在磁盘——协议对账服务会对此类节点补发 purge，走本方法收敛。</p>
+     */
+    private Map<String, Object> purgeOrphanResidue(String name) {
+        boolean runtimeExists = registry.getProvider(name) != null;
+        Path jarPath = resolveLocalJarPath(name);
+        boolean jarExists = Files.exists(jarPath);
+        if (!runtimeExists && !jarExists) {
+            return ok(); // 幂等：无残留
+        }
+        log.warn("清理 purge 孤儿残留: 协议[{}], 运行时存在={}, 本地jar存在={}", name, runtimeExists, jarExists);
+        if (runtimeExists) {
+            // 关端口/踢连接/destroy Provider/close ClassLoader；
+            // 内部 syncUnload 因 DB 无记录仅打 warn，无副作用
+            registry.unregister(name);
+        }
+        boolean jarDeleted = deleteJarFile(jarPath);
+        Map<String, Object> r = ok();
+        r.put("purgedProtocol", name);
+        r.put("orphanCleanup", true);
         r.put("jarDeleted", jarDeleted);
         return r;
     }

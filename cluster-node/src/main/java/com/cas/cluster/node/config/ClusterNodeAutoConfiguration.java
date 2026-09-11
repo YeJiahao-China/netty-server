@@ -136,9 +136,15 @@ public class ClusterNodeAutoConfiguration {
                 return carrier.scheduleWithFixedDelay(wrap(task), delay);
             }
 
-            // TaskScheduler 未声明 execute，此处非 @Override；仅作为 TaskExecutor 语义便利入口提供
-            public void execute(Runnable task) {
-                vtExecutor.submit(wrapOnlyName(task));
+            /**
+             * 停机关闭：carrier 与 vtExecutor 均为局部变量（lambda 闭包持有），
+             * Spring 对 @Bean 默认 "(inferred)" destroy 会自动调用本方法——
+             * 否则 carrier 的非 daemon 线程 park 在定时队列上无人关闭，阻塞 JVM 优雅退出。
+             */
+            public void close() {
+                carrier.shutdown();      // 停止后续触发，已注册的定时任务取消
+                vtExecutor.shutdown();   // 优雅模式：允许在跑的虚拟线程任务执行完
+                log.info("clusterNodeTaskScheduler 已关闭（carrier 触发器 + 虚拟线程执行器）");
             }
 
             /** 包装：将用户任务放到虚拟线程里执行（carrier 只做定时触发，立刻返回） */
