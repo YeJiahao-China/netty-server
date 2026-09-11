@@ -29,6 +29,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.INTERNAL_DISTRIBUTE_PATH;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_BIND;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_CLEANUP_UPLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_PURGE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_RELOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_ROLLBACK_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_SYNC_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_SYNC_UPLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UNBIND;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UNLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UPLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_FAILED;
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_INIT;
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_REGISTERED;
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_UNLOADED;
+
 /**
  * 协议热插拔 V2 API（补偿回滚版）。
  *
@@ -46,8 +63,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/protocols/v2")
 @RequiredArgsConstructor
 public class ProtocolAdminV2Controller {
-
-    private static final String INTERNAL_DISTRIBUTE_PATH = "/protocols/v2/internal/distribute";
 
     private final CompensatingNodeBroadcastClient broadcast;
     private final ProtocolJarRegistryMapper registryMapper;
@@ -123,7 +138,7 @@ public class ProtocolAdminV2Controller {
             saveJarToRepo(protocolName, bytes);
             // 2. 广播 sync-upload（节点从 DB 拉）
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("mode", "sync-upload");
+            body.put("mode", MODE_SYNC_UPLOAD);
             body.put("protocolName", protocolName);
             body.put("port", port);
             body.put("fileName", file.getOriginalFilename());
@@ -150,7 +165,7 @@ public class ProtocolAdminV2Controller {
             saveJarToRepo(name, bytes);
             // 2. 广播 sync-update（节点从 DB 拉新 jar 热替换）
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("mode", "sync-update");
+            body.put("mode", MODE_SYNC_UPDATE);
             body.put("protocolName", name);
             body.put("fileName", file.getOriginalFilename());
             return doSyncDistribute(body, name);
@@ -171,7 +186,7 @@ public class ProtocolAdminV2Controller {
         }
         try {
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("mode", "bind");
+            body.put("mode", MODE_BIND);
             body.put("protocolName", name);
             body.put("port", port);
             return doDistribute(body, true);
@@ -194,7 +209,7 @@ public class ProtocolAdminV2Controller {
         }
         try {
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("mode", "unbind");
+            body.put("mode", MODE_UNBIND);
             body.put("port", port);
             return doDistribute(body, false);
         } finally {
@@ -221,7 +236,7 @@ public class ProtocolAdminV2Controller {
         }
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "reload");
+        body.put("mode", MODE_RELOAD);
         body.put("protocolName", name);
 
         // 1. 广播 reload 到所有 ACCESS 节点
@@ -243,7 +258,7 @@ public class ProtocolAdminV2Controller {
         boolean anySuccess = ok > 0;
         if (anySuccess) {
             // 有节点成功 → DB=REGISTERED（协议在系统层面可用）
-            registryMapper.updateStatus(name, "REGISTERED", now);
+            registryMapper.updateStatus(name, STATUS_REGISTERED, now);
             portBindingMapper.update(null,
                     new LambdaUpdateWrapper<PortProtocolBinding>()
                             .eq(PortProtocolBinding::getProtocolName, name)
@@ -254,7 +269,7 @@ public class ProtocolAdminV2Controller {
                             failedNodes.stream().map(NodeResult::getNodeId).toList() + "）");
         } else {
             // 全部失败 → DB=FAILED（协议完全不可用）
-            registryMapper.updateStatus(name, "FAILED", now);
+            registryMapper.updateStatus(name, STATUS_FAILED, now);
             log.warn("协议[{}]重新启用: 全部 {} 节点失败", name, results.size());
         }
 
@@ -266,12 +281,12 @@ public class ProtocolAdminV2Controller {
         r.put("results", results.stream().map(NodeResult::getResult).toList());
         putNodeDetail(r, results);
         if (anySuccess) {
-            r.put("status", "REGISTERED");
+            r.put("status", STATUS_REGISTERED);
             if (!failedNodes.isEmpty()) {
                 r.put("warning", "部分节点启用失败，已成功节点保持运行（nginx 会自动避开失败节点）");
             }
         } else {
-            r.put("status", "FAILED");
+            r.put("status", STATUS_FAILED);
             r.put("reason", results.isEmpty()
                     ? "无可用 ACCESS 节点"
                     : "所有节点启用失败");
@@ -304,7 +319,7 @@ public class ProtocolAdminV2Controller {
         }
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "unload");
+        body.put("mode", MODE_UNLOAD);
         body.put("protocolName", name);
 
         // 1. 广播卸载到所有 ACCESS 节点（运行时清理：关端口监听、踢连接、destroy Provider、close ClassLoader）
@@ -318,7 +333,7 @@ public class ProtocolAdminV2Controller {
         //    不依赖节点是否全部成功。成功节点已自行 syncUnload，这里幂等；
         //    全部失败/部分失败时由 admin 强制把 DB 协议置 UNLOADED、端口绑定置禁用。
         LocalDateTime now = LocalDateTime.now();
-        registryMapper.updateStatus(name, "UNLOADED", now);
+        registryMapper.updateStatus(name, STATUS_UNLOADED, now);
         portBindingMapper.update(null,
                 new LambdaUpdateWrapper<PortProtocolBinding>()
                         .eq(PortProtocolBinding::getProtocolName, name)
@@ -340,7 +355,7 @@ public class ProtocolAdminV2Controller {
         Map<String, Object> r = new LinkedHashMap<>();
         // DB 目标状态（UNLOADED）已达成，操作视为成功
         r.put("success", true);
-        r.put("status", "UNLOADED");
+        r.put("status", STATUS_UNLOADED);
         r.put("total", results.size());
         r.put("successCount", ok);
         r.put("failureCount", results.size() - ok);
@@ -381,7 +396,7 @@ public class ProtocolAdminV2Controller {
             return fail("协议[" + name + "]不存在");
         }
         // INIT 状态：jar 从未分发到节点，直接物理删除 DB 记录，无需广播
-        if ("INIT".equals(existing.getStatus())) {
+        if (STATUS_INIT.equals(existing.getStatus())) {
             int deleted = registryMapper.delete(new LambdaQueryWrapper<ProtocolJarRegistry>()
                     .eq(ProtocolJarRegistry::getName, name));
             log.info("INIT 状态协议直接删除 DB 记录: name={}, deleted={}", name, deleted);
@@ -395,7 +410,7 @@ public class ProtocolAdminV2Controller {
         }
         // 其他状态（UNLOADED/FAILED）：广播通知节点清理（尽力而为），无论广播结果如何都删除 DB 记录
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("mode", "purge");
+        body.put("mode", MODE_PURGE);
         body.put("protocolName", name);
         Map<String, Object> distResult = doDistribute(body, false);
 
@@ -476,16 +491,16 @@ public class ProtocolAdminV2Controller {
         String mode = (String) original.get("mode");
         Map<String, Object> rb = new LinkedHashMap<>();
         switch (mode) {
-            case "upload":
-                rb.put("mode", "cleanup-upload");
+            case MODE_UPLOAD:
+                rb.put("mode", MODE_CLEANUP_UPLOAD);
                 rb.put("protocolName", original.get("protocolName"));
                 return rb;
-            case "update":
-                rb.put("mode", "rollback-update");
+            case MODE_UPDATE:
+                rb.put("mode", MODE_ROLLBACK_UPDATE);
                 rb.put("protocolName", original.get("protocolName"));
                 return rb;
-            case "bind":
-                rb.put("mode", "unbind");
+            case MODE_BIND:
+                rb.put("mode", MODE_UNBIND);
                 rb.put("port", original.get("port"));
                 return rb;
             default:
@@ -554,7 +569,7 @@ public class ProtocolAdminV2Controller {
                 reg.setName(protocolName);
                 reg.setSource("external");
                 reg.setJarBytes(jarBytes);
-                reg.setStatus("INIT");
+                reg.setStatus(STATUS_INIT);
                 reg.setCreatedAt(now);
                 reg.setUpdatedAt(now);
                 registryMapper.insert(reg);
@@ -584,7 +599,7 @@ public class ProtocolAdminV2Controller {
 
         if (!hasFailure) {
             // 全部成功
-            registryMapper.updateStatus(protocolName, "REGISTERED", now);
+            registryMapper.updateStatus(protocolName, STATUS_REGISTERED, now);
             log.info("协议[{}]注册成功: {}/{} 节点全部成功", protocolName, ok, results.size());
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("success", true);
@@ -593,7 +608,7 @@ public class ProtocolAdminV2Controller {
             r.put("failureCount", 0);
             r.put("results", results.stream().map(NodeResult::getResult).toList());
             putNodeDetail(r, results);
-            r.put("status", "REGISTERED");
+            r.put("status", STATUS_REGISTERED);
             return r;
         }
 
@@ -604,7 +619,7 @@ public class ProtocolAdminV2Controller {
         if (!successNodes.isEmpty()) {
             // sync-upload 失败 → cleanup-upload（unload + 删 jar + 删 DB）
             // sync-update 失败 → rollback-update（从备份恢复旧 jar）
-            String rollbackMode = "sync-upload".equals(mode) ? "cleanup-upload" : "rollback-update";
+            String rollbackMode = MODE_SYNC_UPLOAD.equals(mode) ? MODE_CLEANUP_UPLOAD : MODE_ROLLBACK_UPDATE;
             Map<String, Object> rollbackBody = new LinkedHashMap<>();
             rollbackBody.put("mode", rollbackMode);
             rollbackBody.put("protocolName", protocolName);
@@ -622,7 +637,7 @@ public class ProtocolAdminV2Controller {
             compensation.put("results", compResults.stream().map(NodeResult::getResult).toList());
         }
 
-        registryMapper.updateStatus(protocolName, "FAILED", now);
+        registryMapper.updateStatus(protocolName, STATUS_FAILED, now);
         log.warn("协议[{}]注册失败: 成功 {}/{}", protocolName, ok, results.size());
 
         Map<String, Object> r = new LinkedHashMap<>();
@@ -633,7 +648,7 @@ public class ProtocolAdminV2Controller {
         r.put("failureCount", results.size() - ok);
         r.put("results", results.stream().map(NodeResult::getResult).toList());
         putNodeDetail(r, results);
-        r.put("status", "FAILED");
+        r.put("status", STATUS_FAILED);
         if (compensation != null) {
             r.put("compensation", compensation);
         }

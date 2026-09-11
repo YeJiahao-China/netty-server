@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_REGISTERED;
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_UNLOADED;
+
 /**
  * 协议注册表数据库操作 Service。
  *
@@ -71,7 +74,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 entity.setDescription(lp.getDescription());
                 entity.setSource(isBuiltin ? "builtin" : "external");
                 entity.setProviderClass(providerClass);
-                entity.setStatus("REGISTERED");
+                entity.setStatus(STATUS_REGISTERED);
                 entity.setLoadedAt(loadedAt);
                 mapper.insert(entity);
             } else {
@@ -82,7 +85,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
                 update.setDescription(lp.getDescription());
                 update.setSource(isBuiltin ? "builtin" : "external");
                 update.setProviderClass(providerClass);
-                update.setStatus("REGISTERED");
+                update.setStatus(STATUS_REGISTERED);
                 update.setLoadedAt(loadedAt);
                 mapper.updateFull(update);
             }
@@ -104,7 +107,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             }
             ProtocolJarRegistry update = new ProtocolJarRegistry();
             update.setName(name);
-            update.setStatus("UNLOADED");
+            update.setStatus(STATUS_UNLOADED);
             update.setUpdatedAt(LocalDateTime.now());
             mapper.updateStatusByName(update);
 
@@ -129,7 +132,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             mapper.update(null,
                     new LambdaUpdateWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getName, name)
-                            .set(ProtocolJarRegistry::getStatus, "REGISTERED")
+                            .set(ProtocolJarRegistry::getStatus, STATUS_REGISTERED)
                             .set(ProtocolJarRegistry::getUpdatedAt, LocalDateTime.now()));
 
             portBindingMapper.update(null,
@@ -200,7 +203,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             List<ProtocolJarRegistry> list = mapper.selectList(
                     new LambdaQueryWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getSource, "external")
-                            .eq(ProtocolJarRegistry::getStatus, "REGISTERED"));
+                            .eq(ProtocolJarRegistry::getStatus, STATUS_REGISTERED));
             for (ProtocolJarRegistry p : list) {
                 // jar 路径不再存表，由本节点配置 jarDir + 协议名推导
                 result.put(p.getName(), resolveLocalJarPath(p.getName()));
@@ -248,7 +251,7 @@ public class ProtocolJarRegistryService implements ProtocolDbSync, ProtocolStore
             mapper.update(null,
                     new LambdaUpdateWrapper<ProtocolJarRegistry>()
                             .eq(ProtocolJarRegistry::getName, name)
-                            .set(ProtocolJarRegistry::getStatus, "REGISTERED")
+                            .set(ProtocolJarRegistry::getStatus, STATUS_REGISTERED)
                             .set(ProtocolJarRegistry::getUpdatedAt, LocalDateTime.now()));
             log.info("DB 激活协议: name={}", name);
         } catch (Exception e) {

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.NODE_DOWN;
+
 /**
  * 节点协议同步状态定时维护。
  *
@@ -31,7 +33,7 @@ public class NodeSyncStateScheduler {
     public void markDownNodesPending() {
         try {
             List<ClusterNode> downNodes = nodeService.listByType(null).stream()
-                    .filter(n -> "DOWN".equals(n.getStatus()))
+                    .filter(n -> NODE_DOWN.equals(n.getStatus()))
                     .toList();
             if (downNodes.isEmpty()) {
                 return;

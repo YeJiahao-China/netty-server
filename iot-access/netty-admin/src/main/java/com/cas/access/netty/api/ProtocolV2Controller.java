@@ -14,6 +14,18 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_BIND;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_CLEANUP_UPLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_PURGE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_RELOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_ROLLBACK_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_SYNC_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_SYNC_UPLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UNBIND;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UNLOAD;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UPDATE;
+import static com.cas.cluster.node.constant.ProtocolConstants.MODE_UPLOAD;
+
 /**
  * 协议管理 V2 内部分发接口（端口 2310）。
  *
@@ -58,55 +70,55 @@ public class ProtocolV2Controller {
         Map<String, Object> result;
         try {
             switch (mode) {
-                case "sync-upload":
+                case MODE_SYNC_UPLOAD:
                     result = doSyncUpload(body);
                     break;
-                case "sync-update":
+                case MODE_SYNC_UPDATE:
                     result = doSyncUpdate(body);
                     break;
-                case "upload":
+                case MODE_UPLOAD:
                     result = doInternalUpload(body);
                     break;
-                case "update":
+                case MODE_UPDATE:
                     result = doInternalUpdate(body);
                     break;
-                case "rollback-update": {
+                case MODE_ROLLBACK_UPDATE: {
                     if (name == null) return fail("protocolName 为空");
                     result = compensationService.rollbackUpdate(name);
                     break;
                 }
-                case "cleanup-upload": {
+                case MODE_CLEANUP_UPLOAD: {
                     if (name == null) return fail("protocolName 为空");
                     result = compensationService.cleanupUpload(name);
                     break;
                 }
-                case "reload": {
+                case MODE_RELOAD: {
                     if (name == null) return fail("protocolName 为空");
                     // 协议重启仅允许单协议维度：全量扫描式重载会无差别加载目录下所有 jar，
                     // 已卸载协议（jar 保留用于单协议恢复）会被意外复活，故不提供
                     result = compensationService.reload(name);
                     break;
                 }
-                case "bind": {
+                case MODE_BIND: {
                     Object p = body.get("port");
                     int port = p == null ? 0 : ((Number) p).intValue();
                     if (name == null || port <= 0) return fail("protocolName/port 非法");
                     result = compensationService.bind(name, port);
                     break;
                 }
-                case "unbind": {
+                case MODE_UNBIND: {
                     Object p = body.get("port");
                     int port = p == null ? 0 : ((Number) p).intValue();
                     if (port <= 0) return fail("port 非法");
                     result = compensationService.unbind(port);
                     break;
                 }
-                case "unload": {
+                case MODE_UNLOAD: {
                     if (name == null) return fail("protocolName 为空");
                     result = compensationService.unload(name);
                     break;
                 }
-                case "purge": {
+                case MODE_PURGE: {
                     if (name == null) return fail("protocolName 为空");
                     result = compensationService.purge(name);
                     break;
@@ -126,7 +138,7 @@ public class ProtocolV2Controller {
         if (protocolName == null || protocolName.isBlank()) {
             return;
         }
-        if ("cleanup-upload".equals(mode) && Boolean.TRUE.equals(result.get("success"))) {
+        if (MODE_CLEANUP_UPLOAD.equals(mode) && Boolean.TRUE.equals(result.get("success"))) {
             // cleanup 成功后该协议在本节点已不存在，暂不删除状态记录，而是标为 UNKNOWN
             syncReporter.reportUnknown(protocolName, "cleanup-upload completed");
             return;

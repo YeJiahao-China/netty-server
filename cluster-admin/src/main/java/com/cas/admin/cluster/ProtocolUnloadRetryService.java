@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.INTERNAL_DISTRIBUTE_PATH;
+import static com.cas.cluster.node.constant.ProtocolConstants.SYNC_OUT_OF_SYNC;
+
 /**
  * 协议卸载后台重试服务。
  *
@@ -35,8 +38,6 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 @Component
 public class ProtocolUnloadRetryService {
-
-    private static final String INTERNAL_DISTRIBUTE_PATH = "/protocols/v2/internal/distribute";
 
     private final CompensatingNodeBroadcastClient broadcast;
     private final ClusterNodeSyncStateService syncStateService;
@@ -102,7 +103,7 @@ public class ProtocolUnloadRetryService {
                         + "请检查失败节点健康状态（心跳/GC/磁盘/日志）",
                 protocolName, failedIds);
         for (ClusterNode node : stillFailed) {
-            syncStateService.report(node.getNodeId(), protocolName, "OUT_OF_SYNC",
+            syncStateService.report(node.getNodeId(), protocolName, SYNC_OUT_OF_SYNC,
                     "unload 后台重试 1 次仍失败，等待人工检查或节点重启收敛");
         }
     }

@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.SYNC_OUT_OF_SYNC;
+import static com.cas.cluster.node.constant.ProtocolConstants.SYNC_SYNCED;
+import static com.cas.cluster.node.constant.ProtocolConstants.SYNC_UNKNOWN;
+
 /**
  * 协议同步状态上报器。
  *
@@ -37,7 +41,7 @@ public class ProtocolSyncReporter {
             return;
         }
         boolean success = Boolean.TRUE.equals(result.get("success"));
-        String state = success ? "SYNCED" : "OUT_OF_SYNC";
+        String state = success ? SYNC_SYNCED : SYNC_OUT_OF_SYNC;
         String detail = success
                 ? "mode=" + mode + ", success=true"
                 : "mode=" + mode + ", success=false, reason=" + result.get("reason");
@@ -49,6 +53,6 @@ public class ProtocolSyncReporter {
      */
     public void reportUnknown(String protocolName, String detail) {
         if (!nodeIdentity.isConfigured()) return;
-        syncStateService.report(nodeIdentity.getNodeId(), protocolName, "UNKNOWN", detail);
+        syncStateService.report(nodeIdentity.getNodeId(), protocolName, SYNC_UNKNOWN, detail);
     }
 }

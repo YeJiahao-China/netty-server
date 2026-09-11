@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static com.cas.cluster.node.constant.ProtocolConstants.STATUS_REGISTERED;
+
 /**
  * 协议热插拔补偿服务。
  *
@@ -85,7 +87,7 @@ public class ProtocolCompensationService {
         if (port < 1024 || port > 65535) return fail("端口范围必须在 1024-65535");
 
         ProtocolJarRegistry exist = protocolJarRegistryService.selectByName(protocolName);
-        if (exist != null && "REGISTERED".equals(exist.getStatus())) return fail("协议[" + protocolName + "]已存在");
+        if (exist != null && STATUS_REGISTERED.equals(exist.getStatus())) return fail("协议[" + protocolName + "]已存在");
         String existingProtocol = registry.getProtocolNameByPort(port);
         if (existingProtocol != null) return fail("端口 " + port + " 已被协议[" + existingProtocol + "]占用");
         if (registry.getProvider(protocolName) != null) return fail("协议[" + protocolName + "]已存在，请走 update");
@@ -337,7 +339,7 @@ public class ProtocolCompensationService {
     public Map<String, Object> purge(String name) {
         ProtocolJarRegistry existing = protocolJarRegistryService.selectByName(name);
         if (existing == null) return fail("协议[" + name + "]不存在");
-        if ("REGISTERED".equals(existing.getStatus())) return fail("协议[" + name + "]处于活跃状态，请先卸载");
+        if (STATUS_REGISTERED.equals(existing.getStatus())) return fail("协议[" + name + "]处于活跃状态，请先卸载");
         if (registry.getProvider(name) != null) return fail("协议[" + name + "]仍在运行时注册表中");
 
         protocolJarRegistryService.purgeByName(name);

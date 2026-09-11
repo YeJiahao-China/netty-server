@@ -29,6 +29,10 @@ import java.util.Map;
 @Component
 public class CompensatingNodeBroadcastClient {
 
+    /** 节点业务响应解析用（线程安全，静态单例避免每次解析重复创建） */
+    private static final com.fasterxml.jackson.databind.ObjectMapper MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
+
     private final RestClient restClient;
     private final PrimaryNodeRouter router;
 
@@ -120,8 +124,7 @@ public class CompensatingNodeBroadcastClient {
             if (response == null) return false;
             try {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> bizResult = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .readValue(response.toString(), Map.class);
+                Map<String, Object> bizResult = MAPPER.readValue(response.toString(), Map.class);
                 return Boolean.TRUE.equals(bizResult.get("success"));
             } catch (Exception e) {
                 return false;
@@ -137,8 +140,7 @@ public class CompensatingNodeBroadcastClient {
             if (response == null) return Map.of();
             try {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> bizResult = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .readValue(response.toString(), Map.class);
+                Map<String, Object> bizResult = MAPPER.readValue(response.toString(), Map.class);
                 return bizResult;
             } catch (Exception e) {
                 return Map.of();
